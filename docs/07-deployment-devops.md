@@ -143,14 +143,14 @@ Each microservice uses a multi-stage Dockerfile to separate build and runtime:
 
 ### 9.1 Build Stage
 
-- Base image: maven:3.9-eclipse-temurin-17
+- Base image: maven:3.9-eclipse-temurin-22
 - Copy pom.xml first for dependency caching
 - Run mvn dependency:go-offline for layer caching
 - Copy source and run mvn package -DskipTests
 
 ### 9.2 Runtime Stage
 
-- Base image: eclipse-temurin:17-jre-alpine
+- Base image: eclipse-temurin:22-jre-alpine
 - Copy only the JAR from build stage
 - Expose service port
 - Set ENTRYPOINT to java -jar app.jar
@@ -164,14 +164,14 @@ Each microservice uses a multi-stage Dockerfile to separate build and runtime:
 
 ### 9.4 Dockerfile Template
 
-Stage 1: FROM maven:3.9-eclipse-temurin-17 AS build
+Stage 1: FROM maven:3.9-eclipse-temurin-22 AS build
   WORKDIR /app
   COPY pom.xml .
   RUN mvn dependency:go-offline -B
   COPY src ./src
   RUN mvn package -DskipTests
 
-Stage 2: FROM eclipse-temurin:17-jre-alpine
+Stage 2: FROM eclipse-temurin:22-jre-alpine
   WORKDIR /app
   COPY --from=build /app/target/*.jar app.jar
   EXPOSE 8080
@@ -281,19 +281,19 @@ Full local development stack saved as docker-compose.yml
 See project root for actual Dockerfiles per service.
 ### Spring Boot Dockerfile
 
-FROM eclipse-temurin:22-jdk-alpine AS builder
+# Build Stage
+FROM maven:3.9-eclipse-temurin-22 AS builder
 WORKDIR /app
-COPY gradle/ gradle/
-COPY gradlew .
-COPY build.gradle settings.gradle .
-RUN ./gradlew dependencies --no-daemon
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
 COPY src/ src/
-RUN ./gradlew bootJar --no-daemon -x test
+RUN mvn package -DskipTests
 
+# Runtime Stage
 FROM eclipse-temurin:22-jre-alpine
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/target/*.jar app.jar
 USER appuser
 EXPOSE 8080
 ENTRYPOINT java -jar app.jar

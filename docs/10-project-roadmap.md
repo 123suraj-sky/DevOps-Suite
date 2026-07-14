@@ -103,7 +103,7 @@ Phase 6 Top Tier Polish: Zipkin Resilience4j Analytics Health (Weeks 35-40)
 ### Phase 1: Foundation (Weeks 1-8)
 
 #### Week 1-2: Project Setup and Auth Service
-- Set up Spring Boot multi-module Gradle project
+- Set up Spring Boot multi-module Maven project
 - Create auth-service module with Spring Security
 - Implement user registration endpoint with password hashing (BCrypt)
 - Implement login endpoint with JWT token generation

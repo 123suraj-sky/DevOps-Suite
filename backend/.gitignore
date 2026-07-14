@@ -1,21 +1,19 @@
+# DevOps Suite - Build output
+**/target/
+*.class
+*.jar
+*.war
+
 # IDE
-.vscode/
 .idea/
 *.iml
+.vscode/
 .settings/
 .project
 .classpath
 *.swp
 
-# Python
-__pycache__/
-*.pyc
-
-# Java / Maven
-**/target/
-*.class
-*.jar
-*.war
+# Maven
 .mvn/wrapper/maven-wrapper.jar
 
 # Logs
