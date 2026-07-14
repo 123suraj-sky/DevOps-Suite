@@ -184,7 +184,7 @@ Stage 2: FROM eclipse-temurin:17-jre-alpine
 ### 10.1 Pipeline Stages
 
 1. Checkout: Pull latest code from branch
-2. Setup JDK 17: Configure Java environment
+2. Setup JDK 22: Configure Java environment
 3. Cache Maven dependencies: Speed up builds
 4. Build and Test: mvn clean test for each service
 5. Code Coverage: Check minimum threshold via JaCoCo
@@ -281,7 +281,7 @@ Full local development stack saved as docker-compose.yml
 See project root for actual Dockerfiles per service.
 ### Spring Boot Dockerfile
 
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:22-jdk-alpine AS builder
 WORKDIR /app
 COPY gradle/ gradle/
 COPY gradlew .
@@ -290,7 +290,7 @@ RUN ./gradlew dependencies --no-daemon
 COPY src/ src/
 RUN ./gradlew bootJar --no-daemon -x test
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:22-jre-alpine
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
