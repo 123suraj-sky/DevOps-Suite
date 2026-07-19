@@ -12,18 +12,10 @@
     </parent>
 
     <artifactId>code-execution-service</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <name>code-execution-service</name>
     <description>Code Execution Service</description>
 
-    <properties>
-        <java.version>22</java.version>
-        <lombok.version>1.18.38</lombok.version>
-        <jjwt.version>0.12.6</jjwt.version>
-        <postgresql.version>42.7.4</postgresql.version>
-        <kafka.version>3.8.0</kafka.version>
-        <docker-java.version>3.4.0</docker-java.version>
-    </properties>
+    <!-- All version properties are inherited from the parent POM -->
 
     <dependencies>
         <dependency>
@@ -49,7 +41,6 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>${postgresql.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -66,24 +57,20 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -114,12 +101,10 @@
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java</artifactId>
-            <version>${docker-java.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-httpclient5</artifactId>
-            <version>${docker-java.version}</version>
         </dependency>
     </dependencies>
 
@@ -137,15 +122,7 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                </configuration>
-            </plugin>
+
         </plugins>
     </build>
 </project>
