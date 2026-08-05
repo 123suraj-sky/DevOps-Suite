@@ -1,42 +1,37 @@
-﻿# Security Design - DevOps Suite
+# Security Design - DevOps Suite
 
 ## 1. Overview
-
-Multi-layer security: transport, authentication, authorization, input validation, and runtime sandboxing.
+Multi-layer security: transport, authentication, authorization, input validation, and runtime sandboxing are managed within the monolithic Spring Boot application.
 
 ---
 
 ## 2. Authentication Flow
 
-``` mermaid
+```mermaid
 sequenceDiagram
     participant C as Client
-    participant GW as API Gateway
-    participant AS as Auth Service
+    participant MN as Monolith (Security Filter)
     participant DB as Database
 
-    C->>GW: POST /auth/login
-    GW->>AS: Forward request
-    AS->>DB: Validate credentials
-    DB-->>AS: User found
-    AS->>AS: Generate JWT (access + refresh)
-    AS-->>GW: tokens
-    GW-->>C: 200 OK with tokens
+    C->>MN: POST /api/auth/login
+    MN->>DB: Validate credentials
+    DB-->>MN: User found
+    MN->>MN: Generate JWT (access + refresh)
+    MN-->>C: 200 OK with tokens
 
-    Note over C,GW: Subsequent requests
-    C->>GW: GET /projects with Bearer token
-    GW->>AS: Validate token
-    AS-->>GW: User claims
-    GW->>Project: Forward with user context
-    Project-->>GW: Response
-    GW-->>C: Response
+    Note over C,MN: Subsequent requests
+    C->>MN: GET /api/v1/projects with Bearer token
+    MN->>MN: Intercept & Validate Token
+    MN->>MN: Establish Security Context
+    MN->>MN: Execute Controller logic
+    MN-->>C: Response
 ```
 
 ---
 
 ## 3. JWT Token Lifecycle
 
-``` mermaid
+```mermaid
 stateDiagram-v2
     [*] --> Active : Generated
     Active --> Expired : 1 hour (access)
@@ -51,9 +46,8 @@ stateDiagram-v2
 
 ## 4. Role-Based Access Control (RBAC)
 
-### 4.1 Role Hierarchy
-
-``` mermaid
+### Role Hierarchy
+```mermaid
 flowchart TD
     OWNER --> ADMIN
     ADMIN --> MEMBER
@@ -61,10 +55,10 @@ flowchart TD
     VIEWER --> NONE
 ```
 
-### 4.2 Permission Matrix
+### Permission Matrix
 
 | Action | OWNER | ADMIN | MEMBER | VIEWER |
-|--------|-------|-------|--------|--------|
+|---|---|---|---|---|
 | View project | Yes | Yes | Yes | Yes |
 | Create task | Yes | Yes | Yes | No |
 | Edit task | Yes | Yes | Yes | No |
@@ -78,31 +72,29 @@ flowchart TD
 ## 5. Password Policy
 
 | Requirement | Rule |
-|-------------|------|
+|---|---|
 | Minimum length | 8 characters |
 | Complexity | 1 upper, 1 lower, 1 digit, 1 special |
 | Hash algorithm | BCrypt (cost 12) |
-| Max login attempts | 5 before 15-min lockout |
-| Password history | Last 5 remembered |
 
 ---
 
 ## 6. API Security - Rate Limiting
 
-``` mermaid
+```mermaid
 flowchart TD
     A[Request] --> B{Rate limit check}
     B -->|Under limit| C[Process request]
     B -->|Over limit| D[Return 429]
-    C --> E[Increment counter]
-    E --> F[Return response with headers]
+    C --> E[Increment counter in Redis]
+    E --> F[Return response]
 ```
 
 ---
 
 ## 7. Code Execution Sandbox
 
-``` mermaid
+```mermaid
 flowchart TD
     A[Source Code] --> B[Write to temp file]
     B --> C[Create Docker container]
@@ -129,30 +121,18 @@ flowchart TD
 ---
 
 ## 8. Secrets Management
-
-- All secrets in environment variables
-- Production via HashiCorp Vault
-- DB passwords rotated every 90 days
-- JWT keys rotated every 30 days
+- All secrets are loaded from environment variables (e.g. `JWT_SECRET`, `DB_PASSWORD`, `GOOGLE_CLIENT_ID`).
+- Safe fallback defaults are configured for development.
 
 ---
 
 ## 9. Security Headers
-
-| Header | Value | Purpose |
-|--------|-------|---------|
-| Strict-Transport-Security | max-age=31536000; includeSubDomains | Enforce HTTPS |
-| X-Content-Type-Options | nosniff | Prevent MIME sniffing |
-| X-Frame-Options | DENY | Prevent clickjacking |
-| Content-Security-Policy | default-src 'self' | Prevent XSS |
-| Cache-Control | no-store | Prevent caching |
+- `Strict-Transport-Security`: Enforces HTTPS.
+- `X-Content-Type-Options`: nosniff.
+- `X-Frame-Options`: DENY to prevent clickjacking.
+- `Content-Security-Policy`: default-src 'self'.
 
 ---
 
 ## 10. Audit Logging
-
-- All auth attempts logged
-- All CRUD operations logged
-- All code executions logged
-- Logs immutable and append-only
-- Retained for 90 days minimum
+- Auth attempts, CRUD actions, and code executions are logged synchronously or asynchronously to the logging database and indexed to Elasticsearch.

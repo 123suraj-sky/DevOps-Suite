@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-CdvZGgm7.js";import{r as t}from"./index-C9Avw86k.js";var n=e(),r=({children:e,className:r,padding:i=`md`})=>(0,n.jsx)(`div`,{className:t(`bg-white rounded-lg border border-gray-200 shadow-sm`,{none:``,sm:`p-4`,md:`p-6`,lg:`p-8`}[i],r),children:e});export{r as t};
