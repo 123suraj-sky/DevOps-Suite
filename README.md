@@ -23,30 +23,38 @@ Make sure the following are installed:
 ```bash
 cp .env.example .env
 ```
-Edit `.env` and set your values (defaults work out-of-the-box).
+Edit `.env` and set your values (defaults work out-of-the-box for local dev).
 
-### Step 2 — Start Infrastructure
-Start the middleware (PostgreSQL, Redis):
+### Step 2 — Start Infrastructure + Backend (Docker)
+The backend compiles and runs **inside Docker**. Start everything with:
 ```bash
-docker-compose up -d postgres redis
+docker-compose up -d postgres redis backend
 ```
-*(Or run `docker-compose up -d` to include Grafana, Elasticsearch, Kibana, Prometheus)*
+This will:
+1. Start PostgreSQL and Redis, wait for their health checks
+2. Compile the Spring Boot app inside a Maven container
+3. Run the resulting jar in a slim JRE container on port `8081`
 
-### Step 3 — Run Backend
+> **First build takes ~2-3 min** (Maven downloads dependencies). Subsequent builds are fast due to layer caching.
+
+**After code changes**, rebuild the backend:
 ```bash
-cd backend
-mvn clean compile
-mvn spring-boot:run
+docker-compose up -d --build backend
 ```
-The backend starts on `http://localhost:8081`.
 
-### Step 4 — Run Frontend
+**Full observability stack** (Grafana, Kibana, Prometheus, Elasticsearch — optional):
+```bash
+docker-compose up -d
+```
+
+### Step 3 — Run Frontend (local)
+The frontend still runs locally on your machine:
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The frontend starts on `http://localhost:5173`.
+The frontend starts on `http://localhost:5173` and talks to the backend at `http://localhost:8081`.
 
 ---
 
@@ -64,13 +72,13 @@ The frontend starts on `http://localhost:5173`.
 
 ## 🔄 Daily Workflow
 ```bash
-# 1. Start database and cache
-docker-compose up -d postgres redis
+# 1. Start infra + backend (compiles inside Docker)
+docker-compose up -d postgres redis backend
 
-# 2. Run backend
-cd backend && mvn spring-boot:run
+# 2. After backend code changes — rebuild
+docker-compose up -d --build backend
 
-# 3. Run frontend
+# 3. Run frontend locally
 cd frontend && npm run dev
 ```
 
@@ -78,9 +86,6 @@ cd frontend && npm run dev
 
 ## 🛑 Stopping Everything
 ```bash
-docker-compose down
-```
-To wipe database volumes for a fresh start:
-```bash
-docker-compose down -v
+docker-compose down          # Stop all containers
+docker-compose down -v       # Stop + wipe volumes (fresh start)
 ```
