@@ -26,7 +26,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
     @Bean
@@ -36,7 +36,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
+                .requestMatchers(
+                    "/auth/login", "/auth/register", "/auth/refresh", "/auth/logout",
+                    "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout"
+                ).permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )

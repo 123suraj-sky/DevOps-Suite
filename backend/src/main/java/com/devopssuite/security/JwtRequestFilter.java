@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${project.security.mock-user.enabled:false}")
     private boolean mockUserEnabled;
@@ -41,6 +43,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+            
+            // Reject blacklisted tokens
+            if (Boolean.TRUE.equals(redisTemplate.hasKey("blacklist:" + token))) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             if (jwtUtils.validateToken(token)) {
                 try {
                     Claims claims = jwtUtils.getClaimsFromToken(token);

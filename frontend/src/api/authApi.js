@@ -17,7 +17,10 @@ export const authApi = {
   },
 
   logout: async () => {
-    await apiClient.post('/auth/logout');
+    const refreshToken = localStorage.getItem('refreshToken');
+    await apiClient.post('/auth/logout', { refresh_token: refreshToken });
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   },
 
   getCurrentUser: async () => {

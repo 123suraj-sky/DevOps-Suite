@@ -51,7 +51,7 @@ _Nothing currently in active progress._
 ## 🟢 Completed
 
 - [x] **Monolith backend scaffold** — Single Spring Boot app under `com.devopssuite.monolith` compiles successfully
-- [x] **Auth module** — Registration, login, JWT filter, Google OAuth2 config fully implemented
+- [x] **Auth module** — Registration, login, refresh tokens, secure logout (Redis-backed blacklist), validation annotations, complex password rules, and custom exception handler fully implemented.
 - [x] **Project module** — Projects, boards, columns, tasks entities + Flyway migrations + CRUD controllers done
 - [x] **Flyway migration** — Single unified migration file for all domain schemas
 - [x] **Docker Compose infrastructure** — PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, Grafana all configured
@@ -72,6 +72,8 @@ _Nothing currently in active progress._
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)
 - [ ] Health page with status of all infrastructure components
 - [ ] Notification email delivery (currently only in-app via WebSocket)
+- [ ] **Reset Password flow** — `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` with time-limited token via email link. Requires an email service to be wired first (e.g. Mailtrap for dev, SendGrid for prod). Add `spring-boot-starter-mail` to `pom.xml` and configure SMTP credentials in `.env` before implementing.
+
 
 ---
 

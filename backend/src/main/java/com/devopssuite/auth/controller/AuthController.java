@@ -2,7 +2,10 @@ package com.devopssuite.auth.controller;
 
 import com.devopssuite.auth.dto.AuthDto.*;
 import com.devopssuite.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,7 +21,7 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<SignupResponse>> register(@RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request) {
         try {
             SignupResponse response = authService.register(request);
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -36,7 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         try {
             LoginResponse response = authService.login(request);
             return ResponseEntity.ok(ApiResponse.<LoginResponse>builder()
@@ -50,6 +53,40 @@ public class AuthController {
                             .message(e.getMessage())
                             .build());
         }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<RefreshResponse>> refresh(@Valid @RequestBody RefreshRequest request) {
+        try {
+            RefreshResponse response = authService.refreshAccessToken(request.getRefreshToken());
+            return ResponseEntity.ok(ApiResponse.<RefreshResponse>builder()
+                    .message("Token refreshed successfully")
+                    .data(response)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<RefreshResponse>builder()
+                            .status("error")
+                            .message(e.getMessage())
+                            .build());
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            @RequestBody(required = false) LogoutRequest logoutRequest) {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+        String refreshToken = logoutRequest != null ? logoutRequest.getRefreshToken() : null;
+
+        authService.logout(accessToken, refreshToken);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Logged out successfully")
+                .build());
     }
 
     @GetMapping("/me")

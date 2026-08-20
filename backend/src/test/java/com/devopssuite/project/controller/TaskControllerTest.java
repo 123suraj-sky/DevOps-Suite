@@ -36,6 +36,9 @@ class TaskControllerTest {
     @MockitoBean
     private JwtUtils jwtUtils;
 
+    @MockitoBean
+    private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
     @Test
     void createTaskInBoardSupportsDocumentedV1Path() throws Exception {
         UUID boardId = UUID.randomUUID();
