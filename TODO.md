@@ -18,12 +18,12 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 ## ?? Medium Priority
 
 ### Observability & Real-Time (Phase 3)
-- [ ] **WebSocket STOMP Broker** ? Implement `WebSocketConfig.java` on port `8081` at `/ws` using SockJS so frontend can connect.
-- [ ] **Real-time logs streaming** ? Feed application console logs straight to the websocket topic `/topic/logs/{projectId}`.
-- [ ] **Kanban Board WebSocket updates** ? Broadcast card movements and re-order operations on `/topic/tasks/{projectId}`.
-- [ ] **In-App Notifications** ? Implement `notification` module using Spring Application Events to notify user sessions asynchronously on `/topic/notifications/{userId}`.
-- [ ] **Structured logging pipeline** ? Consolidate console logs in JSON format and configure Elasticsearch indexing.
-- [ ] **Metrics Dashboard charts** ? Map Actuator `/actuator/metrics` to frontend Recharts diagrams.
+- [x] **WebSocket STOMP Broker** — `WebSocketConfig.java` at `/ws`, SockJS, `/topic` broker. (Completed)
+- [x] **Real-time logs streaming** — `RequestLoggingFilter` + `LogStreamingService` broadcast project-scoped logs to `/topic/logs/{projectId}`. (Completed)
+- [x] **In-App Notifications** — Full `notification` module: DB persistence, REST API, Spring Events, WebSocket push to `/topic/notifications/{userId}`. (Completed)
+- [x] **Structured logging pipeline** — `ElasticsearchLogService` indexes JSON log docs to `devopssuite-logs-{date}` index. (Completed)
+- [ ] **Kanban Board WebSocket updates** — Broadcast card movements on `/topic/tasks/{projectId}` (wire into `TaskService.reorderTasks`).
+- [ ] **Metrics Dashboard charts** — Map Actuator `/actuator/metrics` to frontend Recharts diagrams.
 
 ---
 
