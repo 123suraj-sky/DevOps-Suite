@@ -1,9 +1,11 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.notification.event.TaskAssignedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ public class TaskService {
     private final ColumnRepository columnRepository;
     private final BoardRepository boardRepository;
     private final ProjectService projectService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public TaskResponse createTask(TaskRequest request, UUID userId) {
@@ -49,6 +52,13 @@ public class TaskService {
                 .build();
 
         Task savedTask = taskRepository.saveAndFlush(task);
+
+        // Notify assignee if one was specified
+        if (savedTask.getAssigneeId() != null) {
+            eventPublisher.publishEvent(new TaskAssignedEvent(
+                    savedTask.getId(), savedTask.getAssigneeId(), projectId, savedTask.getTitle()));
+        }
+
         return mapToTaskResponse(savedTask);
     }
 

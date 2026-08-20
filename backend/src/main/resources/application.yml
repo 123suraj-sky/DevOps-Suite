@@ -57,3 +57,7 @@ logging:
     root: INFO
     com.devopssuite.monolith: DEBUG
     org.springframework.security: DEBUG
+
+elasticsearch:
+  host: ${ELASTICSEARCH_HOST:localhost}
+  port: ${ELASTICSEARCH_PORT:9200}

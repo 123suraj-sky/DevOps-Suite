@@ -1,9 +1,11 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.notification.event.MemberAddedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ public class ProjectService {
     private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final TaskRepository taskRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request, UUID ownerId) {
@@ -166,6 +169,11 @@ public class ProjectService {
                     .role(role)
                     .build();
             projectMemberRepository.save(member);
+
+            // Notify the newly added member
+            Project project = projectRepository.findById(projectId).orElse(null);
+            String projectName = project != null ? project.getName() : projectId.toString();
+            eventPublisher.publishEvent(new MemberAddedEvent(projectId, memberUserId, projectName, role));
         }
     }
 
