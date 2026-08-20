@@ -7,10 +7,11 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 ## ?? High Priority
 
 ### Code Execution Sandbox (Phase 2 completion)
-- [ ] **Pipe stdin** ? Wire `stdin` payload from requests to the ephemeral container inside `DockerSandbox.java`.
-- [ ] **Java compilation support** ? Extend sandbox language capabilities to build and run Java classes.
-- [ ] **Docker-in-Docker path alignment** ? Fix hardcoded local directory paths (`backend/code-execution-service/temp/`) so directory mounting is portable inside dockerized environments.
-- [ ] **Align API routes** ? Sync endpoint mappings (frontend calls `/api/execution/run` but backend currently exposes `/api/v1/execute`).
+- [x] **Pipe stdin** — Wire `stdin` payload from requests to the ephemeral container inside `DockerSandbox.java`. (Completed)
+- [x] **Java compilation support** — Extend sandbox language capabilities to build and run Java classes. (Completed)
+- [x] **C++ compilation support** — Extend sandbox language capabilities to build and run C++ files. (Completed)
+- [x] **Docker-in-Docker path alignment** — Fix hardcoded local directory paths (`backend/code-execution-service/temp/`) so directory mounting is portable inside dockerized environments via host-temp-dir property. (Completed)
+- [x] **Align API routes** — Sync endpoint mappings (frontend calls `/api/execution/run` but backend currently exposes `/api/v1/execute`). (Completed)
 
 ---
 

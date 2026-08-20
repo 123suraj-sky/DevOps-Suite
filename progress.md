@@ -12,7 +12,7 @@ This document details the current state of the implementation of the **DevOps Su
 | **Database & Middlewares** | 🟢 Complete | 100% | Single unified DB `devopssuite` structured via Flyway migrations, Redis configured. docker-compose has Postgres, Redis, Elasticsearch, Kibana, Prometheus, Grafana. |
 | **Auth Module** | 🟢 Complete | 100% | Login, signup, tokens refresh, secure logout (Redis-backed blacklist), inputs validation, complex password rules, and global exception mapping active. |
 | **Project Module** | 🟢 Complete | 100% | Complete REST CRUD APIs for Projects, Boards, Columns, Tasks, membership mappings, reordering, and exceptions handling. |
-| **Code Execution Sandbox** | 🟡 Mostly Complete | ~80% | Epic sandbox worker and Docker runner support active for Python/JS. Stdin piping and Java compiling are pending. |
+| **Code Execution Sandbox** | 🟢 Complete | 100% | Ephemeral container execution sandbox worker and Docker runner support active for Python, JS, Java, and C++. Stdin piping and compilation are fully functional. |
 | **Frontend (React)** | 🟡 Scaffolded | ~65% | Contexts, layout, and API modules are fully built, pages exist, but awaiting real WebSocket integration and metrics wiring. |
 | **Observability & Real-Time** | 🔴 Partially Complete | ~20% | Prometheus Actuator endpoints exposed. Structured JSON logs, Elasticsearch forwarding, and STOMP WebSockets are not started. |
 | **CI/CD & Deployment** | 🔴 Incomplete | ~0% | GitHub Actions pipelines and Kubernetes charts/manifests are not started. |
@@ -33,7 +33,7 @@ The backend runs as a unified Spring Boot application on port `8081`.
     *   **Done**: Comprehensive CRUD maps for projects, boards, columns, and tasks. Initial project creation automatically populates a default board with Backlog, To Do, In Progress, and Done columns.
 *   **Code Sandbox (`com.devopssuite.execution`)**:
     *   **Done**: Ephemeral containers are spawned with resource constraints (1 CPU, 256MB memory caps, no-network profile), running asynchronously off an internal Queue worker.
-    *   **Pending**: stdin piping support inside `DockerSandbox` and compiling capability for JVM (Java) programs.
+    *   **Done**: Supports compilation and runtime commands for Python, JavaScript, Java 21, and C++ (GCC 13), along with robust file-based stdin piping. Customizable Docker directory bind mounts support Docker-in-Docker portability.
 
 ### 2. Frontend (React SPA)
 The frontend is built on React 18, Vite, and Tailwind CSS.
@@ -61,4 +61,4 @@ The frontend is built on React 18, Vite, and Tailwind CSS.
     *   Auth, Project, and Sandbox routing match the LLD/HLD designs.
 *   **Roadmap Verification**:
     *   Phase 1 (Foundation & Auth) is fully complete.
-    *   We are currently wrapping up Phase 2 (Sandbox execution engine).
+    *   Phase 2 (Sandbox execution engine) is fully complete. We are ready to start Phase 3 (Observability & Real-Time).
