@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
+@RequestMapping({"/code-execution", "/api/v1/code-execution"})
 @RequiredArgsConstructor
 public class ExecutionController {
 
@@ -28,7 +29,7 @@ public class ExecutionController {
         return UUID.fromString(userIdStr);
     }
 
-    @PostMapping({"/api/v1/execute", "/execute"})
+    @PostMapping({"/run", "/execute"})
     public ResponseEntity<ApiResponse<SubmitResponse>> execute(
             @Valid @RequestBody SubmitRequest request) {
         UUID userId = getCurrentUserId();
@@ -40,7 +41,7 @@ public class ExecutionController {
                         .build());
     }
 
-    @GetMapping({"/api/v1/execute/{id}", "/execute/{id}"})
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<QueryResponse>> getResult(
             @PathVariable("id") UUID id) {
         QueryResponse response = executionService.getResult(id);

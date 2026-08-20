@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.command.LogContainerResultCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -30,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 public class DockerSandbox {
 
     private final DockerClient dockerClient;
+
+    @Value("${docker.host-temp-dir:}")
+    private String hostTempDir;
 
     public static class SandboxResult {
         public String stdout = "";
@@ -62,13 +66,25 @@ public class DockerSandbox {
             return result;
         }
 
-        // Write the source code to a file
-        File codeFile = new File(workspaceTempDir.toFile(), "code." + fileExtension);
+        // Determine source code file name (Java source code needs Main.java naming)
+        String fileName = language.equalsIgnoreCase("java") ? "Main.java" : "code." + fileExtension;
+        File codeFile = new File(workspaceTempDir.toFile(), fileName);
         try (FileWriter writer = new FileWriter(codeFile, StandardCharsets.UTF_8)) {
             writer.write(sourceCode);
         } catch (IOException e) {
             log.error("Failed to write source code to file", e);
             result.stderr = "System error: Failed to save source code.";
+            cleanupDirectory(workspaceTempDir.toFile());
+            return result;
+        }
+
+        // Write stdin to input.txt
+        File stdinFile = new File(workspaceTempDir.toFile(), "input.txt");
+        try (FileWriter writer = new FileWriter(stdinFile, StandardCharsets.UTF_8)) {
+            writer.write(stdin != null ? stdin : "");
+        } catch (IOException e) {
+            log.error("Failed to write stdin to file", e);
+            result.stderr = "System error: Failed to save stdin.";
             cleanupDirectory(workspaceTempDir.toFile());
             return result;
         }
@@ -88,11 +104,21 @@ public class DockerSandbox {
             // Determine execute command based on language
             String[] cmd;
             if (language.equalsIgnoreCase("python")) {
-                cmd = new String[]{"python3", "/app/code.py"};
+                cmd = new String[]{"sh", "-c", "python3 /app/code.py < /app/input.txt"};
             } else if (language.equalsIgnoreCase("javascript")) {
-                cmd = new String[]{"node", "/app/code.js"};
+                cmd = new String[]{"sh", "-c", "node /app/code.js < /app/input.txt"};
+            } else if (language.equalsIgnoreCase("java")) {
+                cmd = new String[]{"sh", "-c", "javac /app/Main.java && java -cp /app Main < /app/input.txt"};
+            } else if (language.equalsIgnoreCase("cpp")) {
+                cmd = new String[]{"sh", "-c", "g++ -O3 /app/code.cpp -o /app/program && /app/program < /app/input.txt"};
             } else {
                 cmd = new String[]{"sh", "-c", "echo 'Unsupported language'"};
+            }
+
+            // Bind workspace directory path (use hostTempDir if configured for Docker-in-Docker environment)
+            String bindPath = workspaceTempDir.toString();
+            if (hostTempDir != null && !hostTempDir.isBlank()) {
+                bindPath = Paths.get(hostTempDir, "run_" + runId).toAbsolutePath().toString();
             }
 
             // Create HostConfig with limits: 1 CPU core, maxMemoryMb, disabled network
@@ -102,7 +128,7 @@ public class DockerSandbox {
                     .withMemorySwap(memoryBytes)
                     .withNanoCPUs(1000000000L) // 1 CPU Core
                     .withNetworkMode("none")   // Disable internet
-                    .withBinds(new Bind(workspaceTempDir.toString(), new Volume("/app")));
+                    .withBinds(new Bind(bindPath, new Volume("/app")));
 
             CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage)
                     .withHostConfig(hostConfig)
