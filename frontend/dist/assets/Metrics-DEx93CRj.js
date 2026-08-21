@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-CdvZGgm7.js";var t=e(),n=()=>(0,t.jsx)(`div`,{className:`space-y-6`,children:(0,t.jsx)(`h1`,{className:`text-2xl font-bold text-gray-900`,children:`Metrics Dashboard`})});export{n as MetricsPage};

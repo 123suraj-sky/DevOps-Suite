@@ -1,1 +1,0 @@
-import{t as e}from"./jsx-runtime-CdvZGgm7.js";import{l as t}from"./index-C9Avw86k.js";var n=e(),r=()=>{let{id:e}=t();return(0,n.jsxs)(`div`,{className:`space-y-6`,children:[(0,n.jsx)(`h1`,{className:`text-2xl font-bold text-gray-900`,children:`Logs`}),(0,n.jsxs)(`p`,{className:`text-gray-500`,children:[`Project ID: `,e]})]})};export{r as LogsPage};
