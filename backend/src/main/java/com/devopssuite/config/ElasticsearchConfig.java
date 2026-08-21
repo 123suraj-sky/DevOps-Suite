@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ElasticsearchConfig {
 
-    @Value("")
+    @Value("${elasticsearch.host:localhost}")
     private String host;
 
-    @Value("")
+    @Value("${elasticsearch.port:9200}")
     private int port;
 
     @Bean
