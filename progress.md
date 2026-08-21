@@ -15,9 +15,9 @@ This document details the current state of the implementation of the **DevOps Su
 | **Code Execution Sandbox** | 🟢 Complete | 100% | Ephemeral container execution sandbox worker and Docker runner support active for Python, JS, Java, and C++. Stdin piping and compilation are fully functional. |
 | **Frontend (React)** | 🟢 Complete | 100% | Contexts, layout, and API modules are fully built, pages exist, Code Editor integrated with Monaco, Logs streaming and Metrics dashboard implemented. |
 | **Observability & Real-Time** | 🟢 Complete | 100% | Prometheus Actuator endpoints exposed. Structured JSON logs, Elasticsearch indexing config fixed, and STOMP WebSockets log/notification streaming implemented. |
-| **CI/CD & Deployment** | 🟢 Complete | 100% | GitHub Actions workflow pipeline created for checkout, JDK setup, caching, compilation, and unit testing. |
+| **CI/CD & Deployment** | 🟢 Complete | 100% | GitHub Actions workflow pipeline created; Kubernetes orchestration manifests implemented for local zero-cost cluster deployment. |
 
-**Overall Project Progress: ~95%**
+**Overall Project Progress: ~98%**
 
 ---
 
@@ -52,6 +52,7 @@ The frontend is built on React 18, Vite, and Tailwind CSS.
     *   Connected the logs forwarder to index raw monolithic logs into Elasticsearch with host/port mapping fix in config.
     *   STOMP WebSockets configured and active to stream logs and notification events straight to browser sessions.
     *   CI configuration (`ci.yml`) wired to execute Java checkouts, dependency caching, compile checks, and unit testing runs.
+    *   Production deployment manifests for local and cloud Kubernetes orchestration (Namespace, ConfigMaps, Secrets, StatefulSets for database volumes, Deployments for backend/frontend) fully provisioned in the `k8s/` directory.
 
 ---
 
@@ -63,4 +64,4 @@ The frontend is built on React 18, Vite, and Tailwind CSS.
     *   Phase 1 (Foundation & Auth) is fully complete.
     *   Phase 2 (Sandbox execution engine) is fully complete.
     *   Phase 3 (Observability & Real-Time) is fully complete.
-    *   Phase 4 (CI/CD Pipeline Setup) is fully complete. We are ready to proceed to Kubernetes manifesting and stretch goals.
+    *   Phase 4 (CI/CD & Deployment manifests orchestration) is fully complete. We are ready for end-to-end Cypress test scenarios.
