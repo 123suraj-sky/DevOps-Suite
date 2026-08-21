@@ -136,5 +136,5 @@ CREATE INDEX IF NOT EXISTS idx_result_request ON execution_results(request_id);
 INSERT INTO languages (id, name, version, docker_image, file_extension, max_execution_time_ms, max_memory_mb, enabled)
 VALUES 
 ('11111111-1111-1111-1111-111111111111', 'python', '3.12', 'python:3.12-alpine', 'py', 5000, 256, true),
-('22222222-2222-2222-2222-222222222222', 'javascript', '20', 'node:20-alpine', 'js', 5000, 256, true)
+('22222222-2222-2222-2222-222222222222', 'javascript', '24', 'node:24-alpine', 'js', 5000, 256, true)
 ON CONFLICT (name) DO NOTHING;

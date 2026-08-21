@@ -69,7 +69,7 @@ DevOps Suite/
 | Docker Desktop | Latest | PostgreSQL, Redis, Elasticsearch, etc. |
 | Java (JDK) | 21 | Compile & run Spring Boot backend |
 | Maven | 3.9+ | Build the backend |
-| Node.js | 20+ | Run the React frontend |
+| Node.js | 24+ | Run the React frontend |
 
 ### Start Order
 

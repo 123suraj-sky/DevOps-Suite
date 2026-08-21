@@ -2,6 +2,8 @@
 
 Complete SDLC documentation for the Developer Productivity Platform (DevOps Suite).
 
+> 👋 **New here?** Start with [PROJECT-OVERVIEW.md](./PROJECT-OVERVIEW.md) — it explains every API, how the whole system works, and how to get up and running in Postman in 10 minutes.
+
 | # | Document | Description |
 |---|----------|-------------|
 | 01 | [Requirements Specification](01-requirements.md) | Functional & non-functional requirements, actors, scope |
@@ -14,5 +16,7 @@ Complete SDLC documentation for the Developer Productivity Platform (DevOps Suit
 | 08 | [Testing Strategy](08-testing-strategy.md) | Unit, integration, contract, e2e testing approach |
 | 09 | [Monitoring & Observability](09-monitoring-observability.md) | Logging, metrics, alerting, dashboards |
 | 10 | [Project Roadmap](10-project-roadmap.md) | Phases, milestones, stretch goals |
+| 11 | [Frontend Design](11-frontend-design.md) | React SPA component design, page structure, state management |
+| 12 | [Folder Structure](12-folder-structure.md) | Canonical directory layout for backend and frontend |
 
 > **Note:** All diagrams use [Mermaid](https://mermaid.js.org/) syntax. Render them in any Mermaid-compatible Markdown viewer (GitHub, GitLab, VS Code with Mermaid extension, etc.).

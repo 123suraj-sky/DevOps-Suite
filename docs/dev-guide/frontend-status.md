@@ -1,9 +1,10 @@
-# Frontend Implementation Status
+﻿# Frontend Implementation Status
 
-> **Framework:** React (Vite + JSX)  
+> **Framework:** React 18 (Vite + JSX)  
 > **Dev URL:** `http://localhost:5173`  
 > **API target:** `http://localhost:8081/api`  
-> **WebSocket target:** `ws://localhost:8081/ws`
+> **WebSocket target:** `ws://localhost:8081/ws`  
+> **Overall Status:** ✅ Complete (100%)
 
 ---
 
@@ -24,14 +25,14 @@
 
 ```
 frontend/
-├── .env                        ← API base URL config
+├── .env                        ← VITE_API_BASE_URL, VITE_WS_URL
 ├── package.json
 └── src/
     ├── App.jsx                 ← Root component, router, provider tree
     ├── main.jsx                ← React DOM entry
-    ├── index.css               ← Global styles
+    ├── index.css               ← Global Tailwind base styles
     ├── api/                    ← Raw Axios API call functions
-    │   ├── client.js           ← Configured Axios instance + interceptors
+    │   ├── client.js           ← Configured Axios instance + JWT interceptors
     │   ├── authApi.js
     │   ├── projectApi.js
     │   ├── taskApi.js
@@ -45,24 +46,19 @@ frontend/
     │   ├── taskService.js
     │   └── websocketService.js
     ├── context/                ← React Context providers
-    │   ├── AuthContext.jsx     ← Authentication state, token management
-    │   ├── WebSocketContext.jsx← STOMP WebSocket connection
-    │   └── NotificationContext.jsx
-    ├── hooks/                  ← Custom React hooks
+    │   ├── AuthContext.jsx     ← Auth state, token management
+    │   ├── WebSocketContext.jsx← STOMP/SockJS connection lifecycle
+    │   └── NotificationContext.jsx ← WS notification queue + toast state
+    ├── hooks/
     │   ├── useDebounce.js
     │   ├── useLoading.js
     │   └── useLocalStorage.js
     ├── components/
-    │   ├── common/             ← Reusable UI primitives
-    │   │   ├── Badge.jsx
-    │   │   ├── Button.jsx
-    │   │   ├── Card.jsx
-    │   │   ├── EmptyState.jsx
-    │   │   ├── Input.jsx
-    │   │   ├── Modal.jsx
-    │   │   ├── Select.jsx
-    │   │   └── Spinner.jsx
-    │   └── layout/             ← App shell
+    │   ├── common/
+    │   │   ├── Badge.jsx, Button.jsx, Card.jsx
+    │   │   ├── EmptyState.jsx, Input.jsx, Modal.jsx
+    │   │   ├── Select.jsx, Spinner.jsx
+    │   └── layout/
     │       ├── MainLayout.jsx
     │       ├── Header.jsx
     │       └── Sidebar.jsx
@@ -71,21 +67,22 @@ frontend/
     │   ├── Dashboard/          ← DashboardPage
     │   ├── Projects/           ← ProjectsPage, ProjectDetailPage
     │   ├── Tasks/              ← TasksPage
-    │   ├── CodeEditor/         ← CodeEditorPage
-    │   ├── Logs/               ← LogsPage
-    │   ├── Metrics/            ← MetricsPage
+    │   ├── CodeEditor/         ← CodeEditorPage (Monaco Editor)
+    │   ├── Logs/               ← LogsPage (WS + REST)
+    │   ├── Metrics/            ← MetricsPage (Recharts)
     │   └── Notifications/      ← NotificationsPage
-    ├── services/
-    ├── store/                  ← State management (configured but expandable)
-    ├── types/                  ← TypeScript-style JSDoc type definitions
-    └── utils/                  ← Helper utility functions
+    ├── store/                  ← Expandable state management
+    ├── types/                  ← JSDoc-style type definitions
+    └── utils/                  ← Date formatting, string helpers, etc.
 ```
 
 ---
 
 ## 2. Pages & Routes
 
-All authenticated routes are wrapped with `ProtectedRoute`. Public routes (`/login`, `/register`) are wrapped with `PublicRoute` (redirects to `/` if already logged in).
+All authenticated routes are wrapped with `ProtectedRoute`. Public routes redirect to `/` if already logged in.
+
+> All pages are **lazy-loaded** with `React.lazy()` + `<Suspense>` for code splitting.
 
 | Route | Component | Auth | Status |
 |---|---|---|---|
@@ -101,8 +98,6 @@ All authenticated routes are wrapped with `ProtectedRoute`. Public routes (`/log
 | `/notifications` | `NotificationsPage` | ✅ Protected | ✅ Done |
 | `*` | Redirect to `/` | — | ✅ Done |
 
-> All pages are **lazy-loaded** with `React.lazy()` and wrapped in `<Suspense>` for code splitting.
-
 ---
 
 ## 3. API Layer
@@ -112,14 +107,18 @@ Files in `src/api/` — each wraps a group of Axios calls.
 ### `client.js`
 - Configured Axios instance with `baseURL` from `import.meta.env.VITE_API_BASE_URL`
 - Request interceptor: attaches `Authorization: Bearer <token>` from localStorage
-- Response interceptor: handles 401 token expiry
+- Response interceptor: handles 401 token expiry with auto-refresh loop
 
 ### `authApi.js`
 | Function | Method | Endpoint |
 |---|---|---|
 | `registerUser(data)` | POST | `/auth/register` |
 | `loginUser(data)` | POST | `/auth/login` |
+| `refreshToken(data)` | POST | `/auth/refresh` |
+| `logoutUser(data)` | POST | `/auth/logout` |
 | `getCurrentUser()` | GET | `/auth/me` |
+| `forgotPassword(data)` | POST | `/auth/forgot-password` |
+| `resetPassword(data)` | POST | `/auth/reset-password` |
 
 ### `projectApi.js`
 | Function | Method | Endpoint |
@@ -152,43 +151,63 @@ Files in `src/api/` — each wraps a group of Axios calls.
 | `submitExecution(data)` | POST | `/api/v1/execute` |
 | `getExecutionResult(id)` | GET | `/api/v1/execute/{id}` |
 
-### `logApi.js`, `metricsApi.js`, `notificationApi.js`
-- Defined; consumption depends on backend scaffold completion.
+### `logApi.js`
+| Function | Method | Endpoint |
+|---|---|---|
+| `getLogs(projectId, params)` | GET | `/api/logs?projectId={id}&...` |
+| `searchLogs(query)` | GET | `/api/logs/search?q={query}` |
+
+> Real-time log streaming is handled via WebSocket subscription to `/topic/logs/{projectId}` in `LogsPage`.
+
+### `metricsApi.js`
+| Function | Method | Endpoint |
+|---|---|---|
+| `getHealth()` | GET | `/actuator/health` |
+| `getPrometheusMetrics()` | GET | `/actuator/prometheus` |
+| `getMetric(name)` | GET | `/actuator/metrics/{name}` |
+| `getAllMetrics()` | GET | `/actuator/metrics` |
+
+### `notificationApi.js`
+| Function | Method | Endpoint |
+|---|---|---|
+| `getNotifications(page, size)` | GET | `/api/notifications` |
+| `getUnreadCount()` | GET | `/api/notifications/unread-count` |
+| `markAsRead(id)` | PUT | `/api/notifications/{id}/read` |
+| `markAllAsRead()` | PUT | `/api/notifications/read-all` |
+| `deleteNotification(id)` | DELETE | `/api/notifications/{id}` |
 
 ---
 
 ## 4. Services
-
-Files in `src/services/` are higher-level wrappers around the raw API calls, handling business logic like token storage.
 
 | File | Purpose |
 |---|---|
 | `authService.js` | Calls `authApi`, stores/removes JWT tokens in localStorage |
 | `projectService.js` | Orchestrates project and board operations |
 | `taskService.js` | Orchestrates task CRUD and board reordering |
-| `websocketService.js` | Manages STOMP over SockJS connection lifecycle (connect, subscribe, disconnect) |
+| `websocketService.js` | Manages STOMP/SockJS connection lifecycle (connect, subscribe, disconnect) |
 
 ---
 
 ## 5. Context Providers
 
-Provider tree (outer to inner): `AuthProvider → WebSocketProvider → NotificationProvider`
+Provider tree (outer → inner): `AuthProvider → WebSocketProvider → NotificationProvider`
 
 ### `AuthContext.jsx`
 - Stores `user`, `isAuthenticated`, `loading` state
-- Exposes `login(credentials)`, `logout()`, `register(data)` functions
+- Exposes `login()`, `logout()`, `register()` functions
 - On mount: reads token from localStorage, calls `/auth/me` to rehydrate session
-- Used by `ProtectedRoute` and all pages needing user identity
+- Handles token refresh on 401 via Axios interceptor
 
 ### `WebSocketContext.jsx`
 - Connects to `ws://localhost:8081/ws` via STOMP/SockJS on user login
-- Exposes `subscribe(topic, callback)` and `publish(destination, body)` functions
+- Exposes `subscribe(topic, callback)` and `publish(destination, body)`
 - Disconnects cleanly on logout
 
 ### `NotificationContext.jsx`
-- Listens to WebSocket notification topic
+- Subscribes to `/topic/notifications/{userId}` via WebSocket
 - Manages a queue of toast/alert notifications
-- Exposes `notifications` list and `dismissNotification(id)` function
+- Exposes `notifications` list and `dismissNotification(id)`
 
 ---
 
@@ -196,9 +215,9 @@ Provider tree (outer to inner): `AuthProvider → WebSocketProvider → Notifica
 
 | Hook | File | Purpose |
 |---|---|---|
-| `useDebounce(value, delay)` | `useDebounce.js` | Debounces a value by the specified delay (ms) |
-| `useLoading()` | `useLoading.js` | Returns `{ loading, withLoading }` helper for async operations |
-| `useLocalStorage(key, default)` | `useLocalStorage.js` | Persisted state synced with `localStorage` |
+| `useDebounce(value, delay)` | `useDebounce.js` | Debounces a value |
+| `useLoading()` | `useLoading.js` | Returns `{ loading, withLoading }` for async ops |
+| `useLocalStorage(key, default)` | `useLocalStorage.js` | Persisted state synced with localStorage |
 
 ---
 
@@ -208,7 +227,7 @@ Provider tree (outer to inner): `AuthProvider → WebSocketProvider → Notifica
 | Component | Props | Description |
 |---|---|---|
 | `Button` | `variant`, `size`, `disabled`, `onClick` | Primary, secondary, danger, ghost variants |
-| `Input` | `label`, `error`, `type`, `...rest` | Form input with label and validation error display |
+| `Input` | `label`, `error`, `type`, `...rest` | Form input with label and validation error |
 | `Select` | `options`, `label`, `error`, `...rest` | Dropdown selector |
 | `Modal` | `isOpen`, `onClose`, `title`, `children` | Overlay modal dialog |
 | `Card` | `children`, `className` | Padded content container |
@@ -219,33 +238,37 @@ Provider tree (outer to inner): `AuthProvider → WebSocketProvider → Notifica
 ### Layout (`src/components/layout/`)
 | Component | Description |
 |---|---|
-| `MainLayout` | Shell wrapping `Sidebar + Header + <Outlet>` for protected pages |
-| `Sidebar` | Left navigation links (Dashboard, Projects, Metrics, etc.) |
+| `MainLayout` | Shell wrapping `Sidebar + Header + <Outlet>` |
+| `Sidebar` | Left navigation (Dashboard, Projects, Metrics, etc.) |
 | `Header` | Top bar with user profile menu and notifications icon |
 
 ---
 
 ## 8. State & Types
 
-- `src/store/` — Structured but expandable; currently local context is the primary state manager.
-- `src/types/` — JSDoc-style type definitions for IDE autocompletion (e.g., `Project`, `Task`, `User` shapes).
-- `src/utils/` — General-purpose helpers (e.g., date formatting, string manipulation).
+- `src/store/` — Structured but expandable; local context is primary state manager
+- `src/types/` — JSDoc-style type definitions for IDE autocompletion (`Project`, `Task`, `User`)
+- `src/utils/` — General-purpose helpers (date formatting, string manipulation)
 
 ---
 
 ## 9. Feature Status Summary
 
-| Feature | Pages Involved | API Connected | Status |
+| Feature | Pages Involved | API / WS Connected | Status |
 |---|---|---|---|
 | User Registration | `/register` | `authApi.registerUser` | ✅ Done |
 | User Login + JWT | `/login` | `authApi.loginUser` | ✅ Done |
+| Token Refresh | App-wide (interceptor) | `authApi.refreshToken` | ✅ Done |
+| Logout + token blacklist | App-wide | `authApi.logoutUser` | ✅ Done |
+| Forgot / Reset Password | `/login` | `authApi.forgotPassword`, `resetPassword` | ✅ Done |
 | Auto session restore | App mount | `authApi.getCurrentUser` | ✅ Done |
 | Dashboard overview | `/` | — | ✅ Done |
 | Projects list | `/projects` | `projectApi.getProjects` | ✅ Done |
 | Project detail + boards | `/projects/:id` | `projectApi.getProject`, `getBoards` | ✅ Done |
-| Task management | `/projects/:id/tasks` | `taskApi.*` | ✅ Done |
+| Kanban drag-and-drop | `/projects/:id/tasks` | `taskApi.*` | ✅ Done |
 | Code editor + sandbox | `/projects/:id/code` | `codeExecutionApi.*` | ✅ Done |
-| Log viewer | `/projects/:id/logs` | `logApi.*` | ⚙️ Page exists; backend scaffold pending |
-| Metrics dashboard | `/metrics` | `metricsApi.*` | ⚙️ Page exists; Prometheus data pending |
-| Notifications | `/notifications` | WebSocket + `notificationApi` | ⚙️ Context wired; backend scaffold pending |
-| WebSocket integration | Global | `websocketService` | ✅ Client wired |
+| Real-time log viewer | `/projects/:id/logs` | `logApi.*` + WS `/topic/logs/{projectId}` | ✅ Done |
+| Metrics dashboard | `/metrics` | `metricsApi.*` (Actuator/Prometheus) | ✅ Done |
+| Notification inbox | `/notifications` | `notificationApi.*` | ✅ Done |
+| Real-time notifications | Global (Header toast) | WS `/topic/notifications/{userId}` | ✅ Done |
+| WebSocket connection | Global | `websocketService`, `WebSocketContext` | ✅ Done |

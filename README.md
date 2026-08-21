@@ -13,7 +13,7 @@ Make sure the following are installed:
 | **Docker Desktop** | Runs PostgreSQL, Redis, Elasticsearch, Prometheus, etc. |
 | **Java 21 (JDK)** | Compiles and runs the Spring Boot application |
 | **Maven 3.9+** | Builds the backend |
-| **Node.js 20+** | Runs the React frontend |
+| **Node.js 24+** | Runs the React frontend |
 
 ---
 
