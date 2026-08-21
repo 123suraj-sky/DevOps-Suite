@@ -169,4 +169,63 @@ public class AuthService {
             // Already invalid, no need to blacklist
         }
     }
+    private final com.devopssuite.auth.repository.PasswordResetTokenRepository tokenRepository;
+    private final org.springframework.mail.javamail.JavaMailSender mailSender;
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new IllegalArgumentException("Email address not found"));
+
+        // Revoke any existing tokens
+        tokenRepository.deleteByUserId(user.getId());
+
+        // Generate token (expires in 1 hour)
+        String token = UUID.randomUUID().toString();
+        com.devopssuite.auth.model.PasswordResetToken resetToken = com.devopssuite.auth.model.PasswordResetToken.builder()
+                .userId(user.getId())
+                .token(token)
+                .expiryDate(Instant.now().plusSeconds(3600))
+                .build();
+
+        tokenRepository.save(resetToken);
+
+        // Send reset email
+        try {
+            org.springframework.mail.SimpleMailMessage message = new org.springframework.mail.SimpleMailMessage();
+            message.setTo(user.getEmail());
+            message.setSubject("DevOps Suite - Password Reset Request");
+            message.setText("Click the following link to reset your password: \n" +
+                    "http://localhost:5173/reset-password?token=" + token + "\n" +
+                    "This link is valid for 1 hour.");
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send password reset email: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        com.devopssuite.auth.model.PasswordResetToken token = tokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired reset token"));
+
+        if (token.getExpiryDate().isBefore(Instant.now())) {
+            tokenRepository.delete(token);
+            throw new IllegalArgumentException("Password reset token has expired");
+        }
+
+        if (!request.getPassword().matches(PASSWORD_PATTERN)) {
+            throw new IllegalArgumentException("Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character (@#$%^&+=!)");
+        }
+
+        User user = userRepository.findById(token.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Update password hash
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        userRepository.save(user);
+
+        // Delete token
+        tokenRepository.delete(token);
+    }
 }
