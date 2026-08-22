@@ -49,8 +49,8 @@
   - Frontend pages are scaffolded; need to verify all API calls work against the running backend
   - Focus: Auth flow, Kanban CRUD, Code Editor submit/result, WebSocket log streaming
 
-- [ ] **Metrics Dashboard charts**
-  - Connect Recharts components to real `/actuator/metrics` API responses
+- [x] **Metrics Dashboard charts**
+  - Connected dashboard, metrics, and health charts/cards to real aggregated Actuator and repository counts via `/api/metrics/dashboard`
 
 ---
 

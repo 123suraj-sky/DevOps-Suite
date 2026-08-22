@@ -39,12 +39,12 @@ This will:
 
 **After code changes**, rebuild the backend:
 ```bash
-docker-compose up -d --build backend
+docker compose up -d --build backend
 ```
 
 **Full observability stack** (Grafana, Kibana, Prometheus, Elasticsearch — optional):
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Step 3 — Run Frontend (local)

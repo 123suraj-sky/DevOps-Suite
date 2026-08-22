@@ -36,6 +36,7 @@
 - Database schemas unified into a single Flyway migration
 - Auth module (registration, login, JWT filter) — fully implemented
 - Project module (projects, boards, columns, tasks CRUD) — fully implemented
+- Metrics Dashboard (`/api/metrics/dashboard`) — fully implemented and integrated with Actuator/Service Health checking
 - Frontend API paths pointing to `http://localhost:8081/api` — confirmed
 
 ---
