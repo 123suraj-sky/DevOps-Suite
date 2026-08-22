@@ -33,8 +33,13 @@ export const RegisterPage = () => {
 
     setLoading(true);
     try {
-      const { confirmPassword, ...data } = formData;
-      await register(data);
+      const { confirmPassword, firstName, lastName, ...rest } = formData;
+      // Backend expects `display_name`, not separate first/last name fields
+      const payload = {
+        ...rest,
+        display_name: `${firstName} ${lastName}`.trim(),
+      };
+      await register(payload);
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -64,7 +69,12 @@ export const RegisterPage = () => {
           </div>
 
           <Input label="Email" type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
-          <Input label="Password" type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+          <div>
+            <Input label="Password" type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
+            <p className="mt-1 text-xs text-gray-400">
+              Min 8 chars, must include uppercase, lowercase, digit, and a special character (@#$%^&amp;+=!)
+            </p>
+          </div>
           <Input label="Confirm Password" type="password" name="confirmPassword" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required />
 
           <Button type="submit" loading={loading} className="w-full">

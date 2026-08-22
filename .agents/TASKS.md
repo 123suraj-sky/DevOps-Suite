@@ -6,9 +6,15 @@
 
 ---
 
+## 🟢 Project Status: COMPLETED (as of 2026-08-22)
+> All development is complete. The project is in the **manual testing & bug fixing** phase only.
+> Do NOT start new feature work unless explicitly instructed.
+
+---
+
 ## 🔴 In Progress
 
-_Nothing currently in active progress._
+- **Manual Testing & Bug Fixing** — All features are implemented. Only manual QA and bug fixes are active.
 
 ---
 
@@ -72,6 +78,7 @@ _Nothing currently in active progress._
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)
 - [ ] Health page with status of all infrastructure components
 - [ ] Notification email delivery (currently only in-app via WebSocket)
+- [ ] **Migrate PostgreSQL to Neon** — Replace the self-hosted `postgres:16-alpine` Docker container with a [Neon](https://neon.tech) serverless PostgreSQL instance. Steps: provision a Neon project, update `SPRING_DATASOURCE_URL` in `docker-compose.yml` with the Neon connection string, add credentials to `.env`, and remove the `postgres` service + `postgres_data` volume from Compose.
 - [ ] **Reset Password flow** — `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` with time-limited token via email link. Requires an email service to be wired first (e.g. Mailtrap for dev, SendGrid for prod). Add `spring-boot-starter-mail` to `pom.xml` and configure SMTP credentials in `.env` before implementing.
 
 

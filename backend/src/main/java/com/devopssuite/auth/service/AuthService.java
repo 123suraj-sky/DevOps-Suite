@@ -7,6 +7,7 @@ import com.devopssuite.auth.repository.RoleRepository;
 import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -169,11 +170,19 @@ public class AuthService {
             // Already invalid, no need to blacklist
         }
     }
-    private final com.devopssuite.auth.repository.PasswordResetTokenRepository tokenRepository;
-    private final org.springframework.mail.javamail.JavaMailSender mailSender;
+    @Autowired(required = false)
+    private com.devopssuite.auth.repository.PasswordResetTokenRepository tokenRepository;
+
+    @Autowired(required = false)
+    private org.springframework.mail.javamail.JavaMailSender mailSender;
+
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
+        if (mailSender == null) {
+            throw new UnsupportedOperationException("Password reset via email is not configured on this server.");
+        }
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Email address not found"));
 
