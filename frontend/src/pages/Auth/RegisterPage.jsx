@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
 
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$/;
+
 export const RegisterPage = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -15,22 +18,37 @@ export const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
+
+  const [passwordBlurred, setPasswordBlurred] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Derived validation
+  const passwordValid = useMemo(() => PASSWORD_REGEX.test(formData.password), [formData.password]);
+
+  const confirmMatches = useMemo(
+    () => formData.confirmPassword !== '' && formData.password === formData.confirmPassword,
+    [formData.password, formData.confirmPassword]
+  );
+
+  const confirmMismatch = useMemo(
+    () => formData.confirmPassword !== '' && formData.password !== formData.confirmPassword,
+    [formData.password, formData.confirmPassword]
+  );
+
+  // Button only enabled when password is valid AND confirm matches
+  const canSubmit = passwordValid && confirmMatches;
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handlePasswordBlur = () => setPasswordBlurred(true);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
     setLoading(true);
     try {
       const { confirmPassword, firstName, lastName, ...rest } = formData;
@@ -47,6 +65,13 @@ export const RegisterPage = () => {
       setLoading(false);
     }
   };
+
+  // Password hint: grey (untouched) → red (blurred & invalid) → green (valid)
+  const passwordHintClass = passwordValid
+    ? 'text-green-600'
+    : passwordBlurred
+    ? 'text-red-500'
+    : 'text-gray-400';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
@@ -68,16 +93,60 @@ export const RegisterPage = () => {
             <Input label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required />
           </div>
 
-          <Input label="Email" type="email" name="email" placeholder="you@example.com" value={formData.email} onChange={handleChange} required />
+          <Input
+            label="Email"
+            type="email"
+            name="email"
+            placeholder="you@example.com"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+
+          {/* Password with blur-triggered validation hint */}
           <div>
-            <Input label="Password" type="password" name="password" placeholder="••••••••" value={formData.password} onChange={handleChange} required />
-            <p className="mt-1 text-xs text-gray-400">
-              Min 8 chars, must include uppercase, lowercase, digit, and a special character (@#$%^&amp;+=!)
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              onBlur={handlePasswordBlur}
+              required
+            />
+            <p className={`mt-1 text-xs ${passwordHintClass}`}>
+              {passwordValid
+                ? '✓ Password meets all requirements'
+                : 'Min 8 chars, must include uppercase, lowercase, digit, and a special character (@#$%^&+=!)'}
             </p>
           </div>
-          <Input label="Confirm Password" type="password" name="confirmPassword" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} required />
 
-          <Button type="submit" loading={loading} className="w-full">
+          {/* Confirm Password with real-time mismatch feedback */}
+          <div>
+            <Input
+              label="Confirm Password"
+              type="password"
+              name="confirmPassword"
+              placeholder="••••••••"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+            {confirmMismatch && (
+              <p className="mt-1 text-xs text-red-500">✗ Passwords do not match</p>
+            )}
+            {confirmMatches && (
+              <p className="mt-1 text-xs text-green-600">✓ Passwords match</p>
+            )}
+          </div>
+
+          <Button
+            type="submit"
+            loading={loading}
+            disabled={!canSubmit}
+            className="w-full"
+          >
             Create Account
           </Button>
         </form>
