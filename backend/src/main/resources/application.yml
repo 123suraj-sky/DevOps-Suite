@@ -1,4 +1,6 @@
 spring:
+  elasticsearch:
+    uris: http://${ELASTICSEARCH_HOST:localhost}:${ELASTICSEARCH_PORT:9200}
   application:
     name: devops-suite-monolith
   datasource:
