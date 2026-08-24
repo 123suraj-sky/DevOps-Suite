@@ -21,6 +21,7 @@ __pycache__/
 # Logs
 *.log
 logs/
+!frontend/src/pages/Logs/
 
 # Environment
 .env
