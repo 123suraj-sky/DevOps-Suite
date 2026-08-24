@@ -1,0 +1,1 @@
+import{t as e}from"./client-CRYstiVF.js";var t={execute:async t=>(await e.post(`/code-execution/run`,t)).data.data,getStatus:async t=>(await e.get(`/code-execution/${t}`)).data.data,getHistory:async(t,n=0,r=20)=>(await e.get(`/code-execution/history`,{params:{projectId:t,page:n,size:r}})).data.data};export{t};

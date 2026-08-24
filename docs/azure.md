@@ -159,5 +159,10 @@ docker compose up -d elasticsearch
 docker compose up -d logstash prometheus grafana kibana
 ```
 ```powershell
-
+cd frontend
+npm i
+npm run dev -- --host 0.0.0.0
 ```
+
+then \<public ip from azure>:5173 in browser
+
