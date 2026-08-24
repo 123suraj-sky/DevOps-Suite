@@ -1,5 +1,19 @@
 services:
-  # Spring Boot Monolith Backend
+  # ── Frontend: React SPA served by Nginx on port 80 ──────────────────────────
+  # Builds the Vite production bundle and serves it via Nginx.
+  # Nginx also reverse-proxies /api/ and /ws/ to the backend container.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devopssuite-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Spring Boot Monolith Backend ─────────────────────────────────────────────
   backend:
     build:
       context: ./backend
