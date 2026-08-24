@@ -29,3 +29,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Docker Compose overrides (never commit — VM needs the full production stack)
+docker-compose.override.yml
