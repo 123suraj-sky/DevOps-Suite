@@ -43,6 +43,11 @@ public class SecurityConfig {
                     "/api/auth/forgot-password", "/api/auth/reset-password"
                 ).permitAll()
                 .requestMatchers("/actuator/**").permitAll()
+                // SockJS HTTP handshake requests (/ws/info, /ws/<transport>) must be
+                // permitted here — the JWT is sent as a STOMP connect header after the
+                // WebSocket upgrade, not as an HTTP Authorization header, so the HTTP
+                // security layer cannot validate it during the initial handshake.
+                .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
@@ -53,11 +58,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("*"));
+        // Use allowedOriginPatterns instead of allowedOrigins so that allowCredentials(true)
+        // can coexist with a pattern-based wildcard — the CORS spec forbids combining
+        // Access-Control-Allow-Origin: * with credentials.
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-        
+        configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
