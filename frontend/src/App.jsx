@@ -32,6 +32,23 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
+// Wraps ProtectedRoute — additionally redirects authenticated non-admin users to /
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -86,7 +103,7 @@ const AppRoutes = () => {
           <Route path="/projects/:id/tasks" element={<TasksPage />} />
           <Route path="/projects/:id/code" element={<CodeEditorPage />} />
           <Route path="/projects/:id/logs" element={<LogsPage />} />
-          <Route path="/metrics" element={<MetricsPage />} />
+          <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 

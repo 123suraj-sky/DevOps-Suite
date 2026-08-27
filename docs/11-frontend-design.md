@@ -28,18 +28,20 @@ frontend/src/
 
 ## 3. Routing
 
-| Path | Component | Auth |
-|---|---|---|
-| /login | LoginPage | No |
-| /register | RegisterPage | No |
-| / | DashboardPage | Yes |
-| /projects | ProjectsPage | Yes |
-| /projects/:id | ProjectDetailPage | Yes |
-| /projects/:id/tasks | TasksPage | Yes |
-| /projects/:id/code | CodeEditorPage | Yes |
-| /projects/:id/logs | LogsPage | Yes |
-| /metrics | MetricsPage | Yes |
-| /notifications | NotificationsPage | Yes |
+| Path | Component | Auth | Role |
+|---|---|---|---|
+| /login | LoginPage | No | Any |
+| /register | RegisterPage | No | Any |
+| / | DashboardPage | Yes | Any (content varies by role — see §7.6) |
+| /projects | ProjectsPage | Yes | Any |
+| /projects/:id | ProjectDetailPage | Yes | Any |
+| /projects/:id/tasks | TasksPage | Yes | Any |
+| /projects/:id/code | CodeEditorPage | Yes | Any |
+| /projects/:id/logs | LogsPage | Yes | Any |
+| /metrics | MetricsPage | Yes | **ADMIN only** — redirect non-admins to `/` |
+| /notifications | NotificationsPage | Yes | Any |
+
+> **Route guard rule:** The `/metrics` route is wrapped in an `AdminRoute` guard component. Any authenticated user without the `ROLE_ADMIN` role who navigates to `/metrics` is silently redirected to `/`. The "Metrics" sidebar link is also hidden from non-admin users (see §4).
 
 ## 4. Component Hierarchy
 
@@ -49,17 +51,19 @@ App
       NotificationProvider
         MainLayout
           Header (NotificationBell, UserMenu)
-          Sidebar (NavLinks)
+          Sidebar (NavLinks — "Metrics" link rendered only for ADMIN role)
           Routes
             LoginPage (LoginForm)
             RegisterPage (RegisterForm)
-            DashboardPage (ProjectList, MetricsSummary)
+            DashboardPage
+              [ADMIN]  AdminDashboard (ProjectStatsCards, ServiceHealthPanel, QuickLinks)
+              [MEMBER] UserDashboard (PersonalTaskSummary, RecentExecutionsPanel, ActivityFeed, QuickActions)
             ProjectsPage (ProjectList, ProjectForm)
             ProjectDetailPage (ProjectInfo, MemberManagement)
             TasksPage (KanbanBoard, TaskForm, TaskDetail)
             CodeEditorPage (LanguageSelector, CodeEditor, ExecutionPanel)
             LogsPage (LogFilters, LogViewer)
-            MetricsPage (MetricChart, ServiceHealthPanel)
+            MetricsPage [ADMIN only] (MetricChart, ServiceHealthPanel, RequestThroughputChart, RequestLatencyChart)
             NotificationsPage (NotificationList)
 
 ## 5. State Management
@@ -68,6 +72,7 @@ App
 - user: User | null
 - token: string | null
 - isAuthenticated: boolean
+- isAdmin: boolean  ← derived from user.roles; true when roles includes `ROLE_ADMIN`
 - loading: boolean
 - Actions: LOGIN_SUCCESS, LOGOUT, SET_LOADING
 
@@ -123,8 +128,30 @@ App
 - WebSocket subscription for real-time push
 - Click to mark as read and navigate to relevant page
 
-### 7.5 Metrics Dashboard
+### 7.5 Metrics Dashboard (Admin only)
+- Access-guarded by `AdminRoute` — non-admins are redirected away.
 - Charts: Line, Bar, Area (Recharts)
 - Time ranges: 1h, 6h, 24h, 7d, 30d
-- Service health indicators with status colors
+- Service health indicators with status colors (PostgreSQL, Redis, Elasticsearch, Docker Engine)
+- Request Throughput (RPM) area chart with error overlay
+- Request Latency (ms) bar chart with p50 and p99 series
 - Auto-refresh every 30 seconds
+- Calls `/api/metrics/dashboard` (ADMIN-scoped backend endpoint)
+
+### 7.6 Dashboard Page (Role-conditional content)
+
+The `/` route renders a single `DashboardPage` that switches on `isAdmin` from `AuthContext`:
+
+**Admin view — `AdminDashboard`:**
+- Stat cards: Total Projects (platform-wide), Open Tasks (platform-wide), In Progress, Completed
+- Service Health panel: PostgreSQL, Redis, Elasticsearch, Docker Engine — each showing UP/DOWN and response time
+- Quick-link buttons: "View Projects", "View Metrics"
+- Data source: `/api/metrics/dashboard`
+
+**Member view — `UserDashboard`:**
+- Stat cards: My Open Tasks, My In Progress, My Completed, My Executions (this week)
+- Recent Code Executions panel: last 5 executions with language badge, status (COMPLETED / FAILED / TIMEOUT), and relative timestamp
+- Activity feed: last 10 personal actions (task created, task moved to Done, code executed, etc.)
+- Quick-action buttons: "View My Projects", "Run Code"
+- Data source: `/api/metrics/user-summary`
+- No service health, no infrastructure status, no platform-wide counters

@@ -4,7 +4,20 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 
 ---
 
-## ?? High Priority
+## ⚠️ Security — Must Fix Before Production
+
+### Hardcoded Admin Credentials
+- [ ] **Replace hardcoded admin seed** — `DataSeeder.java` (`com.devopssuite.config`) creates a default admin
+  account on startup with `email=admin` / `password=admin`. This is **DEV-ONLY** and must be replaced before
+  any production deployment. Options:
+  - Read credentials from environment variables (`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`)
+  - A one-time setup endpoint that disables itself after first use
+  - An external identity provider / SSO / LDAP integration
+  - File to update: `backend/src/main/java/com/devopssuite/config/DataSeeder.java`
+
+---
+
+## 🔴 High Priority
 
 ### Code Execution Sandbox (Phase 2 completion)
 - [x] **Pipe stdin** — Wire `stdin` payload from requests to the ephemeral container inside `DockerSandbox.java`. (Completed)

@@ -22,6 +22,15 @@
 
 ### Backend
 
+- [ ] **Replace hardcoded admin seed credentials**
+  - `DataSeeder.java` (`com.devopssuite.config`) currently creates a default admin user with
+    `email=admin` / `password=admin` on every startup if the account does not exist.
+  - This is **DEV-ONLY**. Before any production deployment, replace with one of:
+    - Environment-variable-driven credentials (`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`)
+    - A one-time setup endpoint that is disabled after first use
+    - An external identity provider / LDAP / SSO
+  - File to update: `backend/src/main/java/com/devopssuite/config/DataSeeder.java`
+
 - [ ] **Complete Code Execution Sandbox**
   - Core classes exist; Docker runner integration needs completion
   - Files: `execution/` package under `com.devopssuite.monolith`

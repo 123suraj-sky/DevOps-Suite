@@ -1,15 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils';
 
-const navLinks = [
+const baseNavLinks = [
   { path: '/', label: 'Dashboard', icon: '📊' },
   { path: '/projects', label: 'Projects', icon: '📁' },
-  { path: '/metrics', label: 'Metrics', icon: '📈' },
+  { path: '/metrics', label: 'Metrics', icon: '📈', adminOnly: true },
   { path: '/notifications', label: 'Notifications', icon: '🔔' },
 ];
 
 export const Sidebar = ({ isOpen = true, onClose }) => {
   const location = useLocation();
+  const { isAdmin } = useAuth();
+
+  const navLinks = baseNavLinks.filter(link => !link.adminOnly || isAdmin);
 
   return (
     <>

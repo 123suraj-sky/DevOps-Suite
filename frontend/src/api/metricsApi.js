@@ -6,6 +6,11 @@ export const metricsApi = {
     return response.data.data;
   },
 
+  getUserSummary: async () => {
+    const response = await apiClient.get('/metrics/user-summary');
+    return response.data.data;
+  },
+
   getMetrics: async (projectId, metricName, startTime, endTime) => {
     const response = await apiClient.get('/metrics', {
       params: { projectId, metricName, startTime, endTime },

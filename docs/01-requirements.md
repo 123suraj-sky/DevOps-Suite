@@ -8,8 +8,8 @@ The system provides authenticated users the ability to: write and run code in a 
 
 ## 3. Actors
 - Guest: can sign up / log in.
-- Authenticated User (MEMBER): can run code, manage own projects/tasks, view logs/metrics relevant to their scope.
-- Admin (ADMIN): full access, manages users, views all logs/metrics, RBAC control.
+- Authenticated User (MEMBER): can run code, manage own projects/tasks, view their personal activity dashboard (own task stats, recent code executions, personal notifications).
+- Admin (ADMIN): full access, manages users, views all logs/metrics, RBAC control. Sees the system-wide infrastructure dashboard including service health, application metrics, and platform-wide KPIs.
 
 ## 4. Functional Requirements
 
@@ -50,6 +50,8 @@ The system provides authenticated users the ability to: write and run code in a 
 - FR-24: Expose application health and metrics via Spring Actuator.
 - FR-25: Aggregate response time, request count, and error rate per endpoint.
 - FR-26: Provide a queryable metrics API for the frontend dashboard.
+- FR-26a: The `/api/metrics/dashboard` endpoint (system-wide metrics, service health, request throughput/latency) is **ADMIN-only**; return `403 Forbidden` for non-admin callers.
+- FR-26b: Provide a separate `/api/metrics/user-summary` endpoint for MEMBER-role users, returning only their own activity: personal task completion rate, own code execution count/success rate, and recent activity timeline.
 
 ### 4.7 Notification Module
 - FR-27: Send notifications (email or in-app) on defined events (task assigned, execution failure spike, error threshold breached) using internal Spring events.
@@ -98,10 +100,16 @@ The system provides authenticated users the ability to: write and run code in a 
 - FR-39: Real-time toast notifications via WebSocket subscription.
 - FR-40: Notification inbox with read/unread state and mark-as-read.
 
-### 8.6 Metrics Dashboard
-- FR-41: Charts showing request count response time and error rate.
+### 8.6 Metrics Dashboard (Admin only)
+- FR-41: Charts showing request count, response time, and error rate — visible to ADMIN role only.
 - FR-42: Recharts for line and bar chart visualizations.
 - FR-43: Date range picker for historical metric analysis.
+
+### 8.7 User Dashboard (Member / all authenticated users)
+- FR-44a: Personal activity summary: own open/in-progress/completed task counts across all projects the user is a member of.
+- FR-44b: Recent code executions panel: last N executions with language, status, and timestamp.
+- FR-44c: Recent activity feed: last N actions taken by the user (task created, task moved, code executed).
+- FR-44d: Quick-action buttons: "View My Projects" and "Run Code" — no system-health or platform-wide stats.
 
 ## 9. WebSocket and Real-Time Requirements
 - NFR-8 (Real-time): WebSocket connections authenticated via JWT query param during STOMP CONNECT.
