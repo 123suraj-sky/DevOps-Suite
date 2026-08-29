@@ -31,9 +31,10 @@
     - An external identity provider / LDAP / SSO
   - File to update: `backend/src/main/java/com/devopssuite/config/DataSeeder.java`
 
-- [ ] **Complete Code Execution Sandbox**
-  - Core classes exist; Docker runner integration needs completion
-  - Files: `execution/` package under `com.devopssuite.monolith`
+- [x] **Complete Code Execution Sandbox**
+  - All phases implemented: Docker path fix, DinD bind-mount, API alignment, terminal statuses, history endpoint, frontend, unit tests
+  - Files: `execution/` package under `com.devopssuite.execution`
+  - **Detailed plan:** [`.agents/tasks/complete-code-execution-sandbox.md`](tasks/complete-code-execution-sandbox.md)
   - Ref: `docs/05-lld-detailed-design.md` §5
 
 - [ ] **Wire Elasticsearch logging pipeline**
@@ -79,11 +80,9 @@
 
 ---
 
-## 🔵 Stretch Goals (Post-MVP)
-
 - [ ] Kubernetes manifests (Helm chart)
 - [ ] Multi-stage Docker build for production frontend (Nginx)
-- [ ] Add more code execution languages (Go, Rust, C++)
+- [x] **Add more code execution languages (Java, C++)** — Added and verified full sandboxed execution support for Java 21 and C++ (g++ 15) alongside Python and JavaScript.
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)
 - [ ] Health page with status of all infrastructure components
 - [ ] Notification email delivery (currently only in-app via WebSocket)

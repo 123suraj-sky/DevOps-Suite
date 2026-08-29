@@ -2,6 +2,9 @@
 
 This file tracks outstanding developer and agent tasks for the DevOps Suite monolithic platform.
 
+- [ ] Get rid of go-offline
+- [ ] Login bug; whenever user reloads page it will be automatically redirected to login page to login again
+
 ---
 
 ## ⚠️ Security — Must Fix Before Production

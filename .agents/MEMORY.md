@@ -37,13 +37,13 @@
 - Auth module (registration, login, JWT filter) — fully implemented
 - Project module (projects, boards, columns, tasks CRUD) — fully implemented
 - Metrics Dashboard (`/api/metrics/dashboard`) — fully implemented and integrated with Actuator/Service Health checking
+- Code Execution Sandbox (all languages executing securely with correct status mapping and user history) — fully verified
 - Frontend API paths pointing to `http://localhost:8081/api` — confirmed
 
 ---
 
 ## 🔧 Partially Implemented
 
-- **Code Execution Sandbox** — Core classes and model mappings exist; sandboxing logic via Docker runner needs completion
 - **Logging pipeline to Elasticsearch** — Structured log emission in place; Elasticsearch write pipeline needs wiring
 - **WebSocket real-time features** — Config exists; end-to-end testing with live backend not yet completed
 
@@ -73,3 +73,5 @@
 | Date | Agent | Note |
 |---|---|---|
 | 2026-08-07 | Antigravity | Initial MEMORY.md created from project codebase analysis. Auth + Project modules confirmed working. Code execution sandbox partially done. |
+| 2026-08-28 | Antigravity | Completed Code Execution Sandbox implementation. Fixed temp paths, DinD bind-mounts, read-only FS, status mapping (QUEUED/RUNNING/COMPLETED/TIMEOUT/OOM_KILLED), history API, and updated frontend polling. Added unit tests for service validation. |
+| 2026-08-29 | Antigravity | Resolved C++ execution failure: built local `devopssuite-cpp:latest` runtime, added Flyway `V5` migration, and enabled `rw,exec,nosuid,size=64m` on `/tmp` tmpfs mount so compiled binaries execute in read-only containers. All 4 languages (Python, JS, Java, C++) now verified working. |

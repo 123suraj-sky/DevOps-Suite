@@ -1,5 +1,6 @@
 package com.devopssuite.execution.sandbox;
 
+import com.devopssuite.execution.config.ExecutionProperties;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
@@ -10,11 +11,8 @@ import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.core.command.LogContainerResultCallback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -25,15 +23,31 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Runs user-submitted source code inside an ephemeral, isolated Docker container.
+ *
+ * <h3>DinD bind-mount strategy</h3>
+ * When the backend runs inside Docker Compose, sibling sandbox containers are
+ * created by the host Docker daemon. Files written inside the backend container
+ * at {@code sandboxTempDir/run_<id>/} must be visible to the daemon via a
+ * host-side path. This is achieved by:
+ * <ol>
+ *   <li>bind-mounting {@code ./sandbox-temp} → {@code sandboxTempDir} in docker-compose.yml</li>
+ *   <li>setting {@code DOCKER_HOST_TEMP_DIR} to the absolute host-side path of sandbox-temp</li>
+ *   <li>using {@code hostTempDir/run_<id>/} as the bind-source when creating sandbox containers</li>
+ * </ol>
+ * For local dev (backend running natively), leave {@code DOCKER_HOST_TEMP_DIR} blank —
+ * the in-process path is used directly.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DockerSandbox {
 
     private final DockerClient dockerClient;
+    private final ExecutionProperties props;
 
-    @Value("${docker.host-temp-dir:}")
-    private String hostTempDir;
+    // ── Result carrier ──────────────────────────────────────────────────────────
 
     public static class SandboxResult {
         public String stdout = "";
@@ -43,6 +57,8 @@ public class DockerSandbox {
         public boolean oomKilled = false;
         public long executionTimeMs = 0;
     }
+
+    // ── Public API ──────────────────────────────────────────────────────────────
 
     public SandboxResult runCode(
             String language,
@@ -56,79 +72,69 @@ public class DockerSandbox {
         SandboxResult result = new SandboxResult();
         String runId = UUID.randomUUID().toString();
 
-        // Create a unique temporary directory inside the workspace directory
-        Path workspaceTempDir = Paths.get("backend", "code-execution-service", "temp", "run_" + runId).toAbsolutePath();
+        // Resolve in-container workspace path
+        Path workspacePath = Paths.get(props.getSandboxTempDir(), "run_" + runId);
         try {
-            Files.createDirectories(workspaceTempDir);
+            Files.createDirectories(workspacePath);
         } catch (IOException e) {
-            log.error("Failed to create sandbox temp directory", e);
+            log.error("Failed to create sandbox temp directory: {}", workspacePath, e);
             result.stderr = "System error: Failed to initialize execution sandbox environment.";
             return result;
         }
 
-        // Determine source code file name (Java source code needs Main.java naming)
+        // Write source file
         String fileName = language.equalsIgnoreCase("java") ? "Main.java" : "code." + fileExtension;
-        File codeFile = new File(workspaceTempDir.toFile(), fileName);
-        try (FileWriter writer = new FileWriter(codeFile, StandardCharsets.UTF_8)) {
-            writer.write(sourceCode);
+        try {
+            Files.writeString(workspacePath.resolve(fileName), sourceCode, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Failed to write source code to file", e);
             result.stderr = "System error: Failed to save source code.";
-            cleanupDirectory(workspaceTempDir.toFile());
+            cleanupDirectory(workspacePath);
             return result;
         }
 
-        // Write stdin to input.txt
-        File stdinFile = new File(workspaceTempDir.toFile(), "input.txt");
-        try (FileWriter writer = new FileWriter(stdinFile, StandardCharsets.UTF_8)) {
-            writer.write(stdin != null ? stdin : "");
+        // Write stdin file
+        try {
+            Files.writeString(workspacePath.resolve("input.txt"),
+                    stdin != null ? stdin : "", StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Failed to write stdin to file", e);
             result.stderr = "System error: Failed to save stdin.";
-            cleanupDirectory(workspaceTempDir.toFile());
+            cleanupDirectory(workspacePath);
             return result;
         }
 
-        // Ensure the Docker image is available
+        // Pull image if not cached locally
         try {
             ensureImageExists(dockerImage);
         } catch (Exception e) {
             log.error("Failed to ensure image exists: {}", dockerImage, e);
             result.stderr = "System error: Failed to download sandbox runtime environment.";
-            cleanupDirectory(workspaceTempDir.toFile());
+            cleanupDirectory(workspacePath);
             return result;
         }
 
         String containerId = null;
         try {
-            // Determine execute command based on language
-            String[] cmd;
-            if (language.equalsIgnoreCase("python")) {
-                cmd = new String[]{"sh", "-c", "python3 /app/code.py < /app/input.txt"};
-            } else if (language.equalsIgnoreCase("javascript")) {
-                cmd = new String[]{"sh", "-c", "node /app/code.js < /app/input.txt"};
-            } else if (language.equalsIgnoreCase("java")) {
-                cmd = new String[]{"sh", "-c", "javac /app/Main.java && java -cp /app Main < /app/input.txt"};
-            } else if (language.equalsIgnoreCase("cpp")) {
-                cmd = new String[]{"sh", "-c", "g++ -O3 /app/code.cpp -o /app/program && /app/program < /app/input.txt"};
-            } else {
-                cmd = new String[]{"sh", "-c", "echo 'Unsupported language'"};
-            }
+            // Build shell command for language
+            String[] cmd = buildCommand(language);
 
-            // Bind workspace directory path (use hostTempDir if configured for Docker-in-Docker environment)
-            String bindPath = workspaceTempDir.toString();
-            if (hostTempDir != null && !hostTempDir.isBlank()) {
-                bindPath = Paths.get(hostTempDir, "run_" + runId).toAbsolutePath().toString();
-            }
+            // Resolve host-visible bind-source path (for DinD scenarios)
+            String bindSource = resolveHostBindPath(runId);
+            log.debug("Sandbox bind: {} -> /app (language={})", bindSource, language);
 
-            // Create HostConfig with limits: 1 CPU core, maxMemoryMb, disabled network
-            long memoryBytes = (long) maxMemoryMb * 1024 * 1024;
+            // Resource limits: 1 CPU, capped memory, no network, read-only FS
+            long memoryBytes = (long) maxMemoryMb * 1024L * 1024L;
             HostConfig hostConfig = HostConfig.newHostConfig()
                     .withMemory(memoryBytes)
-                    .withMemorySwap(memoryBytes)
-                    .withNanoCPUs(1000000000L) // 1 CPU Core
-                    .withNetworkMode("none")   // Disable internet
-                    .withBinds(new Bind(bindPath, new Volume("/app")));
+                    .withMemorySwap(memoryBytes)        // no swap escape
+                    .withNanoCPUs(1_000_000_000L)       // 1 CPU core
+                    .withNetworkMode("none")             // air-gapped
+                    .withReadonlyRootfs(true)            // immutable FS
+                    .withTmpFs(java.util.Map.of(
+                            "/tmp", "rw,exec,nosuid,size=64m"  // compiler scratch (exec required to run compiled binary)
+                    ))
+                    .withBinds(new Bind(bindSource, new Volume("/app")));
 
             CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage)
                     .withHostConfig(hostConfig)
@@ -139,119 +145,153 @@ public class DockerSandbox {
             containerId = container.getId();
             long startTime = System.currentTimeMillis();
 
-            // Start container
             dockerClient.startContainerCmd(containerId).exec();
 
-            // Wait for execution completion or timeout
-            boolean completed = false;
-            long timeoutSec = (long) Math.ceil(maxTimeMs / 1000.0);
-            if (timeoutSec <= 0) timeoutSec = 5;
-
+            // Wait for completion or timeout
+            long timeoutSec = Math.max(1L, (long) Math.ceil(maxTimeMs / 1000.0));
+            boolean completed;
             try {
-                // Wait for the container to stop
-                com.github.dockerjava.api.command.WaitContainerResultCallback waitCallback = 
-                        dockerClient.waitContainerCmd(containerId).start();
-                
-                completed = waitCallback.awaitCompletion(timeoutSec, TimeUnit.SECONDS);
+                completed = dockerClient.waitContainerCmd(containerId)
+                        .start()
+                        .awaitCompletion(timeoutSec, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                log.warn("Container execution interrupted", e);
+                Thread.currentThread().interrupt();
+                log.warn("Container wait interrupted for {}", containerId);
+                completed = false;
             }
 
             result.executionTimeMs = System.currentTimeMillis() - startTime;
 
             if (!completed) {
-                log.warn("Execution timed out. Killing container {}", containerId);
+                log.warn("Execution timed out after {}ms — stopping container {}", maxTimeMs, containerId);
                 result.timedOut = true;
                 try {
-                    dockerClient.stopContainerCmd(containerId).withTimeout(1).exec();
-                } catch (Exception ignored) {}
+                    dockerClient.stopContainerCmd(containerId).withTimeout(2).exec();
+                } catch (Exception ignored) { /* best-effort */ }
             }
 
-            // Inspect container to get exit code & check if OOM killed
+            // Inspect exit code + OOM flag
             try {
-                var inspect = dockerClient.inspectContainerCmd(containerId).exec();
-                var state = inspect.getState();
+                var state = dockerClient.inspectContainerCmd(containerId).exec().getState();
                 if (state != null) {
-                    if (state.getExitCode() != null) {
-                        result.exitCode = state.getExitCode();
-                    }
-                    if (state.getOOMKilled() != null) {
-                        result.oomKilled = state.getOOMKilled();
-                    }
+                    if (state.getExitCode() != null) result.exitCode = state.getExitCode();
+                    if (Boolean.TRUE.equals(state.getOOMKilled())) result.oomKilled = true;
                 }
             } catch (Exception e) {
-                log.error("Failed to inspect container status", e);
+                log.error("Failed to inspect container state for {}", containerId, e);
             }
 
-            // Capture output logs (stdout/stderr)
+            // Read stdout / stderr logs
             List<String> stdoutLines = new ArrayList<>();
             List<String> stderrLines = new ArrayList<>();
-
             try {
                 LogContainerResultCallback logCallback = new LogContainerResultCallback() {
                     @Override
                     public void onNext(Frame frame) {
                         String payload = new String(frame.getPayload(), StandardCharsets.UTF_8);
-                        if (frame.getStreamType() == com.github.dockerjava.api.model.StreamType.STDOUT) {
-                            stdoutLines.add(payload);
-                        } else if (frame.getStreamType() == com.github.dockerjava.api.model.StreamType.STDERR) {
-                            stderrLines.add(payload);
+                        switch (frame.getStreamType()) {
+                            case STDOUT -> stdoutLines.add(payload);
+                            case STDERR -> stderrLines.add(payload);
+                            default -> { /* RAW / other — ignore */ }
                         }
                     }
                 };
-
                 dockerClient.logContainerCmd(containerId)
                         .withStdOut(true)
                         .withStdErr(true)
-                        .withFollowStream(true)
+                        .withFollowStream(false)  // container already stopped
                         .exec(logCallback)
-                        .awaitCompletion(5, TimeUnit.SECONDS);
-
+                        .awaitCompletion(10, TimeUnit.SECONDS);
             } catch (Exception e) {
-                log.error("Failed to read logs from container", e);
+                log.error("Failed to read logs from container {}", containerId, e);
             }
 
             result.stdout = String.join("", stdoutLines);
             result.stderr = String.join("", stderrLines);
 
+        } catch (Exception e) {
+            log.error("Unexpected sandbox error for run {}", runId, e);
+            result.stderr = "System error: " + e.getMessage();
         } finally {
-            // Delete container
+            // Always remove the container
             if (containerId != null) {
                 try {
                     dockerClient.removeContainerCmd(containerId).withForce(true).exec();
+                    log.debug("Removed sandbox container {}", containerId);
                 } catch (Exception e) {
-                    log.warn("Failed to remove container: {}", containerId, e);
+                    log.warn("Failed to remove sandbox container {}", containerId, e);
                 }
             }
-            // Cleanup directories
-            cleanupDirectory(workspaceTempDir.toFile());
+            // Always clean up workspace
+            cleanupDirectory(workspacePath);
         }
 
         return result;
     }
 
+    // ── Helpers ─────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the shell command to compile/run code for the given language.
+     * The workspace is always mounted at /app inside the sandbox container.
+     */
+    private String[] buildCommand(String language) {
+        return switch (language.toLowerCase()) {
+            case "python", "python3" ->
+                    new String[]{"sh", "-c", "python3 /app/code.py < /app/input.txt"};
+            case "javascript", "node" ->
+                    new String[]{"sh", "-c", "node /app/code.js < /app/input.txt"};
+            case "java" ->
+                    new String[]{"sh", "-c", "javac /app/Main.java && java -cp /app Main < /app/input.txt"};
+            case "cpp", "c++" ->
+                    new String[]{"sh", "-c", "g++ -O2 /app/code.cpp -o /tmp/program && /tmp/program < /app/input.txt"};
+            default ->
+                    new String[]{"sh", "-c", "echo 'Unsupported language: " + language + "'; exit 1"};
+        };
+    }
+
+    /**
+     * Resolves the host-visible bind-mount source path for the sandbox run workspace.
+     * When {@code hostTempDir} is configured (DinD/Docker Compose deployment),
+     * the host path is used so the Docker daemon can see the files.
+     * Otherwise, the in-process path is used directly (native local dev).
+     */
+    private String resolveHostBindPath(String runId) {
+        String hostTempDir = props.getHostTempDir();
+        if (hostTempDir != null && !hostTempDir.isBlank()) {
+            return Paths.get(hostTempDir, "run_" + runId).toString().replace("\\", "/");
+        }
+        return Paths.get(props.getSandboxTempDir(), "run_" + runId).toAbsolutePath().toString();
+    }
+
     private void ensureImageExists(String dockerImage) throws InterruptedException {
         try {
             dockerClient.inspectImageCmd(dockerImage).exec();
+            log.debug("Image {} already present locally", dockerImage);
         } catch (com.github.dockerjava.api.exception.NotFoundException e) {
-            log.info("Image {} not found locally, pulling...", dockerImage);
+            log.info("Image {} not cached — pulling (this may take a moment)...", dockerImage);
             dockerClient.pullImageCmd(dockerImage)
                     .exec(new PullImageResultCallback())
-                    .awaitCompletion(2, TimeUnit.MINUTES);
+                    .awaitCompletion(5, TimeUnit.MINUTES);
+            log.info("Image {} pulled successfully", dockerImage);
         }
     }
 
-    private void cleanupDirectory(File dir) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    cleanupDirectory(f);
+    private void cleanupDirectory(Path dir) {
+        try {
+            if (Files.exists(dir)) {
+                try (var stream = Files.walk(dir)) {
+                    stream.sorted(java.util.Comparator.reverseOrder())
+                          .forEach(p -> {
+                              try { Files.delete(p); }
+                              catch (IOException ex) {
+                                  log.warn("Failed to delete sandbox path: {}", p, ex);
+                              }
+                          });
                 }
             }
-        }
-        if (!dir.delete()) {
-            log.warn("Failed to delete temp sandbox file/folder: {}", dir.getAbsolutePath());
+        } catch (IOException e) {
+            log.warn("Failed to clean up sandbox workspace: {}", dir, e);
         }
     }
 }
