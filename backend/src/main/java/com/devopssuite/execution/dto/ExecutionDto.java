@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.UUID;
 
 public class ExecutionDto {
@@ -17,7 +18,7 @@ public class ExecutionDto {
     public static class SubmitRequest {
         @NotBlank
         private String language;
-        
+
         private String version;
 
         @NotBlank
@@ -43,7 +44,7 @@ public class ExecutionDto {
     public static class SubmitResponse {
         @JsonProperty("execution_id")
         private UUID executionId;
-        
+
         private String status;
     }
 
@@ -76,6 +77,38 @@ public class ExecutionDto {
 
         @JsonProperty("oom_killed")
         private Boolean oomKilled;
+    }
+
+    /**
+     * Single item in the paginated execution history list.
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class HistoryItem {
+        @JsonProperty("execution_id")
+        private UUID executionId;
+
+        private String language;
+
+        private String status;
+
+        @JsonProperty("exit_code")
+        private Integer exitCode;
+
+        @JsonProperty("execution_time_ms")
+        private Integer executionTimeMs;
+
+        @JsonProperty("timed_out")
+        private Boolean timedOut;
+
+        @JsonProperty("oom_killed")
+        private Boolean oomKilled;
+
+        @JsonProperty("created_at")
+        private Instant createdAt;
     }
 
     @Data

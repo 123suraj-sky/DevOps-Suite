@@ -21,6 +21,7 @@ __pycache__/
 # Logs
 *.log
 logs/
+!frontend/src/pages/Logs/
 
 # Environment
 .env
@@ -28,3 +29,9 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Docker Compose overrides (never commit — VM needs the full production stack)
+docker-compose.override.yml
+
+# Sandbox temp directories (ephemeral source files written by the execution sandbox)
+sandbox-temp/

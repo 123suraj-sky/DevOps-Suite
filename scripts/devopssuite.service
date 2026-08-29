@@ -1,0 +1,30 @@
+[Unit]
+Description=DevOps Suite — Docker Compose Stack
+Documentation=https://github.com/123suraj-sky/DevOps-Suite
+# Docker must be running before we start
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+# Absolute path to the cloned repo on the VM
+WorkingDirectory=/home/sky/DevOps-Suite
+
+# Start: bring all services up in detached mode
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+
+# Stop: bring everything down gracefully
+ExecStop=/usr/bin/docker compose down
+
+# On failure, wait 30 s then retry (handles transient startup races)
+Restart=on-failure
+RestartSec=30s
+
+# Don't time out during initial image pull / Maven build
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

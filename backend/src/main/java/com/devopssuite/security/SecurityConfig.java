@@ -42,7 +42,17 @@ public class SecurityConfig {
                     "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout",
                     "/api/auth/forgot-password", "/api/auth/reset-password"
                 ).permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                // Liveness probe must remain public; all other actuator endpoints are admin-only
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
+                // SockJS HTTP handshake requests (/ws/info, /ws/<transport>) must be
+                // permitted here — the JWT is sent as a STOMP connect header after the
+                // WebSocket upgrade, not as an HTTP Authorization header, so the HTTP
+                // security layer cannot validate it during the initial handshake.
+                .requestMatchers("/ws/**").permitAll()
+                // System-wide metrics dashboard is admin/owner only; user-summary is any authenticated user
+                .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
+                .requestMatchers("/metrics/user-summary", "/api/metrics/user-summary").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
@@ -53,11 +63,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Collections.singletonList("*"));
+        // Use allowedOriginPatterns instead of allowedOrigins so that allowCredentials(true)
+        // can coexist with a pattern-based wildcard — the CORS spec forbids combining
+        // Access-Control-Allow-Origin: * with credentials.
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
-        
+        configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

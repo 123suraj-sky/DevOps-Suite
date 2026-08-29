@@ -1,4 +1,6 @@
 spring:
+  elasticsearch:
+    uris: http://${ELASTICSEARCH_HOST:localhost}:${ELASTICSEARCH_PORT:9200}
   application:
     name: devops-suite-monolith
   datasource:
@@ -60,9 +62,12 @@ jwt:
   refresh-expiration: 604800000
 
 docker:
-  pool-size: 10
-  timeout: 300000
+  pool-size: ${DOCKER_POOL_SIZE:10}
+  timeout: ${DOCKER_TIMEOUT:300000}
   host-temp-dir: ${DOCKER_HOST_TEMP_DIR:}
+  sandbox-temp-dir: ${DOCKER_SANDBOX_TEMP_DIR:/tmp/devopssuite-sandbox}
+  max-code-size-bytes: ${DOCKER_MAX_CODE_SIZE:65536}
+  max-stdin-size-bytes: ${DOCKER_MAX_STDIN_SIZE:16384}
 
 logging:
   level:

@@ -10,15 +10,19 @@ RUN mvn dependency:go-offline -q
 
 # Copy source and build the fat jar (skip tests — run them in CI separately)
 COPY src ./src
-RUN mvn package -DskipTests -q
+RUN mvn package -DskipTests
 
 # ─── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-alpine -q
 
 WORKDIR /app
 
 # Non-root user for security
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Create sandbox temp directory and give appuser write access
+RUN mkdir -p /tmp/devopssuite-sandbox && chown appuser:appgroup /tmp/devopssuite-sandbox
+
 USER appuser
 
 # Copy only the fat jar from the builder stage

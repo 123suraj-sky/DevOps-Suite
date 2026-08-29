@@ -1,10 +1,25 @@
 services:
-  # Spring Boot Monolith Backend
+  # ── Frontend: React SPA served by Nginx on port 80 ──────────────────────────
+  # Builds the Vite production bundle and serves it via Nginx.
+  # Nginx also reverse-proxies /api/ and /ws/ to the backend container.
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: devopssuite-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Spring Boot Monolith Backend ─────────────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: devopssuite-backend
+    user: root
     ports:
       - "8081:8081"
     environment:
@@ -16,9 +31,22 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST}
+      ELASTICSEARCH_PORT: ${ELASTICSEARCH_PORT}
+      # Docker daemon socket host
+      DOCKER_HOST: unix:///var/run/docker.sock
+      # Sandbox: in-container path where source files are written
+      DOCKER_SANDBOX_TEMP_DIR: /tmp/devopssuite-sandbox
+      # Sandbox: host-visible path the Docker daemon uses for bind mounts (DinD).
+      # Must be the absolute host path that corresponds to ./sandbox-temp.
+      # On Linux: set to the absolute path of this directory on the host, e.g. /home/user/DevOps Suite/sandbox-temp
+      # On Windows (Docker Desktop): use the Windows path, e.g. C:\Users\you\DevOps Suite\sandbox-temp
+      DOCKER_HOST_TEMP_DIR: ${DOCKER_HOST_TEMP_DIR:-}
     volumes:
-      # Mount Docker socket so the sandbox can spin up ephemeral containers
+      # Mount Docker socket so the sandbox can spin up ephemeral sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
+      # Shared temp volume for sandbox source files (DinD bind-mount workaround)
+      - ./sandbox-temp:/tmp/devopssuite-sandbox
     depends_on:
       postgres:
         condition: service_healthy

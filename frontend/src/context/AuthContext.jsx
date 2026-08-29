@@ -80,8 +80,12 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  // Derive isAdmin from the user's roles list — true for ROLE_ADMIN and ROLE_OWNER
+  const isAdmin = Array.isArray(state.user?.roles) &&
+    state.user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_OWNER');
+
   return (
-    <AuthContext.Provider value={{ ...state, login, register, logout, dispatch }}>
+    <AuthContext.Provider value={{ ...state, isAdmin, login, register, logout, dispatch }}>
       {children}
     </AuthContext.Provider>
   );

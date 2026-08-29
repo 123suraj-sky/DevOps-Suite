@@ -493,15 +493,107 @@ Delete a notification (204 No Content).
 
 ## 6. Actuator / Metrics API
 
-All endpoints are **public** (no token required).
+### 6.1 Spring Actuator Endpoints
 
-| Method | URL | Description |
-|---|---|---|
-| `GET` | `/actuator/health` | Application health (DB, Redis) |
-| `GET` | `/actuator/info` | Build/version info |
-| `GET` | `/actuator/metrics` | Full metrics registry list |
-| `GET` | `/actuator/prometheus` | Prometheus-format metrics |
-| `GET` | `/actuator/metrics/{name}` | Single metric (e.g. `jvm.memory.used`, `http.server.requests`) |
+Actuator endpoints are **restricted to ADMIN role** (except `/actuator/health` which is public for liveness probes).
+
+| Method | URL | Auth | Description |
+|---|---|---|---|
+| `GET` | `/actuator/health` | Public | Application health (DB, Redis) |
+| `GET` | `/actuator/info` | 🔒 ADMIN | Build/version info |
+| `GET` | `/actuator/metrics` | 🔒 ADMIN | Full metrics registry list |
+| `GET` | `/actuator/prometheus` | 🔒 ADMIN | Prometheus-format metrics |
+| `GET` | `/actuator/metrics/{name}` | 🔒 ADMIN | Single metric (e.g. `jvm.memory.used`, `http.server.requests`) |
+
+---
+
+### 6.2 Admin Dashboard & Metrics API
+
+> 🔒 **Requires `ROLE_ADMIN`.** Returns `403 Forbidden` for any other authenticated role.
+
+---
+
+#### GET `/api/metrics/dashboard`
+Returns platform-wide system metrics and service health for the Admin dashboard and Metrics page.
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "data": {
+    "stats": {
+      "total_projects": 42,
+      "open_tasks": 17,
+      "in_progress_tasks": 9,
+      "completed_tasks": 134
+    },
+    "service_health": [
+      { "name": "PostgreSQL", "status": "UP", "response_time_ms": 3 },
+      { "name": "Redis",      "status": "UP", "response_time_ms": 1 },
+      { "name": "Elasticsearch", "status": "UP", "response_time_ms": 5 },
+      { "name": "Docker Engine", "status": "DOWN", "response_time_ms": 4 }
+    ],
+    "request_throughput": [
+      { "timestamp": "2026-08-27T10:00:00Z", "rpm": 1.5, "errors": 0.1 }
+    ],
+    "request_latency": [
+      { "timestamp": "2026-08-27T10:00:00Z", "p50_ms": 45, "p99_ms": 210 }
+    ]
+  }
+}
+```
+
+---
+
+#### GET `/api/metrics/dashboard?range=1h`
+Same as above but scoped to the requested time range. Valid values: `1h`, `6h`, `24h`, `7d`, `30d` (default: `1h`).
+
+---
+
+### 6.3 User Summary API
+
+> 🔒 **Requires any authenticated role (`ROLE_ADMIN` or `ROLE_MEMBER`).** Each user sees only their own data.
+
+---
+
+#### GET `/api/metrics/user-summary`
+Returns a personal activity summary for the currently authenticated user. Powers the Member `UserDashboard` on `/`.
+
+**Response (200 OK):**
+```json
+{
+  "status": "success",
+  "data": {
+    "task_stats": {
+      "open": 3,
+      "in_progress": 2,
+      "completed": 11
+    },
+    "executions_this_week": 7,
+    "recent_executions": [
+      {
+        "execution_id": "uuid",
+        "language": "python",
+        "status": "COMPLETED",
+        "execution_time_ms": 342,
+        "created_at": "2026-08-27T09:15:00Z"
+      }
+    ],
+    "recent_activity": [
+      {
+        "type": "TASK_MOVED",
+        "description": "Moved 'Fix login bug' to Done",
+        "timestamp": "2026-08-27T09:10:00Z"
+      },
+      {
+        "type": "CODE_EXECUTED",
+        "description": "Ran Python snippet",
+        "timestamp": "2026-08-27T09:05:00Z"
+      }
+    ]
+  }
+}
+```
 
 ---
 
