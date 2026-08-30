@@ -2,8 +2,7 @@
 
 This file tracks outstanding developer and agent tasks for the DevOps Suite monolithic platform.
 
-- [ ] Get rid of go-offline
-- [ ] Login bug; whenever user reloads page it will be automatically redirected to login page to login again
+- [x] **Login bug on reload** — Fixed `AuthService.getCurrentUser()` missing implementation causing session reset on refresh. (Completed)
 
 ---
 
@@ -31,7 +30,7 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 
 ---
 
-## ?? Medium Priority
+## 🟡 Medium Priority
 
 ### Observability & Real-Time (Phase 3)
 - [x] **WebSocket STOMP Broker** — `WebSocketConfig.java` at `/ws`, SockJS, `/topic` broker. (Completed)
@@ -43,11 +42,12 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 
 ---
 
-## ?? Stretch Goals
+## 🟣 Stretch Goals
 
-- [ ] **Google OAuth2 Login** ? Complete the Spring Security success handler redirecting to React callback.
-- [ ] **Reset Password flow** ? Implement `forgot-password` and `reset-password` endpoints utilizing time-limited email tokens. (Requires configuring Spring Mail + email provider details).
-- [ ] **CI/CD Pipelines** ? Add GitHub Actions workflow for monolithic compile, unit test passes (JaCoCo), and Docker builds.
-- [ ] **Kubernetes deployment** ? Configure Helm chart files.
-- [ ] **End-to-End Tests** ? Implement Cypress tests inside the scaffolded `cypress/` directory.
+- [ ] **Responsive Website Design** — Make frontend UI/UX mobile-friendly and responsive across various screen breakpoints.
+- [ ] **Google OAuth2 Login** — Complete the Spring Security success handler redirecting to React callback.
+- [ ] **Reset Password flow** — Implement `forgot-password` and `reset-password` endpoints utilizing time-limited email tokens. (Requires configuring Spring Mail + email provider details).
+- [ ] **CI/CD Pipelines** — Add GitHub Actions workflow for monolithic compile, unit test passes (JaCoCo), and Docker builds.
+- [ ] **Kubernetes deployment** — Configure Helm chart files.
+- [ ] **End-to-End Tests** — Implement Cypress tests inside the scaffolded `cypress/` directory.
 

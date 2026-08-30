@@ -28,6 +28,10 @@ export class AuthService {
     return localStorage.getItem('accessToken');
   }
 
+  static async getCurrentUser() {
+    return await authApi.getCurrentUser();
+  }
+
   static isAuthenticated() {
     return !!localStorage.getItem('accessToken');
   }
