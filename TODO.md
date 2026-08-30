@@ -10,7 +10,7 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 
 ### Hardcoded Admin Credentials
 - [ ] **Replace hardcoded admin seed** — `DataSeeder.java` (`com.devopssuite.config`) creates a default admin
-  account on startup with `email=admin` / `password=admin`. This is **DEV-ONLY** and must be replaced before
+  account on startup with `email=admin@admin.com` / `password=admin`. This is **DEV-ONLY** and must be replaced before
   any production deployment. Options:
   - Read credentials from environment variables (`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`)
   - A one-time setup endpoint that disables itself after first use
