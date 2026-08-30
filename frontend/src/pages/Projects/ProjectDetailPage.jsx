@@ -7,6 +7,7 @@ import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { Spinner } from '../../components/common/Spinner';
+import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -96,31 +97,17 @@ export const ProjectDetailPage = () => {
   if (loading) return <Spinner size="lg" className="mt-20" />;
   if (!project) return <div className="text-center mt-20 text-red-500">Project not found</div>;
 
-  const userRole = project.members.find((m) => m.userId === currentUser?.id || m.email === currentUser?.email)?.role || 'MEMBER';
+  const userRole = project.members?.find((m) => m.userId === currentUser?.id || m.email === currentUser?.email)?.role || 'MEMBER';
   const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
 
   return (
     <div className="space-y-6">
-      {/* Detail card */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-sm text-gray-500 mt-2">{project.description || 'No description provided.'}</p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Link to={`/projects/${projectId}/tasks`}>
-              <Button>Task Board</Button>
-            </Link>
-            <Link to={`/projects/${projectId}/code`}>
-              <Button variant="ghost">Code Editor</Button>
-            </Link>
-            <Link to={`/projects/${projectId}/logs`}>
-              <Button variant="ghost">Logs</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      {/* Project Navigation Bar */}
+      <ProjectHeaderNav
+        projectId={projectId}
+        projectName={project.name}
+        projectDescription={project.description}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Members panel */}

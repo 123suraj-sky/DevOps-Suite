@@ -11,6 +11,7 @@ import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { Spinner } from '../../components/common/Spinner';
+import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import toast from 'react-hot-toast';
 
 const COLUMNS = [
@@ -22,6 +23,7 @@ const COLUMNS = [
 
 export const TasksPage = () => {
   const { id: projectId } = useParams();
+  const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -30,13 +32,17 @@ export const TasksPage = () => {
   const [saving, setSaving] = useState(false);
   const { connected } = useWebSocket();
 
-  // Load initial tasks
-  const fetchTasks = async () => {
+  // Load initial tasks and project details
+  const fetchData = async () => {
     try {
-      const data = await projectApi.getTasks(projectId);
-      setTasks(data || []);
+      const [projectData, taskList] = await Promise.all([
+        projectApi.getById(projectId).catch(() => null),
+        projectApi.getTasks(projectId).catch(() => [])
+      ]);
+      setProject(projectData);
+      setTasks(taskList || []);
     } catch (err) {
-      console.error('Failed to load tasks:', err);
+      console.error('Failed to load project/tasks:', err);
       toast.error('Failed to load tasks');
     } finally {
       setLoading(false);
@@ -44,7 +50,7 @@ export const TasksPage = () => {
   };
 
   useEffect(() => {
-    fetchTasks();
+    fetchData();
   }, [projectId]);
 
   // Subscribe to WebSocket live updates
@@ -121,9 +127,15 @@ export const TasksPage = () => {
   if (loading) return <Spinner size="lg" className="mt-20" />;
 
   return (
-    <div className="space-y-6 flex flex-col h-[calc(100vh-8rem)]">
+    <div className="space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
+      <ProjectHeaderNav
+        projectId={projectId}
+        projectName={project?.name}
+        projectDescription={project?.description}
+      />
+
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Task Board</h1>
+        <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
         <div className="flex items-center space-x-2">
           <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-sm text-gray-500">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>

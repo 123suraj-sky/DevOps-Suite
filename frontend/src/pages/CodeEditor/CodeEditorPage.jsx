@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
+import { projectApi } from '../../api/projectApi';
 import { codeExecutionApi } from '../../api/codeExecutionApi';
+import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import toast from 'react-hot-toast';
 
 // Terminal statuses — stop polling when reached
@@ -38,6 +40,7 @@ const MONACO_LANG = { python: 'python', javascript: 'javascript', java: 'java', 
 
 export const CodeEditorPage = () => {
   const { id: projectId } = useParams();
+  const [project, setProject]         = useState(null);
   const [language, setLanguage]       = useState('python');
   const [sourceCode, setSourceCode]   = useState(DEFAULT_CODE.python);
   const [stdin, setStdin]             = useState('');
@@ -45,6 +48,13 @@ export const CodeEditorPage = () => {
   const [executionId, setExecutionId] = useState(null);
   const [result, setResult]           = useState(null);
   const [pollStatus, setPollStatus]   = useState(null);   // live status while polling
+
+  // Fetch project details for header nav
+  useEffect(() => {
+    if (projectId) {
+      projectApi.getById(projectId).then(setProject).catch(() => {});
+    }
+  }, [projectId]);
 
   // Update template when language changes
   useEffect(() => {
@@ -171,11 +181,17 @@ export const CodeEditorPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
+      <ProjectHeaderNav
+        projectId={projectId}
+        projectName={project?.name}
+        projectDescription={project?.description}
+      />
+
       {/* Control Panel */}
       <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold text-gray-900">Sandbox Code Runner</h1>
+          <h2 className="text-xl font-bold text-gray-900">Sandbox Code Runner</h2>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}

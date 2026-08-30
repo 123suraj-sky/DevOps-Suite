@@ -1,17 +1,27 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { projectApi } from '../../api/projectApi';
 import { logApi } from '../../api/logApi';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { subscribe } from '../../services/websocketService';
+import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import toast from 'react-hot-toast';
 
 export const LogsPage = () => {
   const { id: projectId } = useParams();
+  const [project, setProject] = useState(null);
   const [logs, setLogs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const { connected } = useWebSocket();
   const consoleEndRef = useRef(null);
+
+  // Fetch project details for navigation header
+  useEffect(() => {
+    if (projectId) {
+      projectApi.getById(projectId).then(setProject).catch(() => {});
+    }
+  }, [projectId]);
 
   // Auto-scroll logs panel
   useEffect(() => {
@@ -64,11 +74,17 @@ export const LogsPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] space-y-4">
+    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
+      <ProjectHeaderNav
+        projectId={projectId}
+        projectName={project?.name}
+        projectDescription={project?.description}
+      />
+
       {/* Control bar */}
       <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center space-x-3">
-          <h1 className="text-xl font-bold text-gray-900">Project Stream Logs</h1>
+          <h2 className="text-xl font-bold text-gray-900">Project Stream Logs</h2>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
             connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
           }`}>
