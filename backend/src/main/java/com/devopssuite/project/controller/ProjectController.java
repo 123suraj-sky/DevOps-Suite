@@ -98,7 +98,7 @@ public class ProjectController {
     @PostMapping("/{projectId}/members")
     public ResponseEntity<ApiResponse<Void>> addMember(@PathVariable("projectId") UUID projectId, @Valid @RequestBody MemberRequest request) {
         UUID userId = getCurrentUserId();
-        projectService.addMember(projectId, request.getUserId(), request.getRole(), userId);
+        projectService.addMember(projectId, request.getUserId(), request.getEmail(), request.getRole(), userId);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("Member added/updated successfully")
                 .build());

@@ -1,5 +1,7 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.auth.model.User;
+import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.notification.event.MemberAddedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
@@ -27,6 +29,7 @@ public class ProjectService {
     private final BoardRepository boardRepository;
     private final ColumnRepository columnRepository;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -156,16 +159,26 @@ public class ProjectService {
     }
 
     @Transactional
-    public void addMember(UUID projectId, UUID memberUserId, String role, UUID actingUserId) {
+    public void addMember(UUID projectId, UUID memberUserId, String email, String role, UUID actingUserId) {
         checkPermission(projectId, actingUserId, "ADMIN", "OWNER");
-        if (projectMemberRepository.existsByProjectIdAndUserId(projectId, memberUserId)) {
-            ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, memberUserId).get();
+        UUID resolvedUserId = memberUserId;
+        if (resolvedUserId == null) {
+            if (email == null || email.trim().isEmpty()) {
+                throw new IllegalArgumentException("Either userId or email must be provided");
+            }
+            User user = userRepository.findByEmail(email.trim().toLowerCase())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not registered with email: " + email.trim()));
+            resolvedUserId = user.getId();
+        }
+
+        if (projectMemberRepository.existsByProjectIdAndUserId(projectId, resolvedUserId)) {
+            ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, resolvedUserId).get();
             member.setRole(role);
             projectMemberRepository.save(member);
         } else {
             ProjectMember member = ProjectMember.builder()
                     .projectId(projectId)
-                    .userId(memberUserId)
+                    .userId(resolvedUserId)
                     .role(role)
                     .build();
             projectMemberRepository.save(member);
@@ -173,7 +186,7 @@ public class ProjectService {
             // Notify the newly added member
             Project project = projectRepository.findById(projectId).orElse(null);
             String projectName = project != null ? project.getName() : projectId.toString();
-            eventPublisher.publishEvent(new MemberAddedEvent(projectId, memberUserId, projectName, role));
+            eventPublisher.publishEvent(new MemberAddedEvent(projectId, resolvedUserId, projectName, role));
         }
     }
 

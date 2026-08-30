@@ -19,6 +19,7 @@ export const ProjectDetailPage = () => {
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState('MEMBER');
   const [addingMember, setAddingMember] = useState(false);
+  const [userNotFoundEmail, setUserNotFoundEmail] = useState(null);
 
   const fetchProjectDetails = async () => {
     try {
@@ -36,23 +37,48 @@ export const ProjectDetailPage = () => {
     fetchProjectDetails();
   }, [projectId]);
 
+  const handleCloseModal = () => {
+    setShowAddMemberModal(false);
+    setUserNotFoundEmail(null);
+    setMemberEmail('');
+  };
+
   const handleAddMember = async (e) => {
     e.preventDefault();
     setAddingMember(true);
+    setUserNotFoundEmail(null);
     try {
-      // Typically addMember expects a userId. Here we mock search or assume API resolves email or maps userId.
-      // For monolith API compatibility, let's use memberEmail as target.
-      await projectApi.addMember(projectId, memberEmail, memberRole);
+      await projectApi.addMember(projectId, { email: memberEmail, role: memberRole });
       toast.success('Member added successfully');
-      setShowAddMemberModal(false);
-      setMemberEmail('');
+      handleCloseModal();
       fetchProjectDetails();
     } catch (err) {
       console.error('Failed to add member:', err);
-      toast.error(err.response?.data?.message || 'Failed to add member to project');
+      const status = err.response?.status;
+      const message = err.response?.data?.message || err.response?.data?.error || '';
+      
+      if (status === 404 || message.toLowerCase().includes('not registered') || message.toLowerCase().includes('not found')) {
+        setUserNotFoundEmail(memberEmail);
+      } else {
+        toast.error(message || 'Failed to add member to project');
+      }
     } finally {
       setAddingMember(false);
     }
+  };
+
+  const handleSendEmailInvite = () => {
+    if (!userNotFoundEmail) return;
+    const inviterName = currentUser?.displayName || currentUser?.display_name || currentUser?.name || '';
+    const projectName = project?.name || 'our project';
+    const registerUrl = `${window.location.origin}/register`;
+    const subject = encodeURIComponent(`Invitation to join ${projectName} on DevOps Suite`);
+    const body = encodeURIComponent(
+      `Hi,\n\nI would like to invite you to join and collaborate on "${projectName}" on DevOps Suite.\n\nPlease create an account at ${registerUrl} using this email address to get access.\n\nBest regards,\n${inviterName}`
+    );
+    window.location.href = `mailto:${userNotFoundEmail}?subject=${subject}&body=${body}`;
+    toast.success('Opened your email client with invite draft');
+    handleCloseModal();
   };
 
   const handleRemoveMember = async (userId) => {
@@ -158,29 +184,48 @@ export const ProjectDetailPage = () => {
         </div>
       </div>
 
-      <Modal isOpen={showAddMemberModal} onClose={() => setShowAddMemberModal(false)} title="Add Project Member">
-        <form onSubmit={handleAddMember} className="space-y-4">
-          <Input
-            label="User Email"
-            type="email"
-            value={memberEmail}
-            onChange={(e) => setMemberEmail(e.target.value)}
-            required
-            placeholder="member@example.com"
-          />
-          <Select
-            label="Role"
-            value={memberRole}
-            onChange={(e) => setMemberRole(e.target.value)}
-          >
-            <option value="MEMBER">Member</option>
-            <option value="ADMIN">Admin</option>
-          </Select>
-          <div className="flex justify-end space-x-2">
-            <Button variant="ghost" onClick={() => setShowAddMemberModal(false)}>Cancel</Button>
-            <Button type="submit" loading={addingMember}>Add</Button>
+      <Modal isOpen={showAddMemberModal} onClose={handleCloseModal} title="Add Project Member">
+        {userNotFoundEmail ? (
+          <div className="space-y-4">
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-600 dark:text-amber-400">
+              <p className="font-semibold mb-1">User Not Registered</p>
+              <p>
+                No user was found with the email <strong className="underline">{userNotFoundEmail}</strong>. Would you like to send them an email invitation to join DevOps Suite and collaborate on this project?
+              </p>
+            </div>
+            <div className="flex justify-end space-x-2 pt-2">
+              <Button variant="ghost" onClick={() => setUserNotFoundEmail(null)}>
+                Try Another Email
+              </Button>
+              <Button variant="primary" onClick={handleSendEmailInvite}>
+                Send Email Invitation
+              </Button>
+            </div>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleAddMember} className="space-y-4">
+            <Input
+              label="User Email"
+              type="email"
+              value={memberEmail}
+              onChange={(e) => setMemberEmail(e.target.value)}
+              required
+              placeholder="member@example.com"
+            />
+            <Select
+              label="Role"
+              value={memberRole}
+              onChange={(e) => setMemberRole(e.target.value)}
+            >
+              <option value="MEMBER">Member</option>
+              <option value="ADMIN">Admin</option>
+            </Select>
+            <div className="flex justify-end space-x-2">
+              <Button variant="ghost" onClick={handleCloseModal}>Cancel</Button>
+              <Button type="submit" loading={addingMember}>Add</Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );

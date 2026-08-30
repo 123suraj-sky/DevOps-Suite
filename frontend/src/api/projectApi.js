@@ -25,8 +25,13 @@ export const projectApi = {
     await apiClient.delete(`/projects/${id}`);
   },
 
-  addMember: async (projectId, userId, role) => {
-    await apiClient.post(`/projects/${projectId}/members`, { userId, role });
+  addMember: async (projectId, memberData, role) => {
+    const payload = typeof memberData === 'object' && memberData !== null
+      ? memberData
+      : (typeof memberData === 'string' && memberData.includes('@')
+          ? { email: memberData, role }
+          : { userId: memberData, role });
+    await apiClient.post(`/projects/${projectId}/members`, payload);
   },
 
   removeMember: async (projectId, userId) => {

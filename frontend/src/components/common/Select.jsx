@@ -3,10 +3,11 @@ import { cn } from '../../utils';
 export const Select = ({
   label,
   error,
-  options,
+  options = [],
   placeholder,
   className,
   id,
+  children,
   ...props
 }) => {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
@@ -34,11 +35,13 @@ export const Select = ({
             {placeholder}
           </option>
         )}
-        {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
+        {options && options.length > 0
+          ? options.map((option) => (
+              <option key={option.value} value={option.value} disabled={option.disabled}>
+                {option.label}
+              </option>
+            ))
+          : children}
       </select>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>

@@ -48,6 +48,9 @@ class ProjectServiceTest {
     private TaskRepository taskRepository;
 
     @Mock
+    private com.devopssuite.auth.repository.UserRepository userRepository;
+
+    @Mock
     private ApplicationEventPublisher eventPublisher;
 
     private ProjectService projectService;
@@ -60,6 +63,7 @@ class ProjectServiceTest {
                 boardRepository,
                 columnRepository,
                 taskRepository,
+                userRepository,
                 eventPublisher);
     }
 
@@ -118,5 +122,42 @@ class ProjectServiceTest {
                 userId))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("not a member");
+    }
+
+    @Test
+    void addMemberByEmailResolvesUserAndAddsMember() {
+        UUID projectId = UUID.randomUUID();
+        UUID actingUserId = UUID.randomUUID();
+        UUID targetUserId = UUID.randomUUID();
+        String targetEmail = "colleague@example.com";
+        Project project = Project.builder().id(projectId).ownerId(actingUserId).name("Platform").build();
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(userRepository.findByEmail(targetEmail)).thenReturn(Optional.of(
+                com.devopssuite.auth.model.User.builder().id(targetUserId).email(targetEmail).displayName("Colleague").build()));
+        when(projectMemberRepository.existsByProjectIdAndUserId(projectId, targetUserId)).thenReturn(false);
+
+        projectService.addMember(projectId, null, targetEmail, "MEMBER", actingUserId);
+
+        ArgumentCaptor<ProjectMember> captor = ArgumentCaptor.forClass(ProjectMember.class);
+        verify(projectMemberRepository).save(captor.capture());
+        assertThat(captor.getValue().getProjectId()).isEqualTo(projectId);
+        assertThat(captor.getValue().getUserId()).isEqualTo(targetUserId);
+        assertThat(captor.getValue().getRole()).isEqualTo("MEMBER");
+    }
+
+    @Test
+    void addMemberByEmailThrowsNotFoundWhenUserNotRegistered() {
+        UUID projectId = UUID.randomUUID();
+        UUID actingUserId = UUID.randomUUID();
+        String unknownEmail = "unknown@example.com";
+        Project project = Project.builder().id(projectId).ownerId(actingUserId).name("Platform").build();
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(userRepository.findByEmail(unknownEmail)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> projectService.addMember(projectId, null, unknownEmail, "MEMBER", actingUserId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("User not registered with email");
     }
 }

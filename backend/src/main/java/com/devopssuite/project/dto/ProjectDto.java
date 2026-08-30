@@ -80,9 +80,10 @@ public class ProjectDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MemberRequest {
-        @NotNull
         @JsonAlias("user_id")
         private UUID userId;
+
+        private String email;
 
         @NotBlank
         private String role;
