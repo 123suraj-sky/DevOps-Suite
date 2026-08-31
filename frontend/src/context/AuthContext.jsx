@@ -60,6 +60,10 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
   }, []);
 
+  const updateUser = useCallback((updatedUserData) => {
+    dispatch({ type: 'SET_USER', payload: updatedUserData });
+  }, []);
+
   useEffect(() => {
     const initAuth = async () => {
       const token = AuthService.getToken();
@@ -85,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     state.user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_OWNER');
 
   return (
-    <AuthContext.Provider value={{ ...state, isAdmin, login, register, logout, dispatch }}>
+    <AuthContext.Provider value={{ ...state, isAdmin, login, register, logout, updateUser, dispatch }}>
       {children}
     </AuthContext.Provider>
   );

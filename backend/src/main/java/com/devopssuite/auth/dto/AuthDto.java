@@ -132,10 +132,28 @@ public class AuthDto {
         @JsonProperty("display_name")
         private String displayName;
 
+        @JsonProperty("avatar_url")
+        private String avatarUrl;
+
         private List<String> roles;
 
         @JsonProperty("created_at")
         private Instant createdAt;
+
+        @JsonProperty("last_login_at")
+        private Instant lastLoginAt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateProfileRequest {
+        @NotBlank(message = "Display name is required")
+        @JsonProperty("display_name")
+        private String displayName;
+
+        @JsonProperty("avatar_url")
+        private String avatarUrl;
     }
 
     @Data

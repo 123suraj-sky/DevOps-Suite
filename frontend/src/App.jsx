@@ -17,6 +17,7 @@ const CodeEditorPage = lazy(() => import('./pages/CodeEditor').then((m) => ({ de
 const LogsPage = lazy(() => import('./pages/Logs').then((m) => ({ default: m.LogsPage })));
 const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
 const NotificationsPage = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })));
+const ProfilePage = lazy(() => import('./pages/Profile').then((m) => ({ default: m.ProfilePage })));
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -105,6 +106,7 @@ const AppRoutes = () => {
           <Route path="/projects/:id/logs" element={<LogsPage />} />
           <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

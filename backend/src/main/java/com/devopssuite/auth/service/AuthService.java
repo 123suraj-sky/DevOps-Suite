@@ -91,8 +91,10 @@ public class AuthService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt())
                 .build();
 
         return LoginResponse.builder()
@@ -115,8 +117,36 @@ public class AuthService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .build();
+    }
+
+    @Transactional
+    public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
+            user.setDisplayName(request.getDisplayName().trim());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl().trim());
+        }
+
+        User saved = userRepository.save(user);
+
+        return UserResponse.builder()
+                .userId(saved.getId())
+                .id(saved.getId())
+                .email(saved.getEmail())
+                .displayName(saved.getDisplayName())
+                .avatarUrl(saved.getAvatarUrl())
+                .roles(saved.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
+                .createdAt(saved.getCreatedAt())
+                .lastLoginAt(saved.getLastLoginAt())
                 .build();
     }
 

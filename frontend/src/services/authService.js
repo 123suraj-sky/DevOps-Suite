@@ -32,6 +32,10 @@ export class AuthService {
     return await authApi.getCurrentUser();
   }
 
+  static async updateProfile(data) {
+    return await authApi.updateProfile(data);
+  }
+
   static isAuthenticated() {
     return !!localStorage.getItem('accessToken');
   }

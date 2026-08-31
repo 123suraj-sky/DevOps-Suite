@@ -326,15 +326,23 @@ public class ProjectService {
     private ProjectResponse mapToProjectResponse(Project project) {
         List<ProjectMember> members = projectMemberRepository.findByProjectId(project.getId());
         List<MemberResponse> memberResponses = members.stream()
-                .map(m -> MemberResponse.builder()
-                        .userId(m.getUserId())
-                        .userIdSnake(m.getUserId())
-                        .role(m.getRole())
-                        .joinedAt(m.getJoinedAt())
-                        .joinedAtSnake(m.getJoinedAt())
-                        .displayName("User " + m.getUserId().toString().substring(0, 8))
-                        .email("user-" + m.getUserId().toString().substring(0, 8) + "@example.com")
-                        .build())
+                .map(m -> {
+                    User user = userRepository.findById(m.getUserId()).orElse(null);
+                    String displayName = user != null && user.getDisplayName() != null && !user.getDisplayName().isBlank()
+                            ? user.getDisplayName()
+                            : (user != null ? user.getEmail() : "User " + m.getUserId().toString().substring(0, 8));
+                    String email = user != null ? user.getEmail() : "user-" + m.getUserId().toString().substring(0, 8) + "@example.com";
+
+                    return MemberResponse.builder()
+                            .userId(m.getUserId())
+                            .userIdSnake(m.getUserId())
+                            .role(m.getRole())
+                            .joinedAt(m.getJoinedAt())
+                            .joinedAtSnake(m.getJoinedAt())
+                            .displayName(displayName)
+                            .email(email)
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         return ProjectResponse.builder()

@@ -108,6 +108,36 @@ public class AuthController {
         }
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        try {
+            String userIdStr = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            UUID userId = UUID.fromString(userIdStr);
+            UserResponse response = authService.updateProfile(userId, request);
+            return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                    .message("Profile updated successfully")
+                    .data(response)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.<UserResponse>builder()
+                            .status("error")
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<UserResponse>builder()
+                            .status("error")
+                            .message(e.getMessage())
+                            .build());
+        }
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> patchProfile(@RequestBody UpdateProfileRequest request) {
+        return updateProfile(request);
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {

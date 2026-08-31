@@ -77,6 +77,7 @@
 - [x] **Frontend pages scaffold** — Login, Register, Projects, Kanban, Code Editor, Logs, Metrics pages exist
 - [x] **Architecture conversion** — Converted from microservices to monolith; removed Kafka, Zookeeper, API Gateway
 - [x] **Agent context files** — AGENTS.md, GEMINI.md, .agents/ directory created
+- [x] **User Profile & Details** — Added User Profile page (`/profile`) with avatar customization (presets and custom URLs), user stats, `PUT/PATCH /api/auth/me` endpoints, and resolved real user names/emails for project members.
 
 ---
 

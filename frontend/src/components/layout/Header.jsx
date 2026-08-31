@@ -72,20 +72,33 @@ export const Header = ({ onMenuToggle }) => {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100"
+            className="flex items-center justify-center p-1 rounded-full hover:ring-2 hover:ring-primary-300 transition-all focus:outline-none"
+            title={user?.displayName || user?.email || 'User Menu'}
           >
-            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-primary-700">
-                {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
-              </span>
-            </div>
-            <span className="hidden md:block text-sm font-medium text-gray-700">
-              {user?.firstName} {user?.lastName}
-            </span>
+            {user?.avatarUrl || user?.avatar_url ? (
+              <img
+                src={user.avatarUrl || user.avatar_url}
+                alt={user.displayName || user.email || 'User Avatar'}
+                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+              />
+            ) : (
+              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-primary-700">
+                  {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+              </div>
               <Link
                 to="/profile"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
