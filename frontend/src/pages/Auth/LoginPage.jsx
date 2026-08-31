@@ -31,7 +31,7 @@ export const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">🚀 DevOps Suite</h1>
+          <h1 className="text-2xl font-bold text-gray-900">DevOps Suite</h1>
           <p className="text-sm text-gray-500 mt-2">Sign in to your account</p>
         </div>
 

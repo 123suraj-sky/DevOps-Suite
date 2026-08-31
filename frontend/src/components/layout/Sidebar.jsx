@@ -32,7 +32,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
       >
         <div className="flex items-center justify-center h-16 border-b border-gray-200">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary-600">🚀 DevOps Suite</span>
+            <span className="text-xl font-bold text-primary-600">DevOps Suite</span>
           </Link>
         </div>
 

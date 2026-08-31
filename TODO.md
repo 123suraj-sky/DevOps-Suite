@@ -68,3 +68,6 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 - [ ] **Invitation preferences settings** — Add a user settings toggle (e.g., "Allow users to add me" / "Only
   accept me via invitation") controlling how others can request to connect.
 
+### Branding & UI/UX
+- [ ] **Custom Logo** — Design and integrate a custom brand logo for DevOps Suite to replace placeholder text in the navigation bar, sidebar, and auth pages.
+
