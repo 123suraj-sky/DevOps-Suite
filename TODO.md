@@ -51,3 +51,20 @@ This file tracks outstanding developer and agent tasks for the DevOps Suite mono
 - [ ] **Kubernetes deployment** — Configure Helm chart files.
 - [ ] **End-to-End Tests** — Implement Cypress tests inside the scaffolded `cypress/` directory.
 
+---
+
+## 💡 Feature Ideas / Backlog
+
+### User Invites & Public/Private Profiles
+- [ ] **Invite other users** — By default any user can add (invite) another user inside the app, but the user
+  should be able to turn this feature off in their settings so they can only join via an accepted invitation request.
+- [ ] **Invite / join request flow (opt-in gating)** — A user cannot simply join a team/project; they must send a
+  request that the target user must explicitly **accept** or **reject** before access is granted.
+- [ ] **Public vs. private profile visibility** — Support a "public" and "private" profile mode, similar to social
+  platforms:
+  - Public details visible to anyone (e.g., display name, avatar, bio).
+  - Private details hidden until the relationship/invite is accepted (e.g., email, project memberships,
+    contact info, activity/statistics).
+- [ ] **Invitation preferences settings** — Add a user settings toggle (e.g., "Allow users to add me" / "Only
+  accept me via invitation") controlling how others can request to connect.
+
