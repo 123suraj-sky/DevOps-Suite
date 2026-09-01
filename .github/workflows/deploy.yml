@@ -74,4 +74,5 @@ jobs:
             fi
             
             git pull origin master
+            docker system prune -f
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
