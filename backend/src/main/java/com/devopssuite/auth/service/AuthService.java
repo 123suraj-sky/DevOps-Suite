@@ -1,6 +1,7 @@
 package com.devopssuite.auth.service;
 
 import com.devopssuite.auth.dto.AuthDto.*;
+import com.devopssuite.auth.model.Gender;
 import com.devopssuite.auth.model.Role;
 import com.devopssuite.auth.model.User;
 import com.devopssuite.auth.repository.RoleRepository;
@@ -35,7 +36,7 @@ public class AuthService {
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$";
 
     @Transactional
-    public SignupResponse register(SignupRequest request) {
+    public LoginResponse register(SignupRequest request) {
         if (!request.getPassword().matches(PASSWORD_PATTERN)) {
             throw new IllegalArgumentException("Password must be at least 8 characters and contain uppercase, lowercase, digit, and special character (@#$%^&+=!)");
         }
@@ -62,11 +63,28 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        return SignupResponse.builder()
+        String accessToken = jwtUtils.generateAccessToken(savedUser);
+        String refreshToken = jwtUtils.generateRefreshToken(savedUser);
+
+        UserResponse userResponse = UserResponse.builder()
                 .userId(savedUser.getId())
+                .id(savedUser.getId())
                 .email(savedUser.getEmail())
                 .displayName(savedUser.getDisplayName())
+                .avatarUrl(savedUser.getAvatarUrl())
+                .gender(savedUser.getGender())
+                .roles(savedUser.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(savedUser.getCreatedAt())
+                .lastLoginAt(savedUser.getLastLoginAt())
+                .build();
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .accessTokenSnake(accessToken)
+                .refreshToken(refreshToken)
+                .refreshTokenSnake(refreshToken)
+                .expiresIn(86400) // 24 hours
+                .user(userResponse)
                 .build();
     }
 
@@ -92,6 +110,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
+                .gender(user.getGender())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
@@ -118,6 +137,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
+                .gender(user.getGender())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
@@ -135,6 +155,9 @@ public class AuthService {
         if (request.getAvatarUrl() != null) {
             user.setAvatarUrl(request.getAvatarUrl().trim());
         }
+        if (request.getGender() != null) {
+            user.setGender(request.getGender());
+        }
 
         User saved = userRepository.save(user);
 
@@ -144,6 +167,7 @@ public class AuthService {
                 .email(saved.getEmail())
                 .displayName(saved.getDisplayName())
                 .avatarUrl(saved.getAvatarUrl())
+                .gender(saved.getGender())
                 .roles(saved.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                 .createdAt(saved.getCreatedAt())
                 .lastLoginAt(saved.getLastLoginAt())

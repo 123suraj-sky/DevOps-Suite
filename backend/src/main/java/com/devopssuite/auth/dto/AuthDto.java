@@ -1,5 +1,6 @@
 package com.devopssuite.auth.dto;
 
+import com.devopssuite.auth.model.Gender;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -135,6 +136,8 @@ public class AuthDto {
         @JsonProperty("avatar_url")
         private String avatarUrl;
 
+        private Gender gender;
+
         private List<String> roles;
 
         @JsonProperty("created_at")
@@ -154,6 +157,8 @@ public class AuthDto {
 
         @JsonProperty("avatar_url")
         private String avatarUrl;
+
+        private Gender gender;
     }
 
     @Data

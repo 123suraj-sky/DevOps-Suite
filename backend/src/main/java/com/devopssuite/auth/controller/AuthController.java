@@ -21,17 +21,17 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<SignupResponse>> register(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> register(@Valid @RequestBody SignupRequest request) {
         try {
-            SignupResponse response = authService.register(request);
+            LoginResponse response = authService.register(request);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.<SignupResponse>builder()
+                    .body(ApiResponse.<LoginResponse>builder()
                             .message("User registered successfully")
                             .data(response)
                             .build());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ApiResponse.<SignupResponse>builder()
+                    .body(ApiResponse.<LoginResponse>builder()
                             .status("error")
                             .message(e.getMessage())
                             .build());

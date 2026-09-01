@@ -1,73 +1,18 @@
-# DevOps Suite ? Project TODOs
+# TODO
 
-This file tracks outstanding developer and agent tasks for the DevOps Suite monolithic platform.
+## Profile Page Enhancements
 
-- [x] **Login bug on reload** — Fixed `AuthService.getCurrentUser()` missing implementation causing session reset on refresh. (Completed)
+### 1. Code Run Activity Graph
+Replace the current "Activity & Statistics" content area (stats cards + recent executions table) with a GitHub/LeetCode-style activity heatmap showing daily code run counts over the past year.
+- Backend: API endpoint to return daily execution counts per user (grouped by date)
+- Frontend: Render a 52-week calendar grid (similar to GitHub contributions graph) using the execution data
 
----
+### 2. Follow / Following System
+Add the ability for users to follow each other.
+- Backend: `user_follows` join table, follow/unfollow endpoints, follower/following count APIs
+- Frontend: Follow button on profile page (toggle follow/unfollow), display follower count and following count on the profile
 
-## ⚠️ Security — Must Fix Before Production
-
-### Hardcoded Admin Credentials
-- [ ] **Replace hardcoded admin seed** — `DataSeeder.java` (`com.devopssuite.config`) creates a default admin
-  account on startup with `email=admin@admin.com` / `password=admin`. This is **DEV-ONLY** and must be replaced before
-  any production deployment. Options:
-  - Read credentials from environment variables (`ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env`)
-  - A one-time setup endpoint that disables itself after first use
-  - An external identity provider / SSO / LDAP integration
-  - File to update: `backend/src/main/java/com/devopssuite/config/DataSeeder.java`
-
----
-
-## 🔴 High Priority
-
-### Code Execution Sandbox (Phase 2 completion)
-- [x] **Pipe stdin** — Wire `stdin` payload from requests to the ephemeral container inside `DockerSandbox.java`. (Completed)
-- [x] **Java compilation support** — Extend sandbox language capabilities to build and run Java classes. (Completed)
-- [x] **C++ compilation support** — Extend sandbox language capabilities to build and run C++ files. (Completed)
-- [x] **Docker-in-Docker path alignment** — Fix hardcoded local directory paths (`backend/code-execution-service/temp/`) so directory mounting is portable inside dockerized environments via host-temp-dir property. (Completed)
-- [x] **Align API routes** — Sync endpoint mappings (frontend calls `/api/execution/run` but backend currently exposes `/api/v1/execute`). (Completed)
-
----
-
-## 🟡 Medium Priority
-
-### Observability & Real-Time (Phase 3)
-- [x] **WebSocket STOMP Broker** — `WebSocketConfig.java` at `/ws`, SockJS, `/topic` broker. (Completed)
-- [x] **Real-time logs streaming** — `RequestLoggingFilter` + `LogStreamingService` broadcast project-scoped logs to `/topic/logs/{projectId}`. (Completed)
-- [x] **In-App Notifications** — Full `notification` module: DB persistence, REST API, Spring Events, WebSocket push to `/topic/notifications/{userId}`. (Completed)
-- [x] **Structured logging pipeline** — `ElasticsearchLogService` indexes JSON log docs to `devopssuite-logs-{date}` index. (Completed)
-- [ ] **Kanban Board WebSocket updates** — Broadcast card movements on `/topic/tasks/{projectId}` (wire into `TaskService.reorderTasks`).
-- [ ] **Metrics Dashboard charts** — Map Actuator `/actuator/metrics` to frontend Recharts diagrams.
-
----
-
-## 🟣 Stretch Goals
-
-- [ ] **Responsive Website Design** — Make frontend UI/UX mobile-friendly and responsive across various screen breakpoints.
-- [ ] **Google OAuth2 Login** — Complete the Spring Security success handler redirecting to React callback.
-- [ ] **Reset Password flow** — Implement `forgot-password` and `reset-password` endpoints utilizing time-limited email tokens. (Requires configuring Spring Mail + email provider details).
-- [ ] **CI/CD Pipelines** — Add GitHub Actions workflow for monolithic compile, unit test passes (JaCoCo), and Docker builds.
-- [ ] **Kubernetes deployment** — Configure Helm chart files.
-- [ ] **End-to-End Tests** — Implement Cypress tests inside the scaffolded `cypress/` directory.
-
----
-
-## 💡 Feature Ideas / Backlog
-
-### User Invites & Public/Private Profiles
-- [ ] **Invite other users** — By default any user can add (invite) another user inside the app, but the user
-  should be able to turn this feature off in their settings so they can only join via an accepted invitation request.
-- [ ] **Invite / join request flow (opt-in gating)** — A user cannot simply join a team/project; they must send a
-  request that the target user must explicitly **accept** or **reject** before access is granted.
-- [ ] **Public vs. private profile visibility** — Support a "public" and "private" profile mode, similar to social
-  platforms:
-  - Public details visible to anyone (e.g., display name, avatar, bio).
-  - Private details hidden until the relationship/invite is accepted (e.g., email, project memberships,
-    contact info, activity/statistics).
-- [ ] **Invitation preferences settings** — Add a user settings toggle (e.g., "Allow users to add me" / "Only
-  accept me via invitation") controlling how others can request to connect.
-
-### Branding & UI/UX
-- [ ] **Custom Logo** — Design and integrate a custom brand logo for DevOps Suite to replace placeholder text in the navigation bar, sidebar, and auth pages.
-
+### 3. Profile View Count
+Track and display how many times a user's profile has been viewed.
+- Backend: Increment view count on every `GET /api/auth/users/:id` (or equivalent public profile endpoint), store count in DB
+- Frontend: Display view count on the profile page

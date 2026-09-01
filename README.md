@@ -4,7 +4,7 @@ A full-stack developer productivity platform built with a monolithic Spring Boot
 
 ---
 
-## 🧰 Prerequisites
+## Prerequisites
 
 Make sure the following are installed:
 
@@ -17,7 +17,7 @@ Make sure the following are installed:
 
 ---
 
-## 🚀 Running the Project
+## Running the Project
 
 ### Step 1 — Configure Environment
 ```bash
@@ -58,7 +58,7 @@ The frontend starts on `http://localhost:5173` and talks to the backend at `http
 
 ---
 
-## 🌐 Service URLs
+## Service URLs
 
 | Service | URL |
 |---|---|
@@ -70,7 +70,7 @@ The frontend starts on `http://localhost:5173` and talks to the backend at `http
 
 ---
 
-## 🔄 Daily Workflow
+## Daily Workflow
 ```bash
 # 1. Start infra + backend (compiles inside Docker)
 docker-compose up -d postgres redis backend
@@ -84,8 +84,14 @@ cd frontend && npm run dev
 
 ---
 
-## 🛑 Stopping Everything
+## Stopping Everything
 ```bash
 docker-compose down          # Stop all containers
 docker-compose down -v       # Stop + wipe volumes (fresh start)
 ```
+
+---
+
+## Icons & Assets
+
+Icons used throughout the UI are sourced from [Flaticon](https://www.flaticon.com).

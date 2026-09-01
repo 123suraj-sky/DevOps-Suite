@@ -35,6 +35,11 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 20, nullable = false)
+    @Builder.Default
+    private Gender gender = Gender.PREFER_NOT_TO_SAY;
+
     @Column(name = "oauth_provider")
     private String oauthProvider;
 

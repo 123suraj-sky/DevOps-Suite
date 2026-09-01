@@ -39,6 +39,7 @@ export const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [gender, setGender] = useState('');
   const [saving, setSaving] = useState(false);
 
   // Avatar picker modal
@@ -49,6 +50,7 @@ export const ProfilePage = () => {
     if (user) {
       setDisplayName(user.displayName || user.name || '');
       setAvatarUrl(user.avatarUrl || user.avatar_url || '');
+      setGender(user.gender || 'PREFER_NOT_TO_SAY');
     }
   }, [user]);
 
@@ -78,6 +80,7 @@ export const ProfilePage = () => {
       const updatedUser = await AuthService.updateProfile({
         display_name: displayName.trim(),
         avatar_url: avatarUrl.trim(),
+        gender: gender || null,
       });
       updateUser(updatedUser);
       toast.success('Profile updated successfully');
@@ -122,6 +125,7 @@ export const ProfilePage = () => {
               setIsEditing(false);
               setDisplayName(user?.displayName || user?.name || '');
               setAvatarUrl(user?.avatarUrl || user?.avatar_url || '');
+              setGender(user?.gender || 'PREFER_NOT_TO_SAY');
             }}>
               Cancel
             </Button>
@@ -189,7 +193,7 @@ export const ProfilePage = () => {
                     {user?.displayName || 'Unnamed User'}
                   </h2>
                   <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
-                    {user?.roles?.map((role) => (
+                    {user?.roles?.filter((role) => role !== 'ROLE_MEMBER').map((role) => (
                       <span
                         key={role}
                         className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-800 uppercase tracking-wide"
@@ -202,7 +206,7 @@ export const ProfilePage = () => {
 
                 <p className="text-gray-600 text-sm flex items-center justify-center md:justify-start gap-1.5">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   {user?.email}
                 </p>
@@ -222,6 +226,15 @@ export const ProfilePage = () => {
                       <span>{formatDate(user.lastLoginAt)}</span>
                     </div>
                   )}
+                  <div>
+                    <span className="font-medium text-gray-700">Gender:</span>{' '}
+                    <span>
+                      {user?.gender === 'MALE' && 'Male'}
+                      {user?.gender === 'FEMALE' && 'Female'}
+                      {user?.gender === 'PREFER_NOT_TO_SAY' && 'Prefer not to say'}
+                      {!user?.gender && '—'}
+                    </span>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -239,6 +252,18 @@ export const ProfilePage = () => {
                   onChange={(e) => setAvatarUrl(e.target.value)}
                   placeholder="https://example.com/avatar.png"
                 />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  >
+                    <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                   <input
