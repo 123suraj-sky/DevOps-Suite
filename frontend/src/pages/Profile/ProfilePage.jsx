@@ -8,6 +8,7 @@ import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { Spinner } from '../../components/common/Spinner';
 import { formatDate } from '../../utils/formatters';
+import { getDefaultAvatar } from '../../utils';
 import toast from 'react-hot-toast';
 
 const PRESET_AVATARS = [
@@ -151,6 +152,12 @@ export const ProfilePage = () => {
                     e.target.onerror = null;
                     e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=DevOps';
                   }}
+                />
+              ) : getDefaultAvatar(isEditing ? gender : user?.gender) ? (
+                <img
+                  src={getDefaultAvatar(isEditing ? gender : user?.gender)}
+                  alt={(isEditing ? gender : user?.gender) === 'FEMALE' ? 'Female User' : 'Male User'}
+                  className="w-28 h-28 rounded-full object-cover border-4 border-primary-50 shadow-md bg-white"
                 />
               ) : (
                 <div className="w-28 h-28 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-4xl font-bold border-4 border-primary-50 shadow-md">

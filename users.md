@@ -20,6 +20,7 @@
 |---|---|---|
 ||suraj@gmail.com|Test@1234|
 ||kumar@gmail.com|Test@1234|
+||lk@gmail.com|Test@1234|
 
 ## Admin
 |S.No.|Email|Password|

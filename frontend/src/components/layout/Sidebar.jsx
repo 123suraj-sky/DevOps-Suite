@@ -1,12 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils';
+import dashboardIcon from '../../assets/07_dashboard.svg';
+import projectsIcon from '../../assets/08_folder.svg';
+import metricsIcon from '../../assets/10_metrics.svg';
+import notificationsIcon from '../../assets/09_notification_bell.svg';
 
 const baseNavLinks = [
-  { path: '/', label: 'Dashboard', icon: '📊' },
-  { path: '/projects', label: 'Projects', icon: '📁' },
-  { path: '/metrics', label: 'Metrics', icon: '📈', adminOnly: true },
-  { path: '/notifications', label: 'Notifications', icon: '🔔' },
+  { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard' },
+  { path: '/projects', label: 'Projects', icon: projectsIcon, iconAlt: 'Projects' },
+  { path: '/metrics', label: 'Metrics', icon: metricsIcon, iconAlt: 'Metrics', adminOnly: true },
+  { path: '/notifications', label: 'Notifications', icon: notificationsIcon, iconAlt: 'Notifications' },
 ];
 
 export const Sidebar = ({ isOpen = true, onClose }) => {
@@ -49,7 +53,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
               )}
               onClick={onClose}
             >
-              <span>{link.icon}</span>
+              <img src={link.icon} alt={link.iconAlt} className="w-5 h-5 object-contain" />
               <span>{link.label}</span>
             </Link>
           ))}

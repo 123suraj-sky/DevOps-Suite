@@ -5,6 +5,8 @@ import { projectApi } from '../../api/projectApi';
 import { codeExecutionApi } from '../../api/codeExecutionApi';
 import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import toast from 'react-hot-toast';
+import clockIcon from '../../assets/14_clock.svg';
+import skullIcon from '../../assets/15_skull.svg';
 
 // Terminal statuses — stop polling when reached
 const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMEOUT', 'OOM_KILLED']);
@@ -148,8 +150,8 @@ export const CodeEditorPage = () => {
         </div>
 
         {/* Timeout / OOM banners */}
-        {result.timed_out   && <div className="text-orange-400 font-bold">⏱ Execution timed out.</div>}
-        {result.oom_killed  && <div className="text-red-500 font-bold">💀 Killed: out of memory.</div>}
+        {result.timed_out   && <div className="flex items-center gap-2 text-orange-400 font-bold"><img src={clockIcon} alt="Timed out" className="w-4 h-4 object-contain" /> Execution timed out.</div>}
+        {result.oom_killed  && <div className="flex items-center gap-2 text-red-500 font-bold"><img src={skullIcon} alt="OOM killed" className="w-4 h-4 object-contain" /> Killed: out of memory.</div>}
 
         {/* stdout */}
         {result.stdout && (

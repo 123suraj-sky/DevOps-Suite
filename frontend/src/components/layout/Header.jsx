@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { formatRelativeTime } from '../../utils/formatters';
+import { getDefaultAvatar } from '../../utils';
+import notificationBellIcon from '../../assets/09_notification_bell.svg';
 
 export const Header = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
@@ -29,7 +31,7 @@ export const Header = ({ onMenuToggle }) => {
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
           >
-            🔔
+            <img src={notificationBellIcon} alt="Notifications" className="w-5 h-5 object-contain" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -81,6 +83,12 @@ export const Header = ({ onMenuToggle }) => {
                 alt={user.displayName || user.email || 'User Avatar'}
                 className="w-8 h-8 rounded-full object-cover border border-gray-200"
                 onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+              />
+            ) : getDefaultAvatar(user?.gender) ? (
+              <img
+                src={getDefaultAvatar(user?.gender)}
+                alt={user?.gender === 'FEMALE' ? 'Female User' : 'Male User'}
+                className="w-8 h-8 rounded-full object-cover border border-gray-200"
               />
             ) : (
               <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">

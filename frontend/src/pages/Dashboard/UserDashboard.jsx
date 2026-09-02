@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { metricsApi } from '../../api';
 import { Card } from '../../components/common/Card';
 import { Spinner } from '../../components/common/Spinner';
+import checkIcon from '../../assets/11_check.svg';
+import lightningIcon from '../../assets/12_lightning.svg';
+import diamondIcon from '../../assets/13_diamond.svg';
 
 const STATUS_STYLES = {
   COMPLETED: 'bg-green-100 text-green-800',
@@ -14,8 +17,8 @@ const STATUS_STYLES = {
 };
 
 const ACTIVITY_ICONS = {
-  TASK_UPDATED: '✅',
-  CODE_EXECUTED: '⚡',
+  TASK_UPDATED: checkIcon,
+  CODE_EXECUTED: lightningIcon,
 };
 
 /** Formats an ISO timestamp as a relative string, e.g. "3 minutes ago" */
@@ -122,7 +125,11 @@ export const UserDashboard = () => {
               {recentActivity.map((event, idx) => (
                 <li key={idx} className="flex items-start space-x-3 py-2">
                   <span className="text-base leading-none mt-0.5">
-                    {ACTIVITY_ICONS[event.type] ?? '🔹'}
+                    <img
+                      src={ACTIVITY_ICONS[event.type] ?? diamondIcon}
+                      alt={event.type}
+                      className="w-4 h-4 object-contain"
+                    />
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 truncate">{event.description}</p>
