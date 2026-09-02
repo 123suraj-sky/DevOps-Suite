@@ -125,17 +125,6 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
-  # Logstash
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.12.0
-    container_name: devopssuite-logstash
-    depends_on:
-      - elasticsearch
-    ports:
-      - "5044:5044"
-    volumes:
-      - ./config/logstash:/usr/share/logstash/pipeline
-
   # Kibana
   kibana:
     image: docker.elastic.co/kibana/kibana:8.12.0

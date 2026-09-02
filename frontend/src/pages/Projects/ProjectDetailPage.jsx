@@ -1,42 +1,22 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { projectApi } from '../../api/projectApi';
+import { useState } from 'react';
+import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
-import { Spinner } from '../../components/common/Spinner';
-import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export const ProjectDetailPage = () => {
   const { id: projectId } = useParams();
+  const { project, refreshProject } = useOutletContext();
   const { user: currentUser } = useAuth();
-  const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [memberEmail, setMemberEmail] = useState('');
   const [memberRole, setMemberRole] = useState('MEMBER');
   const [addingMember, setAddingMember] = useState(false);
   const [userNotFoundEmail, setUserNotFoundEmail] = useState(null);
-
-  const fetchProjectDetails = async () => {
-    try {
-      const data = await projectApi.getById(projectId);
-      setProject(data);
-    } catch (err) {
-      console.error('Failed to get project details:', err);
-      toast.error('Failed to load project details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProjectDetails();
-  }, [projectId]);
 
   const handleCloseModal = () => {
     setShowAddMemberModal(false);
@@ -52,7 +32,7 @@ export const ProjectDetailPage = () => {
       await projectApi.addMember(projectId, { email: memberEmail, role: memberRole });
       toast.success('Member added successfully');
       handleCloseModal();
-      fetchProjectDetails();
+      refreshProject();
     } catch (err) {
       console.error('Failed to add member:', err);
       const status = err.response?.status;
@@ -87,27 +67,18 @@ export const ProjectDetailPage = () => {
     try {
       await projectApi.removeMember(projectId, userId);
       toast.success('Member removed successfully');
-      fetchProjectDetails();
+      refreshProject();
     } catch (err) {
       console.error('Failed to remove member:', err);
       toast.error('Failed to remove member');
     }
   };
 
-  if (loading) return <Spinner size="lg" className="mt-20" />;
-  if (!project) return <div className="text-center mt-20 text-red-500">Project not found</div>;
-
-  const userRole = project.members?.find((m) => m.userId === currentUser?.id || m.email === currentUser?.email)?.role || 'MEMBER';
+  const userRole = project?.members?.find((m) => m.userId === currentUser?.id || m.email === currentUser?.email)?.role || 'MEMBER';
   const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
 
   return (
     <div className="space-y-6">
-      {/* Project Navigation Bar */}
-      <ProjectHeaderNav
-        projectId={projectId}
-        projectName={project.name}
-        projectDescription={project.description}
-      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Members panel */}
@@ -122,7 +93,7 @@ export const ProjectDetailPage = () => {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {project.members.map((member) => (
+            {project?.members?.map((member) => (
               <div key={member.userId} className="flex justify-between items-center py-3">
                 <div>
                   <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
@@ -155,17 +126,17 @@ export const ProjectDetailPage = () => {
           <div className="space-y-3 text-sm text-gray-600">
             <div>
               <span className="font-semibold block">Owner ID</span>
-              <span>{project.ownerId}</span>
+              <span>{project?.ownerId}</span>
             </div>
             <div>
               <span className="font-semibold block">Status</span>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                {project.status || 'ACTIVE'}
+                {project?.status || 'ACTIVE'}
               </span>
             </div>
             <div>
               <span className="font-semibold block">Created At</span>
-              <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+              <span>{project?.createdAt ? new Date(project.createdAt).toLocaleDateString() : '—'}</span>
             </div>
           </div>
         </div>

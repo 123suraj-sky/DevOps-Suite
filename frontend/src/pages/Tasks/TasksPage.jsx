@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useOutletContext } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { projectApi } from '../../api/projectApi';
 import { taskApi } from '../../api/taskApi';
+import { projectApi } from '../../api/projectApi';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { subscribe } from '../../services/websocketService';
 import { Card } from '../../components/common/Card';
@@ -11,7 +11,6 @@ import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { Spinner } from '../../components/common/Spinner';
-import { ProjectHeaderNav } from '../../components/layout/ProjectHeaderNav';
 import toast from 'react-hot-toast';
 
 const COLUMNS = [
@@ -23,7 +22,7 @@ const COLUMNS = [
 
 export const TasksPage = () => {
   const { id: projectId } = useParams();
-  const [project, setProject] = useState(null);
+  const { project } = useOutletContext();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -35,14 +34,10 @@ export const TasksPage = () => {
   // Load initial tasks and project details
   const fetchData = async () => {
     try {
-      const [projectData, taskList] = await Promise.all([
-        projectApi.getById(projectId).catch(() => null),
-        projectApi.getTasks(projectId).catch(() => [])
-      ]);
-      setProject(projectData);
+      const taskList = await projectApi.getTasks(projectId).catch(() => []);
       setTasks(taskList || []);
     } catch (err) {
-      console.error('Failed to load project/tasks:', err);
+      console.error('Failed to load tasks:', err);
       toast.error('Failed to load tasks');
     } finally {
       setLoading(false);
@@ -128,12 +123,6 @@ export const TasksPage = () => {
 
   return (
     <div className="space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
-      <ProjectHeaderNav
-        projectId={projectId}
-        projectName={project?.name}
-        projectDescription={project?.description}
-      />
-
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
         <div className="flex items-center space-x-2">

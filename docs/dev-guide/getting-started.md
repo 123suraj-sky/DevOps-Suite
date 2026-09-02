@@ -54,7 +54,7 @@ $env:GOOGLE_CLIENT_SECRET = "your-secret"
 ### Frontend
 `frontend/.env` is pre-configured:
 ```
-VITE_API_BASE_URL=http://localhost:8081/api
+VITE_API_URL=http://localhost:8081/api
 VITE_WS_URL=ws://localhost:8081/ws
 ```
 No changes needed for local development.
@@ -722,7 +722,7 @@ docker-compose down -v
 ### Frontend shows blank / no data
 - Confirm backend is running on port `8081`.
 - Check browser DevTools → Network tab for failed API calls.
-- Confirm `frontend/.env` has `VITE_API_BASE_URL=http://localhost:8081/api`.
+- Confirm `frontend/.env` has `VITE_API_URL=http://localhost:8081/api`.
 
 ### Code execution times out or fails
 - Ensure Docker Desktop is running.

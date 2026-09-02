@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { MainLayout } from './components/layout/MainLayout';
+import { ProjectLayout } from './components/layout/ProjectLayout';
 import { Spinner } from './components/common/Spinner';
 
 // Lazy-loaded pages
@@ -100,10 +101,12 @@ const AppRoutes = () => {
         >
           <Route path="/" element={<DashboardPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:id" element={<ProjectDetailPage />} />
-          <Route path="/projects/:id/tasks" element={<TasksPage />} />
-          <Route path="/projects/:id/code" element={<CodeEditorPage />} />
-          <Route path="/projects/:id/logs" element={<LogsPage />} />
+          <Route path="/projects/:id" element={<ProjectLayout />}>
+            <Route index element={<ProjectDetailPage />} />
+            <Route path="tasks" element={<TasksPage />} />
+            <Route path="code" element={<CodeEditorPage />} />
+            <Route path="logs" element={<LogsPage />} />
+          </Route>
           <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />

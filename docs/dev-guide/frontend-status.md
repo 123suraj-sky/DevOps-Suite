@@ -25,7 +25,7 @@
 
 ```
 frontend/
-├── .env                        ← VITE_API_BASE_URL, VITE_WS_URL
+├── .env                        ← VITE_API_URL, VITE_WS_URL
 ├── package.json
 └── src/
     ├── App.jsx                 ← Root component, router, provider tree
@@ -105,7 +105,7 @@ All authenticated routes are wrapped with `ProtectedRoute`. Public routes redire
 Files in `src/api/` — each wraps a group of Axios calls.
 
 ### `client.js`
-- Configured Axios instance with `baseURL` from `import.meta.env.VITE_API_BASE_URL`
+- Configured Axios instance with `baseURL` from `import.meta.env.VITE_API_URL`
 - Request interceptor: attaches `Authorization: Bearer <token>` from localStorage
 - Response interceptor: handles 401 token expiry with auto-refresh loop
 

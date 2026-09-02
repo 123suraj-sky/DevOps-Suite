@@ -30,7 +30,6 @@ Azure VM  (Ubuntu LTS)
               ├── redis      (Redis 7, port 6379)
               ├── elasticsearch  (port 9200)
               ├── kibana         (port 5601)
-              ├── logstash       (port 5044)
               ├── prometheus     (port 9090)
               └── grafana        (port 3000)
 ```
@@ -65,6 +64,7 @@ The NSG is the perimeter firewall. Only the minimum required ports are open to t
 
 > All internal service ports (8081, 5432, 6379, 9200, 5601, 9090, 3000) are **not** exposed to the internet. They are only accessible within the Docker bridge network or via SSH tunnel.
 
+
 ---
 
 ## 5. Docker Compose Stack
@@ -80,7 +80,6 @@ All services run inside a single Docker Compose project sharing an internal brid
 | `devopssuite-postgres` | `postgres:16-alpine` | 5432 | 5432 | Primary datastore; named volume `postgres_data` |
 | `devopssuite-redis` | `redis:7-alpine` | 6379 | 6379 | Cache + rate limiting + JWT blacklist |
 | `devopssuite-elasticsearch` | `elasticsearch:8.12.0` | 9200 | 9200 | Log storage; single-node, security disabled |
-| `devopssuite-logstash` | `logstash:8.12.0` | 5044 | 5044 | Log ingestion pipeline |
 | `devopssuite-kibana` | `kibana:8.12.0` | 5601 | 5601 | Log explorer UI |
 | `devopssuite-prometheus` | `prom/prometheus:2.51.0` | 9090 | 9090 | Metrics scraping |
 | `devopssuite-grafana` | `grafana/grafana:10.4.0` | 3000 | 3000 | Metrics dashboards |
@@ -293,7 +292,6 @@ docker compose up -d --remove-orphans
 | Prometheus | `http://localhost:9090` | Scrapes `/actuator/prometheus` every 15s |
 | Grafana | `http://localhost:3000` | Dashboards over Prometheus data |
 | Elasticsearch | `http://localhost:9200` | Stores structured application logs |
-| Logstash | `http://localhost:5044` | Ingests and transforms log events |
 | Kibana | `http://localhost:5601` | Log search and visualization |
 
 Prometheus is configured via `config/prometheus/prometheus.yml` and uses `host.docker.internal` to scrape the backend when needed.
