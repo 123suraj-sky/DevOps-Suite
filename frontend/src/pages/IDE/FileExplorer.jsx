@@ -1,4 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import pythonIcon from '../../assets/03_python.svg';
+import javascriptIcon from '../../assets/04_js.svg';
+import javaIcon from '../../assets/05_java.svg';
+import cppIcon from '../../assets/06_cpp.svg';
+import dangerIcon from '../../assets/16_danger.svg';
 
 // ── Icons (inline SVG — zero extra deps) ────────────────────────────────────
 
@@ -23,11 +28,19 @@ const FolderIcon = ({ open }) => (
 );
 
 const FileIcon = ({ language }) => {
+  const languageIcons = {
+    python: pythonIcon,
+    javascript: javascriptIcon,
+    java: javaIcon,
+    cpp: cppIcon,
+  };
+  const icon = languageIcons[language];
+
+  if (icon) {
+    return <img src={icon} alt="" className="h-4 w-4 shrink-0 object-contain" aria-hidden="true" />;
+  }
+
   const colours = {
-    python:     'text-blue-400',
-    javascript: 'text-yellow-300',
-    java:       'text-orange-400',
-    cpp:        'text-purple-400',
     typescript: 'text-blue-500',
     html:       'text-red-400',
     css:        'text-pink-400',
@@ -109,7 +122,12 @@ function ContextMenu({ x, y, node, onNewFile, onNewFolder, onRename, onDelete, o
   const item = (label, action, danger = false) => (
     <button
       key={label}
-      onMouseDown={(e) => { e.stopPropagation(); action(); onClose(); }}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        action();
+        onClose();
+      }}
       className={`w-full text-left px-3 py-1.5 text-xs hover:bg-[#2a2d2e] rounded
         ${danger ? 'text-red-400 hover:text-red-300' : 'text-gray-300'}`}
     >
@@ -162,16 +180,102 @@ function InlineInput({ defaultValue = '', placeholder, onConfirm, onCancel }) {
   );
 }
 
+// ── Delete confirmation ─────────────────────────────────────────────────────
+
+function DeleteConfirmDialog({ node, onConfirm, onCancel }) {
+  const cancelRef = useRef(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onCancel();
+      if (e.key === 'Enter') onConfirm();
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onCancel, onConfirm]);
+
+  if (!node) return null;
+
+  const type = node.isFolder ? 'folder' : 'file';
+  const message = node.isFolder
+    ? 'This will delete the folder and everything inside it.'
+    : 'This will permanently delete this file.';
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/45 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="ide-delete-title"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onCancel();
+      }}
+    >
+      <div className="w-full max-w-sm overflow-hidden rounded border border-[#3c3c3c] bg-[#1e1e1e] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-[#2d2d30] bg-[#252526] px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <img src={dangerIcon} alt="" className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <h2 id="ide-delete-title" className="truncate text-sm font-semibold text-[#f0f0f0]">
+              Delete {type}
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded p-1 text-[#858585] hover:bg-[#3c3c3c] hover:text-[#f0f0f0]"
+            aria-label="Close delete confirmation"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" clipRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-3 px-4 py-4">
+          <p className="text-sm text-[#d4d4d4]">{message}</p>
+          <div className="rounded border border-[#3c3c3c] bg-[#252526] px-2.5 py-2 font-mono text-xs text-[#cccccc]">
+            <div className="truncate">{node.path || node.name}</div>
+          </div>
+          <p className="text-xs text-[#858585]">This action cannot be undone.</p>
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-[#2d2d30] bg-[#252526] px-3 py-2">
+          <button
+            ref={cancelRef}
+            type="button"
+            onClick={onCancel}
+            className="rounded border border-[#3c3c3c] px-3 py-1.5 text-xs font-medium text-[#cccccc] hover:bg-[#333333] hover:text-white"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-500"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Tree node ────────────────────────────────────────────────────────────────
 
 function TreeNode({
   node,
   depth,
   activeFileId,
+  selectedFolderPath,
   openFolders,
   pendingCreate,
   renamingId,
   onOpenFile,
+  onSelectFolder,
   onToggleFolder,
   onContextMenu,
   onConfirmCreate,
@@ -182,6 +286,7 @@ function TreeNode({
 }) {
   const isOpen    = openFolders.has(node.path);
   const isActive  = !node.isFolder && node.id === activeFileId;
+  const isSelectedFolder = node.isFolder && selectedFolderPath === node.path;
   const isRenaming = renamingId === node.id;
   const children  = sortedChildren(node);
 
@@ -192,12 +297,25 @@ function TreeNode({
       {/* Row */}
       <div
         role={node.isFolder ? 'button' : 'option'}
-        aria-selected={isActive}
+        aria-selected={isActive || isSelectedFolder}
         style={{ paddingLeft }}
-        onContextMenu={(e) => { e.preventDefault(); onContextMenu(e, node); }}
-        onClick={() => node.isFolder ? onToggleFolder(node.path) : onOpenFile(node)}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (node.isFolder) onSelectFolder(node.path);
+          onContextMenu(e, node);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (node.isFolder) {
+            onSelectFolder(node.path);
+            onToggleFolder(node.path);
+          } else {
+            onOpenFile(node);
+          }
+        }}
         className={`group flex items-center gap-1.5 py-0.5 pr-1 cursor-pointer rounded-sm text-xs select-none
-          ${isActive ? 'bg-[#37373d] text-white' : 'text-[#cccccc] hover:bg-[#2a2d2e]'}`}
+          ${isActive || isSelectedFolder ? 'bg-[#37373d] text-white' : 'text-[#cccccc] hover:bg-[#2a2d2e]'}`}
       >
         {node.isFolder
           ? <><ChevronRight open={isOpen} /><FolderIcon open={isOpen} /></>
@@ -249,10 +367,12 @@ function TreeNode({
               node={child}
               depth={depth + 1}
               activeFileId={activeFileId}
+              selectedFolderPath={selectedFolderPath}
               openFolders={openFolders}
               pendingCreate={pendingCreate}
               renamingId={renamingId}
               onOpenFile={onOpenFile}
+              onSelectFolder={onSelectFolder}
               onToggleFolder={onToggleFolder}
               onContextMenu={onContextMenu}
               onConfirmCreate={onConfirmCreate}
@@ -295,7 +415,9 @@ export function FileExplorer({
   const [openFolders, setOpenFolders]   = useState(new Set());
   const [contextMenu, setContextMenu]   = useState(null); // { x, y, node }
   const [pendingCreate, setPendingCreate] = useState(null); // { parentPath, type }
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [renamingId, setRenamingId]     = useState(null);
+  const [selectedFolderPath, setSelectedFolderPath] = useState('');
 
   // Auto-expand root on first load
   useEffect(() => {
@@ -319,8 +441,21 @@ export function FileExplorer({
 
   const handleRootContextMenu = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
+    setSelectedFolderPath('');
     setContextMenu({ x: e.clientX, y: e.clientY, node: { isFolder: true, path: '', name: projectName } });
   }, [projectName]);
+
+  const getSelectedFolderNode = useCallback(() => {
+    if (!selectedFolderPath) return { isFolder: true, path: '', name: projectName };
+
+    const selected = files.find((file) => file.path === selectedFolderPath && file.isFolder);
+    return selected ?? {
+      isFolder: true,
+      path: selectedFolderPath,
+      name: selectedFolderPath.split('/').pop(),
+    };
+  }, [files, projectName, selectedFolderPath]);
 
   // ── Create ────────────────────────────────────────────────────────────────
 
@@ -328,6 +463,7 @@ export function FileExplorer({
     if (!parentNode.path && parentNode.path !== '') return;
     // Ensure parent folder is open
     setOpenFolders((prev) => new Set([...prev, parentNode.path]));
+    setSelectedFolderPath(parentNode.path);
     setPendingCreate({ parentPath: parentNode.path, type });
   }, []);
 
@@ -337,6 +473,9 @@ export function FileExplorer({
     await onCreate({ path, isFolder: pending.type === 'folder' });
     if (pending.type === 'folder') {
       setOpenFolders((prev) => new Set([...prev, path]));
+      setSelectedFolderPath(path);
+    } else {
+      setSelectedFolderPath(pending.parentPath);
     }
   }, [onCreate]);
 
@@ -357,18 +496,26 @@ export function FileExplorer({
 
   // ── Delete ────────────────────────────────────────────────────────────────
 
-  const handleDelete = useCallback(async (node) => {
-    const label = node.isFolder
-      ? `Delete folder "${node.name}" and all its contents? This cannot be undone.`
-      : `Delete "${node.name}"? This cannot be undone.`;
-    if (!window.confirm(label)) return;
+  const requestDelete = useCallback((node) => {
+    setContextMenu(null);
+    setPendingDelete(node);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    const node = pendingDelete;
+    setPendingDelete(null);
     await onDelete(node);
-  }, [onDelete]);
+  }, [onDelete, pendingDelete]);
 
   // ── Toolbar buttons (new file / new folder at root) ───────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-[#252526] select-none" onContextMenu={handleRootContextMenu}>
+    <div
+      className="flex flex-col h-full bg-[#252526] select-none"
+      onContextMenu={handleRootContextMenu}
+      onClick={() => setSelectedFolderPath('')}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#3c3c3c]">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[#bbbbbb]">
@@ -376,8 +523,11 @@ export function FileExplorer({
         </span>
         <div className="flex gap-1">
           <button
-            title="New File"
-            onClick={() => startCreate({ path: '', name: projectName, isFolder: true }, 'file')}
+            title={selectedFolderPath ? `New file in ${selectedFolderPath}` : 'New file at root'}
+            onClick={(e) => {
+              e.stopPropagation();
+              startCreate(getSelectedFolderNode(), 'file');
+            }}
             className="text-[#cccccc] hover:text-white hover:bg-[#3c3c3c] rounded p-0.5"
             aria-label="New file"
           >
@@ -386,8 +536,11 @@ export function FileExplorer({
             </svg>
           </button>
           <button
-            title="New Folder"
-            onClick={() => startCreate({ path: '', name: projectName, isFolder: true }, 'folder')}
+            title={selectedFolderPath ? `New folder in ${selectedFolderPath}` : 'New folder at root'}
+            onClick={(e) => {
+              e.stopPropagation();
+              startCreate(getSelectedFolderNode(), 'folder');
+            }}
             className="text-[#cccccc] hover:text-white hover:bg-[#3c3c3c] rounded p-0.5"
             aria-label="New folder"
           >
@@ -423,17 +576,19 @@ export function FileExplorer({
             node={node}
             depth={0}
             activeFileId={activeFileId}
+            selectedFolderPath={selectedFolderPath}
             openFolders={openFolders}
             pendingCreate={pendingCreate}
             renamingId={renamingId}
             onOpenFile={onOpenFile}
+            onSelectFolder={setSelectedFolderPath}
             onToggleFolder={toggleFolder}
             onContextMenu={handleContextMenu}
             onConfirmCreate={confirmCreate}
             onCancelCreate={() => setPendingCreate(null)}
             onConfirmRename={confirmRename}
             onCancelRename={cancelRename}
-            onDelete={handleDelete}
+            onDelete={requestDelete}
           />
         ))}
       </div>
@@ -447,10 +602,15 @@ export function FileExplorer({
           onNewFile={(n)    => startCreate(n, 'file')}
           onNewFolder={(n)  => startCreate(n, 'folder')}
           onRename={(n)     => startRename(n)}
-          onDelete={(n)     => handleDelete(n)}
+          onDelete={(n)     => requestDelete(n)}
           onClose={() => setContextMenu(null)}
         />
       )}
+      <DeleteConfirmDialog
+        node={pendingDelete}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

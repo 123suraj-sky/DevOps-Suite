@@ -103,10 +103,8 @@ public class IdeFileDto {
         private String language;
 
         /** True to create a virtual folder entry. */
-        @Setter(onMethod_ = @JsonProperty("is_folder"))
-        @Getter(onMethod_ = @JsonProperty("is_folder"))
-        @Builder.Default
-        private boolean isFolder = false;
+        @JsonProperty("is_folder")
+        private boolean isFolder;
     }
 
     // ── Update request ───────────────────────────────────────────────────────────

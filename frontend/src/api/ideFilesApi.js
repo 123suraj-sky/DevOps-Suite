@@ -1,5 +1,18 @@
 import apiClient from './client';
 
+const normaliseFile = (file) => {
+  if (!file) return file;
+
+  return {
+    ...file,
+    projectId: file.projectId ?? file.project_id,
+    userId: file.userId ?? file.user_id,
+    isFolder: file.isFolder ?? file.is_folder ?? false,
+    createdAt: file.createdAt ?? file.created_at,
+    updatedAt: file.updatedAt ?? file.updated_at,
+  };
+};
+
 /**
  * API client for the IDE file system (/api/ide/files).
  *
@@ -14,7 +27,7 @@ export const ideFilesApi = {
    */
   listFiles: async (projectId) => {
     const res = await apiClient.get('/ide/files', { params: { projectId } });
-    return res.data.data;
+    return (res.data.data ?? []).map(normaliseFile);
   },
 
   /**
@@ -23,13 +36,13 @@ export const ideFilesApi = {
    */
   getFile: async (fileId) => {
     const res = await apiClient.get(`/ide/files/${fileId}`);
-    return res.data.data;
+    return normaliseFile(res.data.data);
   },
 
   /**
    * POST /api/ide/files
    * Creates a new file or folder.
-   * @param {{ projectId: string, path: string, content?: string, language?: string, is_folder?: boolean }} data
+   * @param {{ projectId: string, path: string, content?: string, language?: string, isFolder?: boolean }} data
    */
   createFile: async (data) => {
     const res = await apiClient.post('/ide/files', {
@@ -39,7 +52,7 @@ export const ideFilesApi = {
       language:   data.language   ?? null,
       is_folder:  data.isFolder   ?? false,
     });
-    return res.data.data;
+    return normaliseFile(res.data.data);
   },
 
   /**

@@ -104,6 +104,11 @@ public class IdeFileService {
                     "A file or folder already exists at path: '" + normPath + "'.");
         }
 
+        // Ensure every ancestor folder has a real DB row.
+        // e.g. creating "src/utils/math.py" will auto-create "src" and "src/utils"
+        // if they don't already exist as folder entries.
+        ensureAncestorFolders(req.getProjectId(), requestingUserId, normPath);
+
         String name     = extractName(normPath);
         String language = req.isFolder()
                 ? "plaintext"
@@ -124,6 +129,41 @@ public class IdeFileService {
                 saved.isFolder() ? "folder" : "file", normPath, saved.getId(), req.getProjectId());
 
         return toDetail(saved);
+    }
+
+    /**
+     * Walks every ancestor segment of {@code normPath} and inserts a folder row
+     * for any that are missing. Called inside an existing transaction.
+     *
+     * <p>Example: path = "a/b/c/file.py" → ensures rows for "a" and "a/b" and "a/b/c".
+     */
+    private void ensureAncestorFolders(UUID projectId, UUID userId, String normPath) {
+        String[] parts = normPath.split("/");
+        // No ancestors for a top-level entry (no "/" in path)
+        if (parts.length <= 1) return;
+
+        StringBuilder current = new StringBuilder();
+        // Iterate all segments except the last (which is the file/folder itself)
+        for (int i = 0; i < parts.length - 1; i++) {
+            if (current.length() > 0) current.append('/');
+            current.append(parts[i]);
+            String ancestorPath = current.toString();
+
+            if (!fileRepository.existsByProjectIdAndPath(projectId, ancestorPath)) {
+                String folderName = parts[i];
+                IdeFile folder = IdeFile.builder()
+                        .projectId(projectId)
+                        .userId(userId)
+                        .path(ancestorPath)
+                        .name(folderName)
+                        .content("")
+                        .language("plaintext")
+                        .isFolder(true)
+                        .build();
+                fileRepository.save(folder);
+                log.info("Auto-created missing ancestor folder '{}' in project {}", ancestorPath, projectId);
+            }
+        }
     }
 
     // ── Update ───────────────────────────────────────────────────────────────────

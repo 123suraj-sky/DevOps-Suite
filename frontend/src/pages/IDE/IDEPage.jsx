@@ -249,15 +249,38 @@ export function IDEPage() {
   const handleDelete = useCallback(async (fileListItem) => {
     try {
       if (fileListItem.id) {
-        // Real DB entry — single API call (backend cascades children for folders)
+        // Real DB entry — single API call; backend cascade-deletes all children
         await ideFilesApi.deleteFile(fileListItem.id);
 
-        // Close any open tab for this file
-        if (tabs.find((t) => t.id === fileListItem.id)) {
-          handleCloseTab(fileListItem.id);
+        // Close tabs for the deleted entry AND any open tabs that were inside it
+        // (backend has already removed the rows, tabs would become ghost tabs)
+        if (fileListItem.isFolder) {
+          const prefix = fileListItem.path + '/';
+          setTabs((prev) => {
+            const toClose = prev.filter(
+              (t) => t.id === fileListItem.id || t.path.startsWith(prefix)
+            );
+            toClose.forEach((t) => {
+              clearTimeout(autoSaveTimers.current[t.id]);
+              disposeEditorModel(t.path);
+            });
+            const remaining = prev.filter(
+              (t) => t.id !== fileListItem.id && !t.path.startsWith(prefix)
+            );
+            setActiveTabId((cur) => {
+              const stillOpen = remaining.find((t) => t.id === cur);
+              return stillOpen ? cur : (remaining[0]?.id ?? null);
+            });
+            return remaining;
+          });
+        } else {
+          // Single file — close its tab if open
+          if (tabs.find((t) => t.id === fileListItem.id)) {
+            handleCloseTab(fileListItem.id);
+          }
         }
       } else if (fileListItem.isFolder) {
-        // Virtual folder (no DB row of its own) — delete all files under this path
+        // Virtual folder (no DB row) — delete all known children by their ids
         const prefix = fileListItem.path + '/';
         const children = files.filter(
           (f) => f.path === fileListItem.path || f.path.startsWith(prefix)
@@ -276,7 +299,7 @@ export function IDEPage() {
       const msg = err.response?.data?.message ?? 'Delete failed.';
       toast.error(msg);
     }
-  }, [refreshFiles, tabs, files, handleCloseTab]);
+  }, [refreshFiles, tabs, files, handleCloseTab, autoSaveTimers]);
 
   // ── Execution polling ──────────────────────────────────────────────────────
 
