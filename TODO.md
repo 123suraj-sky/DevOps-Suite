@@ -45,3 +45,54 @@ Allow users to configure automation rules on a board (e.g., "When due date arriv
 Link a GitHub/GitLab repository to a project board so that PR and commit activity automatically updates task status or posts a comment.
 - Backend: Webhook receiver endpoint for GitHub/GitLab events; map branch names or PR titles to task IDs; update task status or add activity log entry on matching events
 - Frontend: Repository link settings per project; display linked PR/commit references on task cards
+
+## Kanban Dashboard Enhancements
+
+### 10. Delete Task
+Add a delete option directly on task cards in the Kanban board so users can remove a task without opening the detail view.
+- Backend: Confirm `DELETE /api/projects/{projectId}/tasks/{taskId}` endpoint exists and is properly secured (OWNER/ADMIN/MEMBER only)
+- Frontend: Add a delete icon/button on each card (visible on hover); show a confirmation dialog before firing the delete request; remove the card from the board state on success
+
+### 11. Task Metadata — Created At, Last Modified, Creator & Last Modified By
+Display audit information on each task so users can see when it was created, when it was last changed, and who made those changes.
+- Backend:
+  - Ensure `Task` entity has `createdAt`, `updatedAt` (JPA `@CreationTimestamp` / `@UpdateTimestamp`) and `createdBy`, `lastModifiedBy` fields (Spring Data Auditing or manual population in the service layer)
+  - Include these fields in the task response DTO
+- Frontend:
+  - Show "Created by \<user\> on \<date\>" and "Last modified by \<user\> on \<date\>" inside the task detail modal/drawer
+  - Optionally show a compact "Created \<relative time\>" tooltip on the card itself (e.g., "Created 2 days ago")
+
+## UI Theme
+
+### 12. Dark Mode
+First, ensure the entire UI is fully polished in light mode. Once light mode is stable, add a toggle to switch the whole app to dark mode.
+- Phase 1 — Light mode: Audit all pages and components to make sure they look consistent and complete in light mode; fix any unstyled or broken elements
+- Phase 2 — Dark mode toggle:
+  - Frontend: Add a theme toggle button (e.g., sun/moon icon in the navbar); persist the user's preference in `localStorage`
+  - Use Tailwind's `dark:` variant (enable `darkMode: 'class'` in `tailwind.config.js`) so a single class on `<html>` flips the entire app
+  - This includes the Monaco code editor — switch its theme between a light variant (e.g., `vs`) and a dark variant (e.g., `vs-dark`) based on the selected mode
+
+### 13. Responsive Design
+Make the entire website fully responsive so it works well on mobile, tablet, and desktop screen sizes.
+- Audit all pages and components for fixed widths, overflow issues, and desktop-only layouts
+- Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`) to adapt layouts at each breakpoint
+- Key areas to address:
+  - Navbar: collapse into a hamburger menu on small screens
+  - Kanban board: horizontal scroll on mobile with readable card sizes
+  - Task detail modal/drawer: full-screen on mobile
+  - Code editor page: stack the editor and output panels vertically on small screens
+  - Metrics/Logs pages: make charts and tables scrollable or reflowed for narrow viewports
+  - Profile page: single-column layout on mobile
+
+## Task Assignment & Visibility
+
+### 14. Task Assignment — Assigned To / Assigned By
+Show who a task is assigned to and who assigned it. Apply role-based visibility so members only see their own tasks while project admins have full visibility.
+- Backend:
+  - Ensure `Task` entity has both `assignedTo` (the member doing the work) and `assignedBy` (the member who made the assignment) fields, populated in the service layer on create/update
+  - Include both fields in the task response DTO
+  - Enforce visibility in the query layer: if the requesting user is the project OWNER or the user who created the project, return all tasks; otherwise return only tasks where `assignedTo` matches the requesting user
+- Frontend:
+  - Display "Assigned to \<user\>" and "Assigned by \<user\>" on the task card and in the task detail modal
+  - Project admin/owner view: shows all tasks across all members with full assignment info
+  - Member view: Kanban board only renders tasks assigned to the logged-in user; tasks assigned to others are hidden

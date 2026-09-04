@@ -36,6 +36,7 @@ export const TasksPage = () => {
   const [saving, setSaving] = useState(false);
   // Map of status name (uppercased) → column UUID, built from the first board's columns
   const [columnIdMap, setColumnIdMap] = useState({});
+  const [boardId, setBoardId] = useState(null);
   const { connected } = useWebSocket();
 
   // Load initial tasks and resolve column IDs from the project's first board
@@ -51,11 +52,12 @@ export const TasksPage = () => {
       // Build a normalized status-name → columnId map from the first board's columns.
       if (boards && boards.length > 0) {
         const firstBoard = boards[0];
+        setBoardId(firstBoard.id || firstBoard.board_id);
         const cols = firstBoard.columns || [];
         const map = {};
         cols.forEach((col) => {
           const key = normalizeStatusKey(col.name);
-          map[key] = col.id;
+          map[key] = col.id || col.column_id;
         });
         setColumnIdMap(map);
       }
@@ -86,34 +88,76 @@ export const TasksPage = () => {
     }
   }, [connected, projectId]);
 
-  // Handle Drag & Drop status updates
+  // Handle Drag & Drop status and order updates
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    // Find the task we are updating
-    const updatedTask = tasks.find((t) => t.id === draggableId);
-    if (!updatedTask) return;
+    const destinationColumnId = columnIdMap[destination.droppableId];
+    if (!boardId || !destinationColumnId) {
+      toast.error('Task board is still loading. Please try again.');
+      return;
+    }
 
-    const oldStatus = updatedTask.status;
-    const newStatus = destination.droppableId;
+    const previousTasks = tasks;
+    const tasksByStatus = COLUMNS.reduce((acc, col) => {
+      acc[col.id] = tasks
+        .filter((task) => task.status === col.id)
+        .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
+      return acc;
+    }, {});
 
-    // Optimistic Update
-    setTasks((prev) =>
-      prev.map((t) => (t.id === draggableId ? { ...t, status: newStatus } : t))
+    const sourceTasks = [...tasksByStatus[source.droppableId]];
+    const destinationTasks =
+      source.droppableId === destination.droppableId
+        ? sourceTasks
+        : [...tasksByStatus[destination.droppableId]];
+    const sourceIndex = sourceTasks.findIndex((task) => task.id === draggableId);
+    if (sourceIndex === -1) return;
+
+    const [movedTask] = sourceTasks.splice(sourceIndex, 1);
+    const updatedMovedTask = {
+      ...movedTask,
+      status: destination.droppableId,
+      columnId: destinationColumnId,
+      column_id: destinationColumnId,
+    };
+
+    if (source.droppableId === destination.droppableId) {
+      sourceTasks.splice(destination.index, 0, updatedMovedTask);
+      tasksByStatus[source.droppableId] = sourceTasks;
+    } else {
+      destinationTasks.splice(destination.index, 0, updatedMovedTask);
+      tasksByStatus[source.droppableId] = sourceTasks;
+      tasksByStatus[destination.droppableId] = destinationTasks;
+    }
+
+    const reorderedTasks = COLUMNS.flatMap((col) =>
+      tasksByStatus[col.id].map((task, index) => ({
+        ...task,
+        sortOrder: index,
+        sort_order: index,
+      }))
     );
 
+    setTasks(reorderedTasks);
+
     try {
-      await taskApi.updateStatus(draggableId, newStatus);
-      toast.success(`Task status updated to ${newStatus}`);
-    } catch (err) {
-      console.error('Failed to update task status:', err);
-      toast.error('Failed to save task move. Rolling back...');
-      // Rollback on error
-      setTasks((prev) =>
-        prev.map((t) => (t.id === draggableId ? { ...t, status: oldStatus } : t))
+      await taskApi.reorder(
+        projectId,
+        boardId,
+        reorderedTasks.map((task) => ({
+          id: task.id,
+          columnId: task.columnId || task.column_id,
+          sortOrder: task.sortOrder ?? task.sort_order ?? 0,
+        }))
       );
+      toast.success('Task board updated');
+    } catch (err) {
+      console.error('Failed to reorder tasks:', err);
+      toast.error('Failed to save task move. Rolling back...');
+      setTasks(previousTasks);
     }
   };
 
@@ -164,7 +208,9 @@ export const TasksPage = () => {
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
-            const columnTasks = tasks.filter((t) => t.status === col.id);
+            const columnTasks = tasks
+              .filter((t) => t.status === col.id)
+              .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
             return (
               <div key={col.id} className="bg-gray-50 p-4 rounded-lg flex flex-col min-w-[250px]">
                 <div className="flex items-center justify-between mb-4">

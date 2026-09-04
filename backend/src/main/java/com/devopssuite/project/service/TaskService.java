@@ -186,7 +186,7 @@ public class TaskService {
                 task.setSortOrder(item.getSortOrder());
                 
                 // Map column name to task status dynamically ("In Progress" -> "IN_PROGRESS")
-                task.setStatus(targetColumn.getName().trim().replace(" ", "_").toUpperCase());
+                task.setStatus(normalizeStatus(null, targetColumn));
 
                 taskRepository.save(task);
             }
