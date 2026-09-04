@@ -12,9 +12,14 @@ export const LogsPage = () => {
   const [loading, setLoading] = useState(false);
   const { connected } = useWebSocket();
   const consoleEndRef = useRef(null);
+  const isInitialLoad = useRef(true);
 
-  // Auto-scroll logs panel
+  // Auto-scroll logs panel only when a new live log arrives, not on initial load
   useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 

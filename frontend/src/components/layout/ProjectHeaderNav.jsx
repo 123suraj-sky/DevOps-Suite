@@ -1,8 +1,10 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../common/Button';
+import { useAuth } from '../../context/AuthContext';
 
 export const ProjectHeaderNav = ({ projectId, projectName, projectDescription }) => {
   const location = useLocation();
+  const { isAdmin } = useAuth();
 
   const isOverview = location.pathname === `/projects/${projectId}`;
   const isTasks = location.pathname === `/projects/${projectId}/tasks`;
@@ -26,26 +28,28 @@ export const ProjectHeaderNav = ({ projectId, projectName, projectDescription })
           )}
         </div>
         <div className="flex items-center flex-wrap gap-2">
-          <Link to={`/projects/${projectId}`}>
+          <Link to={`/projects/${projectId}`} className="inline-flex">
             <Button variant={isOverview ? 'primary' : 'ghost'} size="sm">
               Overview
             </Button>
           </Link>
-          <Link to={`/projects/${projectId}/tasks`}>
+          <Link to={`/projects/${projectId}/tasks`} className="inline-flex">
             <Button variant={isTasks ? 'primary' : 'ghost'} size="sm">
               Task Board
             </Button>
           </Link>
-          <Link to={`/projects/${projectId}/code`}>
+          <Link to={`/projects/${projectId}/code`} className="inline-flex">
             <Button variant={isCode ? 'primary' : 'ghost'} size="sm">
               Code Editor
             </Button>
           </Link>
-          <Link to={`/projects/${projectId}/logs`}>
-            <Button variant={isLogs ? 'primary' : 'ghost'} size="sm">
-              Logs
-            </Button>
-          </Link>
+          {isAdmin && (
+            <Link to={`/projects/${projectId}/logs`} className="inline-flex">
+              <Button variant={isLogs ? 'primary' : 'ghost'} size="sm">
+                Logs
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
     </div>

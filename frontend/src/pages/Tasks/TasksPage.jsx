@@ -122,7 +122,7 @@ export const TasksPage = () => {
   if (loading) return <Spinner size="lg" className="mt-20" />;
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
+    <div className="space-y-6 flex flex-col">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
         <div className="flex items-center space-x-2">
@@ -157,7 +157,7 @@ export const TasksPage = () => {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className="flex-1 space-y-3 overflow-y-auto min-h-[150px]"
+                      className="flex-1 space-y-3 overflow-y-auto min-h-[32px]"
                     >
                       {columnTasks.map((task, idx) => (
                         <Draggable key={task.id} draggableId={task.id} index={idx}>

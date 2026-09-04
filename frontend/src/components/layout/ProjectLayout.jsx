@@ -47,7 +47,7 @@ export const ProjectLayout = () => {
     // Full-height layout: header nav + IDE fills remaining space, no scroll
     return (
       <div className="flex flex-col flex-1 min-h-0 h-full">
-        <div className="px-4 lg:px-6 pt-4 lg:pt-4 pb-0 shrink-0 bg-gray-50">
+        <div className="px-4 lg:px-6 pt-4 lg:pt-6 pb-0 shrink-0 bg-gray-50">
           <ProjectHeaderNav
             projectId={projectId}
             projectName={project?.name}
