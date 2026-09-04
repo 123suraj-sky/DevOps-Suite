@@ -28,7 +28,7 @@ public class TaskController {
         return UUID.fromString(userIdStr);
     }
 
-    @PostMapping({"/tasks", "/api/v1/tasks"})
+    @PostMapping({"/tasks", "/api/tasks", "/api/v1/tasks"})
     public ResponseEntity<ApiResponse<TaskResponse>> create(@Valid @RequestBody TaskRequest request) {
         UUID userId = getCurrentUserId();
         TaskResponse response = taskService.createTask(request, userId);

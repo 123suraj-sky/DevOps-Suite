@@ -72,12 +72,36 @@ class TaskServiceTest {
 
         var response = taskService.createTaskInBoard(
                 boardId,
-                new TaskRequest(null, null, "Wire API", "Connect frontend", 1, null, null),
+                new TaskRequest(null, null, "Wire API", "Connect frontend", "MEDIUM", null, null),
                 userId);
 
         assertThat(response.getColumnId()).isEqualTo(columnId);
         assertThat(response.getStatus()).isEqualTo("BACKLOG");
         verify(projectService, times(2)).checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
+    }
+
+    @Test
+    void createTaskNormalizesToDoColumnToTodoStatus() {
+        UUID boardId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        UUID columnId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Column column = Column.builder().id(columnId).boardId(boardId).name("To Do").sortOrder(1).build();
+
+        when(columnRepository.findById(columnId)).thenReturn(Optional.of(column));
+        when(projectService.getProjectIdForBoard(boardId)).thenReturn(projectId);
+        when(taskRepository.findByColumnIdOrderBySortOrderAsc(columnId)).thenReturn(List.of());
+        when(taskRepository.saveAndFlush(any(Task.class))).thenAnswer(invocation -> {
+            Task task = invocation.getArgument(0);
+            task.setId(UUID.randomUUID());
+            return task;
+        });
+
+        var response = taskService.createTask(
+                new TaskRequest(columnId, null, "Fix To Do", null, "MEDIUM", null, null),
+                userId);
+
+        assertThat(response.getStatus()).isEqualTo("TODO");
     }
 
     @Test
@@ -94,7 +118,7 @@ class TaskServiceTest {
         when(taskRepository.findByColumnIdOrderBySortOrderAsc(columnId)).thenReturn(List.of(existingTask));
 
         assertThatThrownBy(() -> taskService.createTask(
-                new TaskRequest(columnId, null, "Second task", null, 1, null, null),
+                new TaskRequest(columnId, null, "Second task", null, "MEDIUM", null, null),
                 userId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("WIP limit");

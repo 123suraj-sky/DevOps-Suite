@@ -204,8 +204,7 @@ public class ProjectDto {
         private String title;
         private String description;
 
-        @Min(0)
-        private int priority;
+        private String priority;
         private String status;
         
         @JsonAlias("due_date")
@@ -228,7 +227,7 @@ public class ProjectDto {
         
         private String title;
         private String description;
-        private int priority;
+        private String priority;
         private String status;
         
         @JsonProperty("due_date")

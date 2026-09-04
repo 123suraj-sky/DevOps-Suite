@@ -20,6 +20,11 @@ const COLUMNS = [
   { id: 'DONE', title: 'Done', bg: 'bg-green-100 text-green-800' },
 ];
 
+const normalizeStatusKey = (value) => {
+  const key = (value || '').trim().replace(/\s+/g, '_').toUpperCase();
+  return key === 'TO_DO' ? 'TODO' : key;
+};
+
 export const TasksPage = () => {
   const { id: projectId } = useParams();
   const { project } = useOutletContext();
@@ -29,13 +34,31 @@ export const TasksPage = () => {
   const [selectedColumn, setSelectedColumn] = useState('TODO');
   const [taskData, setTaskData] = useState({ title: '', description: '', priority: 'MEDIUM' });
   const [saving, setSaving] = useState(false);
+  // Map of status name (uppercased) → column UUID, built from the first board's columns
+  const [columnIdMap, setColumnIdMap] = useState({});
   const { connected } = useWebSocket();
 
-  // Load initial tasks and project details
+  // Load initial tasks and resolve column IDs from the project's first board
   const fetchData = async () => {
     try {
-      const taskList = await projectApi.getTasks(projectId).catch(() => []);
+      const [taskList, boards] = await Promise.all([
+        projectApi.getTasks(projectId).catch(() => []),
+        projectApi.getBoards(projectId).catch(() => []),
+      ]);
+
       setTasks(taskList || []);
+
+      // Build a normalized status-name → columnId map from the first board's columns.
+      if (boards && boards.length > 0) {
+        const firstBoard = boards[0];
+        const cols = firstBoard.columns || [];
+        const map = {};
+        cols.forEach((col) => {
+          const key = normalizeStatusKey(col.name);
+          map[key] = col.id;
+        });
+        setColumnIdMap(map);
+      }
     } catch (err) {
       console.error('Failed to load tasks:', err);
       toast.error('Failed to load tasks');
@@ -56,7 +79,7 @@ export const TasksPage = () => {
           setTasks(updatedTasks);
         } else {
           // If a single task event is broadcasted, re-fetch
-          fetchTasks();
+          fetchData();
         }
       });
       return () => unsubscribe();
@@ -97,10 +120,17 @@ export const TasksPage = () => {
   // Add new task
   const handleAddTask = async (e) => {
     e.preventDefault();
+
+    const columnId = columnIdMap[selectedColumn];
+    if (!columnId) {
+      toast.error(`No column found for "${selectedColumn}". Please set up the project board first.`);
+      return;
+    }
+
     setSaving(true);
     try {
       const created = await taskApi.create({
-        projectId,
+        columnId,
         title: taskData.title,
         description: taskData.description,
         status: selectedColumn,

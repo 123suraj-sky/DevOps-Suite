@@ -35,17 +35,15 @@ public class TaskService {
         enforceWipLimit(column, existingTasks, null);
         int nextSortOrder = existingTasks.size();
 
-        String status = request.getStatus();
-        if (status == null || status.trim().isEmpty()) {
-            status = column.getName().toUpperCase();
-        }
+        String status = normalizeStatus(request.getStatus(), column);
+        String priority = normalizePriority(request.getPriority());
 
         Task task = Task.builder()
                 .columnId(column.getId())
                 .assigneeId(request.getAssigneeId())
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .priority(request.getPriority())
+                .priority(priority)
                 .status(status)
                 .dueDate(request.getDueDate())
                 .sortOrder(nextSortOrder)
@@ -114,7 +112,7 @@ public class TaskService {
 
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
-        task.setPriority(request.getPriority());
+        task.setPriority(normalizePriority(request.getPriority()));
         task.setAssigneeId(request.getAssigneeId());
         task.setDueDate(request.getDueDate());
         
@@ -133,16 +131,16 @@ public class TaskService {
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
         projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
 
-        task.setStatus(status);
+        String normalizedStatus = normalizeStatus(status, null);
+        task.setStatus(normalizedStatus);
 
         // Attempt to find column with matching name in the same board
         Column currentColumn = columnRepository.findById(task.getColumnId()).orElse(null);
         if (currentColumn != null) {
             List<Column> boardColumns = columnRepository.findByBoardIdOrderBySortOrderAsc(currentColumn.getBoardId());
             // Normalize both sides: "In Progress" and "IN_PROGRESS" both become "in_progress"
-            String normalizedStatus = status.trim().toLowerCase().replace(" ", "_");
             for (Column col : boardColumns) {
-                String normalizedColName = col.getName().trim().toLowerCase().replace(" ", "_");
+                String normalizedColName = normalizeStatus(null, col);
                 if (normalizedColName.equals(normalizedStatus)) {
                     enforceWipLimit(col, taskRepository.findByColumnIdOrderBySortOrderAsc(col.getId()), task.getId());
                     task.setColumnId(col.getId());
@@ -240,5 +238,24 @@ public class TaskService {
         if (taskCount >= wipLimit) {
             throw new IllegalStateException("Column WIP limit exceeded");
         }
+    }
+
+    private String normalizeStatus(String requestedStatus, Column column) {
+        String rawStatus = requestedStatus;
+        if (rawStatus == null || rawStatus.trim().isEmpty()) {
+            if (column == null) {
+                return "TODO";
+            }
+            rawStatus = column.getName();
+        }
+        String normalized = rawStatus.trim().replaceAll("\\s+", "_").toUpperCase();
+        return "TO_DO".equals(normalized) ? "TODO" : normalized;
+    }
+
+    private String normalizePriority(String requestedPriority) {
+        if (requestedPriority == null || requestedPriority.trim().isEmpty()) {
+            return "MEDIUM";
+        }
+        return requestedPriority.trim().toUpperCase();
     }
 }
