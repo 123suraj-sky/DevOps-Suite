@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { taskApi } from '../../api/taskApi';
 import { projectApi } from '../../api/projectApi';
@@ -28,6 +29,7 @@ const normalizeStatusKey = (value) => {
 export const TasksPage = () => {
   const { id: projectId } = useParams();
   const { project } = useOutletContext();
+  const { isAdmin } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -200,8 +202,12 @@ export const TasksPage = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
         <div className="flex items-center space-x-2">
-          <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span className="text-sm text-gray-500">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
+          {isAdmin && (
+            <>
+              <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-sm text-gray-500">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
+            </>
+          )}
         </div>
       </div>
 

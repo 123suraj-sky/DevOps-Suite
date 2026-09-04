@@ -21,7 +21,20 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const status = err.response?.status;
+      const serverMessage = err.response?.data?.message || err.response?.data?.error;
+
+      setPassword('');
+
+      if (status === 401 || status === 403) {
+        setError('Incorrect email or password. Please try again.');
+      } else if (status === 404) {
+        setError('No account found with this email address.');
+      } else if (serverMessage) {
+        setError(serverMessage);
+      } else {
+        setError('Login failed. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -36,12 +49,6 @@ export const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
           <Input
             label="Email"
             type="email"
@@ -64,13 +71,16 @@ export const LoginPage = () => {
             Sign In
           </Button>
 
-          <div className="mt-4">
+          <div className="mt-2">
             <Button variant="secondary" className="w-full">
               Sign in with Google
             </Button>
           </div>
-        </form>
 
+          {error && (
+            <p className="text-sm text-red-600 text-center">{error}</p>
+          )}
+        </form>
         <div className="mt-6 text-center text-sm text-gray-500">
           Don't have an account?{' '}
           <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">

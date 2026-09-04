@@ -7,6 +7,7 @@ import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { projectApi } from '../../api/projectApi';
 
 export const ProjectDetailPage = () => {
   const { id: projectId } = useParams();

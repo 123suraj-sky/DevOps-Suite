@@ -96,3 +96,19 @@ Show who a task is assigned to and who assigned it. Apply role-based visibility 
   - Display "Assigned to \<user\>" and "Assigned by \<user\>" on the task card and in the task detail modal
   - Project admin/owner view: shows all tasks across all members with full assignment info
   - Member view: Kanban board only renders tasks assigned to the logged-in user; tasks assigned to others are hidden
+
+## Project Member Management
+
+### 15. Change Member Role & Remove Member
+- **Admin** can change the role of MEMBER-level users (promote/demote between MEMBER and ADMIN) but **cannot remove members**.
+- **Owner** can do everything: change any member's role and remove any member (except themselves).
+- Backend:
+  - Add a `PATCH /api/projects/{projectId}/members/{userId}/role` endpoint that accepts a `role` body (`MEMBER` or `ADMIN`)
+  - Restrict role changes: OWNER can change any member's role; ADMIN can only change roles of users with role MEMBER (not other ADMINs or the OWNER); return `403 Forbidden` otherwise
+  - Restrict member removal (`DELETE /api/projects/{projectId}/members/{userId}`) to OWNER only; return `403 Forbidden` for ADMIN or below
+  - Update the member's role in the `project_members` (or equivalent) join table
+- Frontend:
+  - In the project members list, show a role badge/dropdown next to each member
+  - OWNER sees the role dropdown and a "Remove" button for every member except themselves
+  - ADMIN sees the role dropdown only for MEMBER-level users (no dropdown for other ADMINs or the OWNER); no "Remove" button at all
+  - Non-owner/non-admin users see a read-only role label with no controls
