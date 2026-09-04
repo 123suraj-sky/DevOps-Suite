@@ -4,16 +4,28 @@ export const codeExecutionApi = {
   /**
    * POST /api/code-execution/run
    * Submits source code for sandboxed execution.
-   * Returns { executionId, status: "QUEUED" }
+   *
+   * Classic mode: pass { language, sourceCode, stdin, maxTimeMs, maxMemoryMb }
+   * IDE mode:     pass { file_id, language?, stdin, maxTimeMs, maxMemoryMb }
+   *
+   * Returns { execution_id, status: "QUEUED" }
    */
   execute: async (data) => {
-    const response = await apiClient.post('/code-execution/run', {
-      language:       data.language,
-      source_code:    data.sourceCode,
-      stdin:          data.stdin || '',
-      max_time_ms:    data.maxTimeMs,
-      max_memory_mb:  data.maxMemoryMb,
-    });
+    const body = {
+      language:      data.language     ?? undefined,
+      stdin:         data.stdin        || '',
+      max_time_ms:   data.maxTimeMs,
+      max_memory_mb: data.maxMemoryMb,
+    };
+
+    // IDE mode — file_id takes precedence over inline source_code
+    if (data.file_id) {
+      body.file_id = data.file_id;
+    } else {
+      body.source_code = data.sourceCode;
+    }
+
+    const response = await apiClient.post('/code-execution/run', body);
     return response.data.data;
   },
 

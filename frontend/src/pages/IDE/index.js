@@ -1,0 +1,1 @@
+export { IDEPage } from './IDEPage';

@@ -15,6 +15,7 @@ const ProjectsPage = lazy(() => import('./pages/Projects').then((m) => ({ defaul
 const ProjectDetailPage = lazy(() => import('./pages/Projects').then((m) => ({ default: m.ProjectDetailPage })));
 const TasksPage = lazy(() => import('./pages/Tasks').then((m) => ({ default: m.TasksPage })));
 const CodeEditorPage = lazy(() => import('./pages/CodeEditor').then((m) => ({ default: m.CodeEditorPage })));
+const IDEPage = lazy(() => import('./pages/IDE').then((m) => ({ default: m.IDEPage })));
 const LogsPage = lazy(() => import('./pages/Logs').then((m) => ({ default: m.LogsPage })));
 const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
 const NotificationsPage = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })));
@@ -104,7 +105,7 @@ const AppRoutes = () => {
           <Route path="/projects/:id" element={<ProjectLayout />}>
             <Route index element={<ProjectDetailPage />} />
             <Route path="tasks" element={<TasksPage />} />
-            <Route path="code" element={<CodeEditorPage />} />
+            <Route path="code" element={<IDEPage />} />
             <Route path="logs" element={<LogsPage />} />
           </Route>
           <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />

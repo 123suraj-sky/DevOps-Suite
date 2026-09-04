@@ -3,7 +3,6 @@ package com.devopssuite.execution.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.time.Instant;
@@ -16,12 +15,19 @@ public class ExecutionDto {
     @AllArgsConstructor
     @Builder
     public static class SubmitRequest {
-        @NotBlank
+        /**
+         * Required when submitting raw source code (classic mode).
+         * Optional when {@code file_id} is provided — the language is then
+         * inferred from the IDE file's stored language field.
+         */
         private String language;
 
         private String version;
 
-        @NotBlank
+        /**
+         * Inline source code (classic mode). Mutually exclusive with {@code file_id}.
+         * Exactly one of {@code source_code} or {@code file_id} must be present.
+         */
         @JsonProperty("source_code")
         @JsonAlias("sourceCode")
         private String sourceCode;
@@ -35,6 +41,16 @@ public class ExecutionDto {
         @JsonProperty("max_memory_mb")
         @JsonAlias("maxMemoryMb")
         private Integer maxMemoryMb;
+
+        /**
+         * IDE file UUID (IDE mode). When set, the backend loads the file (plus all
+         * sibling project files) and runs them as a multi-file workspace. The
+         * language is taken from the stored file's {@code language} field unless
+         * overridden by the {@code language} field above.
+         */
+        @JsonProperty("file_id")
+        @JsonAlias("fileId")
+        private UUID fileId;
     }
 
     @Data

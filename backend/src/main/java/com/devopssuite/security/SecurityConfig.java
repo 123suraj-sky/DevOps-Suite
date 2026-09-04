@@ -53,6 +53,8 @@ public class SecurityConfig {
                 // System-wide metrics dashboard is admin/owner only; user-summary is any authenticated user
                 .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
                 .requestMatchers("/metrics/user-summary", "/api/metrics/user-summary").authenticated()
+                // IDE file CRUD — any authenticated project member
+                .requestMatchers("/api/ide/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

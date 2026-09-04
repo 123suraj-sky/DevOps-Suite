@@ -7,6 +7,8 @@ import com.devopssuite.execution.model.Language;
 import com.devopssuite.execution.repository.ExecutionRequestRepository;
 import com.devopssuite.execution.repository.ExecutionResultRepository;
 import com.devopssuite.execution.repository.LanguageRepository;
+import com.devopssuite.ide.model.IdeFile;
+import com.devopssuite.ide.service.IdeFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +32,7 @@ public class ExecutionService {
     private final ExecutionRequestRepository requestRepository;
     private final ExecutionResultRepository resultRepository;
     private final ExecutionProperties props;
+    private final IdeFileService ideFileService;
 
     // In-memory queue shared with the worker pool
     private final BlockingQueue<UUID> executionQueue = new LinkedBlockingQueue<>();
@@ -50,11 +53,50 @@ public class ExecutionService {
 
     @Transactional
     public SubmitResponse submitExecution(SubmitRequest request, UUID userId) {
+
+        final String resolvedSourceCode;
+        final String resolvedLanguageName;
+        final UUID resolvedFileId;
+
+        if (request.getFileId() != null) {
+            // ── IDE mode: load the file from DB ──────────────────────────────────
+            IdeFile targetFile = ideFileService.getFileEntityInternal(request.getFileId());
+
+            if (targetFile.isFolder()) {
+                throw new IllegalArgumentException("Cannot execute a folder entry.");
+            }
+
+            resolvedSourceCode   = targetFile.getContent();
+            resolvedFileId       = targetFile.getId();
+
+            // Language can be overridden by the request; otherwise use the file's stored lang
+            String rawLang = (request.getLanguage() != null && !request.getLanguage().isBlank())
+                    ? request.getLanguage().trim().toLowerCase()
+                    : targetFile.getLanguage().trim().toLowerCase();
+            resolvedLanguageName = LANGUAGE_ALIASES.getOrDefault(rawLang, rawLang);
+
+        } else {
+            // ── Classic mode: inline source code ─────────────────────────────────
+            if (request.getSourceCode() == null || request.getSourceCode().isBlank()) {
+                throw new IllegalArgumentException(
+                        "Either source_code or file_id must be provided.");
+            }
+            if (request.getLanguage() == null || request.getLanguage().isBlank()) {
+                throw new IllegalArgumentException(
+                        "language is required when submitting inline source_code.");
+            }
+
+            resolvedSourceCode   = request.getSourceCode();
+            resolvedFileId       = null;
+            String rawLang       = request.getLanguage().trim().toLowerCase();
+            resolvedLanguageName = LANGUAGE_ALIASES.getOrDefault(rawLang, rawLang);
+        }
+
         // Validate source code size
-        if (request.getSourceCode() == null || request.getSourceCode().isBlank()) {
+        if (resolvedSourceCode.isBlank()) {
             throw new IllegalArgumentException("Source code must not be empty.");
         }
-        if (request.getSourceCode().length() > props.getMaxCodeSizeBytes()) {
+        if (resolvedSourceCode.length() > props.getMaxCodeSizeBytes()) {
             throw new IllegalArgumentException(
                     "Source code exceeds maximum allowed size of " + props.getMaxCodeSizeBytes() + " bytes.");
         }
@@ -63,13 +105,10 @@ public class ExecutionService {
                     "Stdin exceeds maximum allowed size of " + props.getMaxStdinSizeBytes() + " bytes.");
         }
 
-        // Resolve language alias → canonical name
-        String rawLanguage = request.getLanguage().trim().toLowerCase();
-        String canonicalLanguage = LANGUAGE_ALIASES.getOrDefault(rawLanguage, rawLanguage);
-
-        Language language = languageRepository.findByNameIgnoreCase(canonicalLanguage)
+        // Resolve Language entity from DB
+        Language language = languageRepository.findByNameIgnoreCase(resolvedLanguageName)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "Unsupported language: '" + request.getLanguage() + "'. " +
+                        "Unsupported language: '" + resolvedLanguageName + "'. " +
                         "Supported: python, javascript, java, cpp (and aliases python3, node, c++)."));
 
         if (!language.isEnabled()) {
@@ -88,18 +127,20 @@ public class ExecutionService {
         ExecutionRequest execRequest = ExecutionRequest.builder()
                 .userId(userId)
                 .language(language)
-                .sourceCode(request.getSourceCode())
+                .sourceCode(resolvedSourceCode)
                 .stdin(request.getStdin())
                 .maxTimeMs(maxTime)
                 .maxMemoryMb(maxMem)
-                .status("QUEUED")   // H1 fix: was "PENDING"
+                .fileId(resolvedFileId)
+                .status("QUEUED")
                 .build();
 
         ExecutionRequest saved = requestRepository.saveAndFlush(execRequest);
         executionQueue.offer(saved.getId());
 
-        log.info("Queued execution request {} (language={}, user={})",
-                saved.getId(), canonicalLanguage, userId);
+        log.info("Queued execution request {} (language={}, mode={}, user={})",
+                saved.getId(), resolvedLanguageName,
+                resolvedFileId != null ? "ide" : "classic", userId);
 
         return SubmitResponse.builder()
                 .executionId(saved.getId())
@@ -117,7 +158,6 @@ public class ExecutionService {
                 .executionId(request.getId())
                 .status(request.getStatus());
 
-        // Include result fields only once the job has reached a terminal state
         boolean isTerminal = isTerminalStatus(request.getStatus());
         if (isTerminal) {
             resultRepository.findByRequestId(request.getId()).ifPresent(res -> {
@@ -140,7 +180,7 @@ public class ExecutionService {
      */
     @Transactional(readOnly = true)
     public List<HistoryItem> getHistory(UUID userId, int page, int size) {
-        int safeSize = Math.min(size, 100);  // cap at 100 per page
+        int safeSize = Math.min(size, 100);
         PageRequest pageable = PageRequest.of(page, safeSize,
                 Sort.by(Sort.Direction.DESC, "createdAt"));
 
@@ -154,7 +194,6 @@ public class ExecutionService {
                     .status(req.getStatus())
                     .createdAt(req.getCreatedAt());
 
-            // Populate result metadata for terminal requests
             if (isTerminalStatus(req.getStatus())) {
                 resultRepository.findByRequestId(req.getId()).ifPresent(res -> {
                     item.exitCode(res.getExitCode())

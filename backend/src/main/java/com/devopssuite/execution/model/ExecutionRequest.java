@@ -30,6 +30,13 @@ public class ExecutionRequest {
     @Column(columnDefinition = "TEXT")
     private String stdin;
 
+    /**
+     * Optional: UUID of the IDE file that was run (IDE mode).
+     * Null for classic inline-code submissions.
+     */
+    @Column(name = "file_id")
+    private UUID fileId;
+
     @Column(name = "max_time_ms", nullable = false)
     private int maxTimeMs;
 
