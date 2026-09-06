@@ -4,6 +4,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
+import checkIcon from '../../assets/11_check.svg';
+import xIcon from '../../assets/26_x.svg';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$/;
 
@@ -115,9 +117,12 @@ export const RegisterPage = () => {
               onBlur={handlePasswordBlur}
               required
             />
-            <p className={`mt-1 text-xs ${passwordHintClass}`}>
+            <p className={`mt-1 text-xs flex items-center gap-1 ${passwordHintClass}`}>
+              {passwordValid && (
+                <img src={checkIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+              )}
               {passwordValid
-                ? '✓ Password meets all requirements'
+                ? 'Password meets all requirements'
                 : 'Min 8 chars, must include uppercase, lowercase, digit, and a special character (@#$%^&+=!)'}
             </p>
           </div>
@@ -134,10 +139,16 @@ export const RegisterPage = () => {
               required
             />
             {confirmMismatch && (
-              <p className="mt-1 text-xs text-red-500">✗ Passwords do not match</p>
+              <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                <img src={xIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                Passwords do not match
+              </p>
             )}
             {confirmMatches && (
-              <p className="mt-1 text-xs text-green-600">✓ Passwords match</p>
+              <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                <img src={checkIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                Passwords match
+              </p>
             )}
           </div>
 

@@ -210,6 +210,7 @@ Before implementing any feature, read the relevant doc in `docs/`:
 - Use the `.env` file for configuration — never hardcode values
 - Check `.agents/TASKS.md` for current work in progress before starting
 - Check `.agents/MEMORY.md` for known issues and past decisions
+- **Use imported SVG assets for all icons.** Place SVG files in `frontend/src/assets/` following the existing numbering convention (`NN_name.svg`, e.g. `17_edit.svg`). Import them in components (`import editIcon from '../../assets/17_edit.svg'`) and render with `<img src={icon} alt="..." className="w-X h-X" />`.
 
 ### ❌ DON'T
 - Don't re-introduce Kafka, Zookeeper, or an API Gateway — this is a monolith
@@ -218,3 +219,5 @@ Before implementing any feature, read the relevant doc in `docs/`:
 - Don't bypass the `JwtRequestFilter` security chain
 - Don't expose Docker socket to the application container in production
 - Don't commit `.env` — use `.env.example` as the template
+- **Don't use inline SVGs** (`<svg>...</svg>`) for static icons in JSX — always import from `src/assets/` instead. Exception: dynamic/animated SVGs (e.g. loading spinners) may stay inline.
+- **Don't use emojis as UI icons** in components. Use SVG assets instead.

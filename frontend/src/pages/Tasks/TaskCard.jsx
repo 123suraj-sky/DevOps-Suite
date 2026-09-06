@@ -1,4 +1,7 @@
 import { Card } from '../../components/common/Card';
+import editIcon from '../../assets/17_edit.svg';
+import trashIcon from '../../assets/18_trash.svg';
+import calendarIcon from '../../assets/19_calendar.svg';
 
 /**
  * Renders a single Kanban task card.
@@ -85,12 +88,16 @@ export const TaskCard = ({
                 onEdit && onEdit(task);
               }}
               title="Edit task"
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400
-                         hover:text-indigo-600 leading-none p-0.5 rounded hover:bg-indigo-50"
+              className="group leading-none p-0.5 rounded hover:bg-indigo-50"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
+              <img
+                src={editIcon}
+                alt="Edit"
+                className="w-3.5 h-3.5 opacity-35 group-hover:opacity-100 transition-opacity"
+                style={{ filter: 'var(--edit-filter, none)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.filter = 'invert(29%) sepia(98%) saturate(1500%) hue-rotate(220deg) brightness(90%)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+              />
             </button>
           )}
 
@@ -100,9 +107,7 @@ export const TaskCard = ({
               onClick={(e) => onDelete(e, task.id)}
               disabled={isDeleting}
               title="Delete task"
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400
-                         hover:text-red-500 disabled:opacity-30 leading-none p-0.5 rounded
-                         hover:bg-red-50"
+              className="group leading-none p-0.5 rounded hover:bg-red-50 disabled:opacity-30"
             >
               {isDeleting ? (
                 <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -110,13 +115,13 @@ export const TaskCard = ({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
               ) : (
-                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path
-                    fillRule="evenodd"
-                    d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <img
+                  src={trashIcon}
+                  alt="Delete"
+                  className="w-3.5 h-3.5 opacity-35 group-hover:opacity-100 transition-opacity"
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'invert(26%) sepia(90%) saturate(2000%) hue-rotate(330deg) brightness(90%)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                />
               )}
             </button>
           )}
@@ -131,8 +136,9 @@ export const TaskCard = ({
       {/* ── Row 3: due date (if set) ────────────────────────────────────── */}
       {task.due_date && (
         <div className="flex items-center pt-0.5">
-          <span className="text-[10px] text-gray-400 whitespace-nowrap">
-            📅 {new Date(task.due_date).toLocaleDateString()}
+          <span className="text-[10px] text-gray-400 whitespace-nowrap flex items-center gap-1">
+            <img src={calendarIcon} alt="" className="w-3 h-3 inline-block opacity-35" aria-hidden="true" />
+            {new Date(task.due_date).toLocaleDateString()}
           </span>
         </div>
       )}

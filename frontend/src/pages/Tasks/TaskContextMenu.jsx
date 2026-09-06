@@ -1,5 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import editIcon from '../../assets/17_edit.svg';
+import duplicateIcon from '../../assets/23_duplicate.svg';
+import trashIcon from '../../assets/18_trash.svg';
+import arrowRightIcon from '../../assets/24_arrow_right.svg';
 
 /**
  * Right-click context menu for a task card.
@@ -71,7 +75,9 @@ export const TaskContextMenu = ({
           : 'text-gray-700 hover:bg-gray-100',
       ].join(' ')}
     >
-      {opts.icon && <span className="w-4 text-center">{opts.icon}</span>}
+      {opts.icon && (
+        <img src={opts.icon} alt="" className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
+      )}
       {label}
     </button>
   );
@@ -90,7 +96,7 @@ export const TaskContextMenu = ({
       {/* ── Admin/Owner-only actions ─────────────────────────────────────── */}
       {isAdminOrOwner && (
         <>
-          {item('Edit Task', () => onEdit(task), { icon: '✎' })}
+          {item('Edit Task', () => onEdit(task), { icon: editIcon })}
           <div className="my-1 mx-2 border-t border-gray-100" />
         </>
       )}
@@ -102,7 +108,7 @@ export const TaskContextMenu = ({
             Move to
           </p>
           {moveTargets.map((col) =>
-            item(col.title, () => onMoveToColumn(task, col.id), { icon: '→' })
+            item(col.title, () => onMoveToColumn(task, col.id), { icon: arrowRightIcon })
           )}
         </>
       )}
@@ -111,9 +117,9 @@ export const TaskContextMenu = ({
       {isAdminOrOwner && (
         <>
           <div className="my-1 mx-2 border-t border-gray-100" />
-          {item('Duplicate', () => onDuplicate(task), { icon: '⎘' })}
+          {item('Duplicate', () => onDuplicate(task), { icon: duplicateIcon })}
           <div className="my-1 mx-2 border-t border-gray-100" />
-          {item('Delete', () => onDelete(task.id), { icon: '🗑', danger: true })}
+          {item('Delete', () => onDelete(task.id), { icon: trashIcon, danger: true })}
         </>
       )}
     </div>

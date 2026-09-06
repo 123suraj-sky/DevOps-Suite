@@ -5,6 +5,8 @@ import { codeExecutionApi } from '../../api/codeExecutionApi';
 import toast from 'react-hot-toast';
 import clockIcon from '../../assets/14_clock.svg';
 import skullIcon from '../../assets/15_skull.svg';
+import circleDotIcon from '../../assets/27_circle_dot.svg';
+import playIcon from '../../assets/28_play.svg';
 
 // Terminal statuses — stop polling when reached
 const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMEOUT', 'OOM_KILLED']);
@@ -135,8 +137,9 @@ export const CodeEditorPage = () => {
     return (
       <div className="space-y-2">
         {/* Status badge */}
-        <div className={`text-xs font-semibold uppercase tracking-wider ${statusCfg.color}`}>
-          ● {statusCfg.label}
+        <div className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${statusCfg.color}`}>
+          <img src={circleDotIcon} alt="" className="w-2 h-2" aria-hidden="true" />
+          {statusCfg.label}
         </div>
 
         {/* Timeout / OOM banners */}
@@ -197,7 +200,12 @@ export const CodeEditorPage = () => {
             running ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
           }`}
         >
-          {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : 'Run Code ▶'}
+          {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : (
+            <span className="inline-flex items-center gap-1.5">
+              Run Code
+              <img src={playIcon} alt="" className="w-4 h-4" aria-hidden="true" />
+            </span>
+          )}
         </button>
       </div>
 

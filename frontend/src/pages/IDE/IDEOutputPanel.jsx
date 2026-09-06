@@ -11,6 +11,7 @@
 
 import clockIcon from '../../assets/14_clock.svg';
 import skullIcon from '../../assets/15_skull.svg';
+import circleDotIcon from '../../assets/27_circle_dot.svg';
 
 const TERMINAL_STATUS_CONFIG = {
   QUEUED:    { label: 'Queued…',       colour: 'text-yellow-400' },
@@ -78,8 +79,9 @@ function renderResult(result) {
   return (
     <div className="space-y-2">
       {/* Status badge */}
-      <div className={`text-[10px] font-bold uppercase tracking-wider ${cfg.colour}`}>
-        ● {cfg.label}
+      <div className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${cfg.colour}`}>
+        <img src={circleDotIcon} alt="" className="w-2 h-2" aria-hidden="true" />
+        {cfg.label}
       </div>
 
       {/* Timeout / OOM banners */}

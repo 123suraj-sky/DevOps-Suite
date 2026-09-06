@@ -8,6 +8,8 @@ import { FileExplorer }      from './FileExplorer';
 import { EditorTabs }        from './EditorTabs';
 import { IDEEditor, disposeEditorModel } from './IDEEditor';
 import { IDEOutputPanel }    from './IDEOutputPanel';
+import circleDotIcon from '../../assets/27_circle_dot.svg';
+import playIcon from '../../assets/28_play.svg';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -435,7 +437,7 @@ export function IDEPage() {
           {activeTab && (
             <span className="text-xs text-[#858585] font-mono ml-2 truncate max-w-[300px]">
               {activeTab.path}
-              {activeTab.isDirty && <span className="text-[#e8c070] ml-1">●</span>}
+              {activeTab.isDirty && <img src={circleDotIcon} alt="unsaved" className="w-2 h-2 inline-block ml-1 text-[#e8c070]" style={{ filter: 'invert(85%) sepia(30%) saturate(500%) hue-rotate(5deg)' }} />}
             </span>
           )}
         </div>
@@ -479,11 +481,8 @@ export function IDEPage() {
               </>
             ) : (
               <>
-                <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" clipRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" />
-                </svg>
-                Run ▶
+                <img src={playIcon} alt="" className="w-3.5 h-3.5" aria-hidden="true" />
+                Run
               </>
             )}
           </button>

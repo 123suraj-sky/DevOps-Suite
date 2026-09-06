@@ -3,6 +3,11 @@ import { Modal } from '../../components/common/Modal';
 import { Badge } from '../../components/common/Badge';
 import { Spinner } from '../../components/common/Spinner';
 import { taskApi } from '../../api/taskApi';
+import editIcon from '../../assets/17_edit.svg';
+import plusIcon from '../../assets/20_plus.svg';
+import arrowsLrIcon from '../../assets/22_arrows_lr.svg';
+import duplicateIcon from '../../assets/23_duplicate.svg';
+import calendarIcon from '../../assets/19_calendar.svg';
 
 /**
  * Task detail modal with full immutable audit-history timeline.
@@ -39,10 +44,10 @@ const fmtDate = (d) => {
 };
 
 const ACTION_META = {
-  CREATED:        { label: 'Created',        color: 'bg-green-500',  icon: '✚' },
-  UPDATED:        { label: 'Updated',        color: 'bg-blue-500',   icon: '✎' },
-  STATUS_CHANGED: { label: 'Status changed', color: 'bg-yellow-500', icon: '↔' },
-  DUPLICATED:     { label: 'Duplicated',     color: 'bg-purple-500', icon: '⎘' },
+  CREATED:        { label: 'Created',        color: 'bg-green-500',  icon: plusIcon },
+  UPDATED:        { label: 'Updated',        color: 'bg-blue-500',   icon: editIcon },
+  STATUS_CHANGED: { label: 'Status changed', color: 'bg-yellow-500', icon: arrowsLrIcon },
+  DUPLICATED:     { label: 'Duplicated',     color: 'bg-purple-500', icon: duplicateIcon },
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -107,7 +112,7 @@ const SnapshotDiff = ({ snap, action, columns = [] }) => {
 };
 
 const HistoryEntry = ({ entry, isLast, columns = [] }) => {
-  const meta = ACTION_META[entry.action] ?? { label: entry.action, color: 'bg-gray-400', icon: '•' };
+  const meta = ACTION_META[entry.action] ?? { label: entry.action, color: 'bg-gray-400', icon: null };
   const actorName = entry.changed_by_name || entry.changedByName || 'Unknown';
   const timestamp = entry.changed_at || entry.changedAt;
 
@@ -126,7 +131,9 @@ const HistoryEntry = ({ entry, isLast, columns = [] }) => {
       {/* Timeline spine */}
       <div className="flex flex-col items-center">
         <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${meta.color}`}>
-          {meta.icon}
+          {meta.icon
+            ? <img src={meta.icon} alt="" className="w-3.5 h-3.5 invert" aria-hidden="true" />
+            : null}
         </div>
         {!isLast && <div className="w-px flex-1 bg-gray-200 mt-1" />}
       </div>
@@ -235,9 +242,7 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
               className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors flex-shrink-0"
               title="Edit this task"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
+              <img src={editIcon} alt="" className="w-3.5 h-3.5" aria-hidden="true" />
               Edit
             </button>
           )}
@@ -245,9 +250,11 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
 
         {/* ── Creator & Timestamp Banner ────────────────────────────────── */}
         <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-2.5">
-          <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-            👤
-          </span>
+          <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] font-bold text-blue-600">
+              {(creatorName || 'U').charAt(0).toUpperCase()}
+            </span>
+          </div>
           <div>
             <span>Created by <strong className="text-gray-800">{creatorName}</strong></span>
             {createdAt && (
@@ -258,9 +265,11 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
 
         {/* ── Assigned To ───────────────────────────────────────────────── */}
         <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-2.5">
-          <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
-            🎯
-          </span>
+          <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] font-bold text-indigo-600">
+              {assigneeName ? assigneeName.charAt(0).toUpperCase() : '?'}
+            </span>
+          </div>
           <div>
             <span>Assigned to{' '}</span>
             {assigneeName ? (
@@ -278,7 +287,10 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
           </span>
           <Badge variant={priorityVariant(task.priority)}>{task.priority ?? 'MEDIUM'}</Badge>
           {task.due_date && (
-            <Badge variant="default">📅 Due {fmtDate(task.due_date)}</Badge>
+            <Badge variant="default" className="inline-flex items-center gap-1">
+              <img src={calendarIcon} alt="" className="w-3 h-3 opacity-35" aria-hidden="true" />
+              Due {fmtDate(task.due_date)}
+            </Badge>
           )}
         </div>
 
