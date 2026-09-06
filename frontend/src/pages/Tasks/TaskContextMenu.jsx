@@ -27,6 +27,7 @@ export const TaskContextMenu = ({
   columns,
   isAdminOrOwner,
   onMoveToColumn,
+  onEdit,
   onDuplicate,
   onDelete,
   onClose,
@@ -86,6 +87,14 @@ export const TaskContextMenu = ({
       style={{ top: clampedY, left: clampedX, position: 'fixed', zIndex: 9999 }}
       className="bg-white border border-gray-200 rounded-lg shadow-2xl py-1.5 min-w-[192px] select-none"
     >
+      {/* ── Admin/Owner-only actions ─────────────────────────────────────── */}
+      {isAdminOrOwner && (
+        <>
+          {item('Edit Task', () => onEdit(task), { icon: '✎' })}
+          <div className="my-1 mx-2 border-t border-gray-100" />
+        </>
+      )}
+
       {/* ── Move to ─────────────────────────────────────────────────────── */}
       {moveTargets.length > 0 && (
         <>

@@ -107,7 +107,7 @@ public class TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
-        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
+        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
 
         if (request.getColumnId() != null && !request.getColumnId().equals(task.getColumnId())) {
             Column column = columnRepository.findById(request.getColumnId())
@@ -351,8 +351,9 @@ public class TaskService {
     private Map<UUID, User> buildUserCache(List<Task> tasks) {
         Set<UUID> userIds = new HashSet<>();
         for (Task t : tasks) {
-            if (t.getCreatedBy() != null) userIds.add(t.getCreatedBy());
+            if (t.getCreatedBy() != null)      userIds.add(t.getCreatedBy());
             if (t.getLastModifiedBy() != null) userIds.add(t.getLastModifiedBy());
+            if (t.getAssigneeId() != null)     userIds.add(t.getAssigneeId());
         }
         if (userIds.isEmpty()) return Collections.emptyMap();
         return userRepository.findAllById(userIds).stream()
@@ -376,11 +377,17 @@ public class TaskService {
                     ? userCache.get(task.getLastModifiedBy()).getDisplayName()
                     : "Unknown"
                 : null;
+        String assigneeName = task.getAssigneeId() != null
+                ? userCache.getOrDefault(task.getAssigneeId(), null) != null
+                    ? userCache.get(task.getAssigneeId()).getDisplayName()
+                    : "Unknown"
+                : null;
 
         return TaskResponse.builder()
                 .id(task.getId())
                 .columnId(task.getColumnId())
                 .assigneeId(task.getAssigneeId())
+                .assigneeName(assigneeName)
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .priority(task.getPriority())

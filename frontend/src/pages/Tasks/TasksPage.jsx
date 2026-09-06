@@ -53,6 +53,11 @@ export const TasksPage = () => {
   const [taskData,       setTaskData]       = useState(EMPTY_TASK);
   const [saving,         setSaving]         = useState(false);
 
+  // Edit-task modal
+  const [editingTask,    setEditingTask]    = useState(null);
+  const [editTaskData,   setEditTaskData]   = useState(EMPTY_TASK);
+  const [updating,       setUpdating]       = useState(false);
+
   // Per-card delete tracking
   const [deletingTaskId, setDeletingTaskId] = useState(null);
 
@@ -229,7 +234,7 @@ export const TasksPage = () => {
         description: taskData.description,
         status:      selectedColumn,
         priority:    taskData.priority,
-        assigneeId:  taskData.assigneeId,                          // required
+        assigneeId:  taskData.assigneeId || null,
         ...(taskData.dueDate && { dueDate: taskData.dueDate }),    // nullable
       };
       const created = await taskApi.create(payload);
@@ -249,6 +254,49 @@ export const TasksPage = () => {
     setSelectedColumn(colId);
     setTaskData(EMPTY_TASK);
     setShowAddModal(true);
+  };
+
+  // ── Edit task ──────────────────────────────────────────────────────────
+  const openEditModal = (task) => {
+    setEditingTask(task);
+    setEditTaskData({
+      title:       task.title || '',
+      description: task.description || '',
+      priority:    task.priority || 'MEDIUM',
+      status:      task.status || 'TODO',
+      assigneeId:  task.assignee_id || task.assigneeId || '',
+      dueDate:     task.due_date || task.dueDate || '',
+    });
+  };
+
+  const handleUpdateTask = async (e) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    setUpdating(true);
+    try {
+      const targetColumn = editTaskData.status || editingTask.status;
+      const targetColumnId = columnIdMap[targetColumn] || editingTask.column_id || editingTask.columnId;
+      const payload = {
+        columnId:    targetColumnId,
+        title:       editTaskData.title,
+        description: editTaskData.description,
+        status:      targetColumn,
+        priority:    editTaskData.priority,
+        assigneeId:  editTaskData.assigneeId || null,
+        ...(editTaskData.dueDate ? { dueDate: editTaskData.dueDate } : { dueDate: null }),
+      };
+      const updated = await taskApi.update(editingTask.id, payload);
+      setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? updated : t)));
+      // If the detail modal is also open for this task, update it too
+      setDetailTask((prev) => (prev && prev.id === editingTask.id ? updated : prev));
+      setEditingTask(null);
+      toast.success('Task updated successfully');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to update task';
+      toast.error(msg);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   // ── Context menu ───────────────────────────────────────────────────────
@@ -325,6 +373,7 @@ export const TasksPage = () => {
                                 isDeleting={deletingTaskId === task.id}
                                 isAdminOrOwner={isAdminOrOwner}
                                 onDelete={handleDeleteTask}
+                                onEdit={openEditModal}
                                 onContextMenu={handleOpenContextMenu}
                                 onOpenDetail={(t) => setDetailTask(t)}
                               />
@@ -348,6 +397,7 @@ export const TasksPage = () => {
           task={detailTask}
           columns={COLUMNS}
           onClose={() => setDetailTask(null)}
+          onEdit={isAdminOrOwner ? openEditModal : null}
         />
       )}
 
@@ -361,6 +411,10 @@ export const TasksPage = () => {
           isAdminOrOwner={isAdminOrOwner}
           onMoveToColumn={(task, colId) => {
             handleStatusChange(task.id, colId);
+            handleCloseContextMenu();
+          }}
+          onEdit={(task) => {
+            openEditModal(task);
             handleCloseContextMenu();
           }}
           onDuplicate={(task) => {
@@ -403,14 +457,13 @@ export const TasksPage = () => {
             <option value="HIGH">High</option>
           </Select>
 
-          {/* Assigned To — required */}
+          {/* Assigned To */}
           <Select
             label="Assign To"
             value={taskData.assigneeId}
             onChange={(e) => setTaskData((p) => ({ ...p, assigneeId: e.target.value }))}
-            required
           >
-            <option value="" disabled>Select a member…</option>
+            <option value="">Unassigned</option>
             {assignableMembers.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.displayName || m.email} ({m.role})
@@ -432,6 +485,79 @@ export const TasksPage = () => {
             </Button>
             <Button type="submit" loading={saving}>
               Add Task
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit-task modal */}
+      <Modal
+        isOpen={!!editingTask}
+        onClose={() => setEditingTask(null)}
+        title="Edit Task"
+      >
+        <form onSubmit={handleUpdateTask} className="space-y-4">
+          <Input
+            label="Task Title"
+            value={editTaskData.title}
+            onChange={(e) => setEditTaskData((p) => ({ ...p, title: e.target.value }))}
+            required
+          />
+          <Input
+            label="Description"
+            value={editTaskData.description}
+            onChange={(e) => setEditTaskData((p) => ({ ...p, description: e.target.value }))}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Status"
+              value={editTaskData.status}
+              onChange={(e) => setEditTaskData((p) => ({ ...p, status: e.target.value }))}
+            >
+              {COLUMNS.map((col) => (
+                <option key={col.id} value={col.id}>{col.title}</option>
+              ))}
+            </Select>
+
+            <Select
+              label="Priority"
+              value={editTaskData.priority}
+              onChange={(e) => setEditTaskData((p) => ({ ...p, priority: e.target.value }))}
+            >
+              <option value="LOW">Low</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="HIGH">High</option>
+            </Select>
+          </div>
+
+          {/* Assigned To */}
+          <Select
+            label="Assign To"
+            value={editTaskData.assigneeId}
+            onChange={(e) => setEditTaskData((p) => ({ ...p, assigneeId: e.target.value }))}
+          >
+            <option value="">Unassigned</option>
+            {assignableMembers.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                {m.displayName || m.email} ({m.role})
+              </option>
+            ))}
+          </Select>
+
+          {/* Due Date */}
+          <Input
+            label="Due Date (optional)"
+            type="date"
+            value={editTaskData.dueDate}
+            onChange={(e) => setEditTaskData((p) => ({ ...p, dueDate: e.target.value }))}
+          />
+
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button variant="ghost" onClick={() => setEditingTask(null)}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={updating}>
+              Save Changes
             </Button>
           </div>
         </form>

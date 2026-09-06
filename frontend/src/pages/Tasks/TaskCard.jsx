@@ -19,6 +19,7 @@ export const TaskCard = ({
   isDeleting,
   isAdminOrOwner,
   onDelete,
+  onEdit,
   onContextMenu,
   onOpenDetail,
 }) => {
@@ -56,7 +57,7 @@ export const TaskCard = ({
         onContextMenu(e.clientX, e.clientY, task);
       }}
     >
-      {/* ── Row 1: title + priority + delete ─────────────────────────────── */}
+      {/* ── Row 1: title + priority + edit/delete ─────────────────────────── */}
       <div className="flex justify-between items-start">
         <h4 className="font-semibold text-gray-900 text-sm line-clamp-1 flex-1 min-w-0 mr-2">
           <button
@@ -73,6 +74,26 @@ export const TaskCard = ({
           <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${priorityStyle}`}>
             {task.priority}
           </span>
+          
+          {/* Edit button — only for admins and owners */}
+          {isAdminOrOwner && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit && onEdit(task);
+              }}
+              title="Edit task"
+              className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400
+                         hover:text-indigo-600 leading-none p-0.5 rounded hover:bg-indigo-50"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
+          )}
+
           {/* Only admins/owners see the delete button */}
           {isAdminOrOwner && (
             <button

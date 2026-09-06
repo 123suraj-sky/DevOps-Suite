@@ -169,7 +169,7 @@ const HistoryEntry = ({ entry, isLast, columns = [] }) => {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export const TaskDetailModal = ({ task, columns, onClose }) => {
+export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
   const [history, setHistory]     = useState([]);
   const [histLoading, setHistLoading] = useState(true);
   const [histError,   setHistError]   = useState(null);
@@ -214,15 +214,34 @@ export const TaskDetailModal = ({ task, columns, onClose }) => {
   if (!task) return null;
 
   const currentCol = columns.find((c) => c.id === task.status);
-  const creatorName = task.created_by_name || task.createdByName || 'Unknown';
-  const createdAt = task.created_at || task.createdAt;
+  const creatorName  = task.created_by_name  || task.createdByName  || 'Unknown';
+  const createdAt    = task.created_at        || task.createdAt;
+  const assigneeName = task.assignee_name     || task.assigneeName   || null;
 
   return (
     <Modal isOpen={!!task} onClose={onClose} title="Task Detail">
       <div className="space-y-5 max-h-[80vh] overflow-y-auto pr-1">
 
-        {/* ── Title ──────────────────────────────────────────────────────── */}
-        <h3 className="text-base font-bold text-gray-900 leading-snug">{task.title}</h3>
+        {/* ── Title + Edit Button ────────────────────────────────────────── */}
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-base font-bold text-gray-900 leading-snug flex-1">{task.title}</h3>
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onEdit(task);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors flex-shrink-0"
+              title="Edit this task"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Edit
+            </button>
+          )}
+        </div>
 
         {/* ── Creator & Timestamp Banner ────────────────────────────────── */}
         <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-2.5">
@@ -233,6 +252,21 @@ export const TaskDetailModal = ({ task, columns, onClose }) => {
             <span>Created by <strong className="text-gray-800">{creatorName}</strong></span>
             {createdAt && (
               <span className="text-gray-500"> on <strong className="text-gray-700">{fmt(createdAt)}</strong></span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Assigned To ───────────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 border border-gray-100 rounded-lg p-2.5">
+          <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+            🎯
+          </span>
+          <div>
+            <span>Assigned to{' '}</span>
+            {assigneeName ? (
+              <strong className="text-gray-800">{assigneeName}</strong>
+            ) : (
+              <span className="text-gray-400 italic">Unassigned</span>
             )}
           </div>
         </div>

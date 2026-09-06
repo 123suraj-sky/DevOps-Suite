@@ -263,6 +263,9 @@ public class ProjectDto {
 
         @JsonProperty("last_modified_by_name")
         private String lastModifiedByName;
+
+        @JsonProperty("assignee_name")
+        private String assigneeName;
     }
 
     @Data
