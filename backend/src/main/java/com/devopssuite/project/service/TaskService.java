@@ -314,6 +314,7 @@ public class TaskService {
     }
 
     private void writeAudit(Task task, UUID actorId, String action, Map<String, Object> extraFields) {
+        if (task == null) return;   // guard: can be null if repository.save returns null
         try {
             Map<String, Object> snap = new LinkedHashMap<>();
             snap.put("title",        task.getTitle());
@@ -337,7 +338,7 @@ public class TaskService {
                     .action(action)
                     .snapshot(json)
                     .build());
-        } catch (JsonProcessingException e) {
+        } catch (Exception e) {
             // Non-fatal — audit failure should not roll back the business transaction
         }
     }

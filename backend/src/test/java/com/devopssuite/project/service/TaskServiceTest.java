@@ -155,6 +155,7 @@ class TaskServiceTest {
         when(projectService.getProjectIdForColumn(targetColumnId)).thenReturn(projectId);
         when(columnRepository.findById(targetColumnId)).thenReturn(Optional.of(targetColumn));
         when(taskRepository.findByColumnIdOrderBySortOrderAsc(targetColumnId)).thenReturn(List.of());
+        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         taskService.reorderTasks(projectId, boardId, List.of(new ReorderTaskItem(taskId, targetColumnId, 0)), userId);
 
