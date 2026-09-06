@@ -1,5 +1,7 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.auth.repository.UserRepository;
+import com.devopssuite.project.repository.TaskAuditHistoryRepository;
 import com.devopssuite.project.dto.ProjectDto.TaskRequest;
 import com.devopssuite.project.dto.ProjectDto.ReorderTaskItem;
 import com.devopssuite.project.model.Board;
@@ -44,11 +46,19 @@ class TaskServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private TaskAuditHistoryRepository auditHistoryRepository;
+
     private TaskService taskService;
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, columnRepository, boardRepository, projectService, eventPublisher);
+        taskService = new TaskService(
+                taskRepository, columnRepository, boardRepository,
+                projectService, eventPublisher, userRepository, auditHistoryRepository);
     }
 
     @Test
@@ -78,7 +88,7 @@ class TaskServiceTest {
 
         assertThat(response.getColumnId()).isEqualTo(columnId);
         assertThat(response.getStatus()).isEqualTo("BACKLOG");
-        verify(projectService, times(2)).checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
+        verify(projectService, times(2)).checkPermission(projectId, userId, "ADMIN", "OWNER");
     }
 
     @Test

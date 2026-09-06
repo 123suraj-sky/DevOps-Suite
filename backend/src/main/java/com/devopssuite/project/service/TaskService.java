@@ -4,14 +4,18 @@ import com.devopssuite.notification.event.TaskAssignedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
+import com.devopssuite.auth.model.User;
+import com.devopssuite.auth.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,13 +27,18 @@ public class TaskService {
     private final BoardRepository boardRepository;
     private final ProjectService projectService;
     private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
+    private final TaskAuditHistoryRepository auditHistoryRepository;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
 
     @Transactional
     public TaskResponse createTask(TaskRequest request, UUID userId) {
         Column column = columnRepository.findById(request.getColumnId())
                 .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
         UUID projectId = projectService.getProjectIdForBoard(column.getBoardId());
-        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
+        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
 
         List<Task> existingTasks = taskRepository.findByColumnIdOrderBySortOrderAsc(column.getId());
         enforceWipLimit(column, existingTasks, null);
@@ -57,6 +66,7 @@ public class TaskService {
                     savedTask.getId(), savedTask.getAssigneeId(), projectId, savedTask.getTitle()));
         }
 
+        writeAudit(savedTask, userId, "CREATED");
         return mapToTaskResponse(savedTask);
     }
 
@@ -64,7 +74,7 @@ public class TaskService {
     public TaskResponse createTaskInBoard(UUID boardId, TaskRequest request, UUID userId) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
-        projectService.checkPermission(board.getProjectId(), userId, "ADMIN", "OWNER", "MEMBER");
+        projectService.checkPermission(board.getProjectId(), userId, "ADMIN", "OWNER");
 
         UUID columnId = request.getColumnId();
         if (columnId == null) {
@@ -121,6 +131,7 @@ public class TaskService {
         }
 
         Task savedTask = taskRepository.saveAndFlush(task);
+        writeAudit(savedTask, userId, "UPDATED");
         return mapToTaskResponse(savedTask);
     }
 
@@ -131,6 +142,7 @@ public class TaskService {
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
         projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
 
+        String previousStatus = task.getStatus();
         String normalizedStatus = normalizeStatus(status, null);
         task.setStatus(normalizedStatus);
 
@@ -150,6 +162,11 @@ public class TaskService {
         }
 
         Task savedTask = taskRepository.saveAndFlush(task);
+        Map<String, Object> extra = new LinkedHashMap<>();
+        if (previousStatus != null && !previousStatus.equals(normalizedStatus)) {
+            extra.put("previous_status", previousStatus);
+        }
+        writeAudit(savedTask, userId, "STATUS_CHANGED", extra);
         return mapToTaskResponse(savedTask);
     }
 
@@ -158,8 +175,36 @@ public class TaskService {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
-        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
+        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
         taskRepository.delete(task);
+    }
+
+    @Transactional
+    public TaskResponse duplicateTask(UUID taskId, UUID userId) {
+        Task original = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        UUID projectId = projectService.getProjectIdForColumn(original.getColumnId());
+        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
+
+        Column column = columnRepository.findById(original.getColumnId())
+                .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
+        List<Task> existingTasks = taskRepository.findByColumnIdOrderBySortOrderAsc(original.getColumnId());
+        enforceWipLimit(column, existingTasks, null);
+
+        Task duplicate = Task.builder()
+                .columnId(original.getColumnId())
+                .assigneeId(original.getAssigneeId())
+                .title(original.getTitle() + " (Copy)")
+                .description(original.getDescription())
+                .priority(original.getPriority())
+                .status(original.getStatus())
+                .dueDate(original.getDueDate())
+                .sortOrder(existingTasks.size())
+                .build();
+
+        Task saved = taskRepository.saveAndFlush(duplicate);
+        writeAudit(saved, userId, "DUPLICATED");
+        return mapToTaskResponse(saved);
     }
 
     @Transactional
@@ -182,13 +227,21 @@ public class TaskService {
                 Column targetColumn = columnRepository.findById(item.getColumnId())
                         .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
                 enforceWipLimit(targetColumn, taskRepository.findByColumnIdOrderBySortOrderAsc(item.getColumnId()), task.getId());
+                
+                String oldStatus = task.getStatus();
+                String newStatus = normalizeStatus(null, targetColumn);
+                boolean statusChanged = oldStatus != null && !oldStatus.equals(newStatus);
+
                 task.setColumnId(item.getColumnId());
                 task.setSortOrder(item.getSortOrder());
-                
-                // Map column name to task status dynamically ("In Progress" -> "IN_PROGRESS")
-                task.setStatus(normalizeStatus(null, targetColumn));
+                task.setStatus(newStatus);
 
-                taskRepository.save(task);
+                Task saved = taskRepository.save(task);
+                if (statusChanged) {
+                    Map<String, Object> extra = new LinkedHashMap<>();
+                    extra.put("previous_status", oldStatus);
+                    writeAudit(saved, userId, "STATUS_CHANGED", extra);
+                }
             }
         }
     }
@@ -197,20 +250,133 @@ public class TaskService {
     public List<TaskResponse> getTasksByProject(UUID projectId, UUID userId) {
         projectService.requireProjectMember(projectId, userId);
         List<Board> boards = boardRepository.findByProjectIdOrderBySortOrderAsc(projectId);
-        List<TaskResponse> allTasks = new ArrayList<>();
+        List<Task> allTasks = new ArrayList<>();
 
         for (Board board : boards) {
             List<Column> columns = columnRepository.findByBoardIdOrderBySortOrderAsc(board.getId());
             for (Column column : columns) {
-                List<Task> tasks = taskRepository.findByColumnIdOrderBySortOrderAsc(column.getId());
-                allTasks.addAll(tasks.stream().map(this::mapToTaskResponse).collect(Collectors.toList()));
+                allTasks.addAll(taskRepository.findByColumnIdOrderBySortOrderAsc(column.getId()));
             }
         }
 
-        return allTasks;
+        // Batch-load all referenced users to avoid N+1 queries
+        Map<UUID, User> userCache = buildUserCache(allTasks);
+        return allTasks.stream()
+                .map(task -> mapToTaskResponse(task, userCache))
+                .collect(Collectors.toList());
+    }
+
+    // ── Audit history ──────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<TaskAuditHistoryResponse> getTaskHistory(UUID taskId, UUID userId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        projectService.requireProjectMember(projectService.getProjectIdForColumn(task.getColumnId()), userId);
+
+        List<TaskAuditHistory> history = auditHistoryRepository.findByTaskIdOrderByChangedAtDesc(taskId);
+
+        // Batch-load user display names
+        Set<UUID> userIds = new HashSet<>();
+        for (TaskAuditHistory h : history) {
+            if (h.getChangedBy() != null) userIds.add(h.getChangedBy());
+        }
+        Map<UUID, String> nameCache = userIds.isEmpty()
+                ? Collections.emptyMap()
+                : userRepository.findAllById(userIds).stream()
+                    .collect(Collectors.toMap(User::getId, u -> u.getDisplayName() != null ? u.getDisplayName() : u.getEmail()));
+
+        return history.stream().map(h -> {
+            Object snapshotObj;
+            try {
+                snapshotObj = MAPPER.readValue(h.getSnapshot(), Object.class);
+            } catch (Exception e) {
+                snapshotObj = h.getSnapshot(); // return raw string on parse failure
+            }
+            return TaskAuditHistoryResponse.builder()
+                    .id(h.getId())
+                    .taskId(h.getTaskId())
+                    .changedBy(h.getChangedBy())
+                    .changedByName(h.getChangedBy() != null ? nameCache.getOrDefault(h.getChangedBy(), "Unknown") : null)
+                    .changedAt(h.getChangedAt())
+                    .action(h.getAction())
+                    .snapshot(snapshotObj)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Serialises the current task state to JSON and persists one audit record.
+     * Swallows serialization errors so audit failures never break the main transaction.
+     */
+    private void writeAudit(Task task, UUID actorId, String action) {
+        writeAudit(task, actorId, action, Collections.emptyMap());
+    }
+
+    private void writeAudit(Task task, UUID actorId, String action, Map<String, Object> extraFields) {
+        try {
+            Map<String, Object> snap = new LinkedHashMap<>();
+            snap.put("title",        task.getTitle());
+            snap.put("description",  task.getDescription());
+            snap.put("status",       task.getStatus());
+            snap.put("priority",     task.getPriority());
+            snap.put("assignee_id",  task.getAssigneeId() != null ? task.getAssigneeId().toString() : null);
+            snap.put("due_date",     task.getDueDate() != null ? task.getDueDate().toString() : null);
+            snap.put("column_id",    task.getColumnId() != null ? task.getColumnId().toString() : null);
+            snap.put("sort_order",   task.getSortOrder());
+
+            if (extraFields != null) {
+                snap.putAll(extraFields);
+            }
+
+            String json = MAPPER.writeValueAsString(snap);
+
+            auditHistoryRepository.save(TaskAuditHistory.builder()
+                    .taskId(task.getId())
+                    .changedBy(actorId)
+                    .action(action)
+                    .snapshot(json)
+                    .build());
+        } catch (JsonProcessingException e) {
+            // Non-fatal — audit failure should not roll back the business transaction
+        }
+    }
+
+    // ── Private utilities ──────────────────────────────────────────────────────
+
+    /**
+     * Collects all unique user UUIDs referenced by created_by / last_modified_by
+     * across a list of tasks and fetches them in a single query.
+     */
+    private Map<UUID, User> buildUserCache(List<Task> tasks) {
+        Set<UUID> userIds = new HashSet<>();
+        for (Task t : tasks) {
+            if (t.getCreatedBy() != null) userIds.add(t.getCreatedBy());
+            if (t.getLastModifiedBy() != null) userIds.add(t.getLastModifiedBy());
+        }
+        if (userIds.isEmpty()) return Collections.emptyMap();
+        return userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
     }
 
     private TaskResponse mapToTaskResponse(Task task) {
+        // Single-task path: fetch only the users needed for this one task
+        Map<UUID, User> cache = buildUserCache(List.of(task));
+        return mapToTaskResponse(task, cache);
+    }
+
+    private TaskResponse mapToTaskResponse(Task task, Map<UUID, User> userCache) {
+        String createdByName = task.getCreatedBy() != null
+                ? userCache.getOrDefault(task.getCreatedBy(), null) != null
+                    ? userCache.get(task.getCreatedBy()).getDisplayName()
+                    : "Unknown"
+                : null;
+        String lastModifiedByName = task.getLastModifiedBy() != null
+                ? userCache.getOrDefault(task.getLastModifiedBy(), null) != null
+                    ? userCache.get(task.getLastModifiedBy()).getDisplayName()
+                    : "Unknown"
+                : null;
+
         return TaskResponse.builder()
                 .id(task.getId())
                 .columnId(task.getColumnId())
@@ -223,6 +389,10 @@ public class TaskService {
                 .sortOrder(task.getSortOrder())
                 .createdAt(task.getCreatedAt())
                 .updatedAt(task.getUpdatedAt())
+                .createdBy(task.getCreatedBy())
+                .createdByName(createdByName)
+                .lastModifiedBy(task.getLastModifiedBy())
+                .lastModifiedByName(lastModifiedByName)
                 .build();
     }
 

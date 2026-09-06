@@ -3,6 +3,8 @@ package com.devopssuite.project.service;
 import com.devopssuite.auth.model.User;
 import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.notification.event.MemberAddedEvent;
+import com.devopssuite.notification.event.MemberRemovedEvent;
+import com.devopssuite.notification.event.MemberRoleChangedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
@@ -161,6 +163,7 @@ public class ProjectService {
     @Transactional
     public void addMember(UUID projectId, UUID memberUserId, String email, String role, UUID actingUserId) {
         checkPermission(projectId, actingUserId, "ADMIN", "OWNER");
+        String normalizedRole = normalizeProjectRole(role);
         UUID resolvedUserId = memberUserId;
         if (resolvedUserId == null) {
             if (email == null || email.trim().isEmpty()) {
@@ -173,34 +176,96 @@ public class ProjectService {
 
         if (projectMemberRepository.existsByProjectIdAndUserId(projectId, resolvedUserId)) {
             ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, resolvedUserId).get();
-            member.setRole(role);
+            member.setRole(normalizedRole);
             projectMemberRepository.save(member);
         } else {
             ProjectMember member = ProjectMember.builder()
                     .projectId(projectId)
                     .userId(resolvedUserId)
-                    .role(role)
+                    .role(normalizedRole)
                     .build();
             projectMemberRepository.save(member);
 
             // Notify the newly added member
             Project project = projectRepository.findById(projectId).orElse(null);
             String projectName = project != null ? project.getName() : projectId.toString();
-            eventPublisher.publishEvent(new MemberAddedEvent(projectId, resolvedUserId, projectName, role));
+            eventPublisher.publishEvent(new MemberAddedEvent(projectId, resolvedUserId, projectName, normalizedRole));
         }
     }
 
     @Transactional
-    public void removeMember(UUID projectId, UUID memberUserId, UUID actingUserId) {
-        checkPermission(projectId, actingUserId, "ADMIN", "OWNER");
+    public void changeMemberRole(UUID projectId, UUID targetUserId, String newRole, UUID actingUserId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        // Resolve acting user's effective role
+        String actingRole = resolveEffectiveRole(project, actingUserId);
+
+        // Only OWNER or ADMIN can change roles
+        if (!actingRole.equals("OWNER") && !actingRole.equals("ADMIN")) {
+            throw new ForbiddenException("Access denied: insufficient project role");
+        }
+
+        // Find the target member
+        ProjectMember targetMember = projectMemberRepository.findByProjectIdAndUserId(projectId, targetUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+
+        String targetCurrentRole = normalizeProjectRole(targetMember.getRole());
+
+        // OWNER's role can never be changed
+        if (targetCurrentRole.equals("OWNER")) {
+            throw new ForbiddenException("Cannot change the project owner's role");
+        }
+
+        // ADMIN can only change MEMBER-level users (not other ADMINs)
+        if (actingRole.equals("ADMIN") && !targetCurrentRole.equals("MEMBER")) {
+            throw new ForbiddenException("ADMIN can only change the role of MEMBER-level users");
+        }
+
+        // Prevent self role change
+        if (targetUserId.equals(actingUserId)) {
+            throw new ForbiddenException("You cannot change your own role");
+        }
+
+        targetMember.setRole(normalizeProjectRole(newRole));
+        projectMemberRepository.save(targetMember);
+
+        eventPublisher.publishEvent(new MemberRoleChangedEvent(projectId, targetUserId, normalizeProjectRole(newRole)));
+    }
+
+    private String resolveEffectiveRole(Project project, UUID userId) {
+        if (project.getOwnerId().equals(userId)) return "OWNER";
+        return projectMemberRepository.findByProjectIdAndUserId(project.getId(), userId)
+                .map(ProjectMember::getRole)
+                .map(this::normalizeProjectRole)
+                .orElseThrow(() -> new ForbiddenException("User is not a member of this project"));
+    }
+
+    @Transactional
+    public void removeMember(UUID projectId, UUID memberUserId, UUID actingUserId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
+        // Only the OWNER can remove members
+        if (!project.getOwnerId().equals(actingUserId)) {
+            throw new ForbiddenException("Only the project owner can remove members");
+        }
+
+        // OWNER cannot be removed
         if (project.getOwnerId().equals(memberUserId)) {
             throw new IllegalStateException("Project owner cannot be removed");
         }
+
+        // Prevent self-removal (owner removing themselves)
+        if (actingUserId.equals(memberUserId)) {
+            throw new IllegalStateException("You cannot remove yourself from the project");
+        }
+
         ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(projectId, memberUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
         projectMemberRepository.delete(member);
+
+        eventPublisher.publishEvent(new MemberRemovedEvent(projectId, memberUserId));
     }
 
     @Transactional(readOnly = true)
@@ -292,8 +357,9 @@ public class ProjectService {
                 .orElseThrow(() -> new ForbiddenException("User is not a member of this project"));
 
         boolean hasRole = false;
+        String memberRole = normalizeProjectRole(member.getRole());
         for (String role : allowedRoles) {
-            if (member.getRole().equalsIgnoreCase(role)) {
+            if (memberRole.equals(normalizeProjectRole(role))) {
                 hasRole = true;
                 break;
             }
@@ -301,6 +367,14 @@ public class ProjectService {
         if (!hasRole) {
             throw new ForbiddenException("Access denied: insufficient project role");
         }
+    }
+
+    private String normalizeProjectRole(String role) {
+        if (role == null) {
+            return "";
+        }
+        String normalized = role.trim().toUpperCase();
+        return normalized.startsWith("ROLE_") ? normalized.substring("ROLE_".length()) : normalized;
     }
 
     public UUID getProjectIdForBoard(UUID boardId) {

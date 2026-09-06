@@ -104,6 +104,18 @@ public class ProjectController {
                 .build());
     }
 
+    @PatchMapping("/{projectId}/members/{userId}/role")
+    public ResponseEntity<ApiResponse<Void>> changeMemberRole(
+            @PathVariable("projectId") UUID projectId,
+            @PathVariable("userId") UUID userId,
+            @Valid @RequestBody ChangeRoleRequest request) {
+        UUID actingUserId = getCurrentUserId();
+        projectService.changeMemberRole(projectId, userId, request.getRole(), actingUserId);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("Member role updated successfully")
+                .build());
+    }
+
     @DeleteMapping("/{projectId}/members/{userId}")
     public ResponseEntity<ApiResponse<Void>> removeMember(
             @PathVariable("projectId") UUID projectId,

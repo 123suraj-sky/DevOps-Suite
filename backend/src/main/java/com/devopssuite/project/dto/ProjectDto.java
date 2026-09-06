@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -108,6 +109,15 @@ public class ProjectDto {
         private Instant joinedAtSnake;
         
         private Instant joinedAt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ChangeRoleRequest {
+        @NotBlank(message = "Role must not be blank")
+        @Pattern(regexp = "^(ADMIN|MEMBER)$", message = "Role must be ADMIN or MEMBER")
+        private String role;
     }
 
     @Data
@@ -241,6 +251,18 @@ public class ProjectDto {
         
         @JsonProperty("updated_at")
         private Instant updatedAt;
+
+        @JsonProperty("created_by")
+        private UUID createdBy;
+
+        @JsonProperty("created_by_name")
+        private String createdByName;
+
+        @JsonProperty("last_modified_by")
+        private UUID lastModifiedBy;
+
+        @JsonProperty("last_modified_by_name")
+        private String lastModifiedByName;
     }
 
     @Data
@@ -316,5 +338,32 @@ public class ProjectDto {
         private String status = "success";
         private String message;
         private T data;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class TaskAuditHistoryResponse {
+        private UUID id;
+
+        @JsonProperty("task_id")
+        private UUID taskId;
+
+        @JsonProperty("changed_by")
+        private UUID changedBy;
+
+        @JsonProperty("changed_by_name")
+        private String changedByName;
+
+        @JsonProperty("changed_at")
+        private Instant changedAt;
+
+        /** CREATED | UPDATED | STATUS_CHANGED | DUPLICATED */
+        private String action;
+
+        /** Full task-field snapshot at the time of this change. */
+        private Object snapshot;
     }
 }

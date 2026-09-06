@@ -125,6 +125,32 @@ class ProjectServiceTest {
     }
 
     @Test
+    void createBoardAllowsLegacySecurityPrefixedProjectRole() {
+        UUID projectId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Project project = Project.builder()
+                .id(projectId)
+                .ownerId(ownerId)
+                .name("Platform")
+                .status("ACTIVE")
+                .build();
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(projectId, userId)).thenReturn(Optional.of(
+                ProjectMember.builder()
+                        .projectId(projectId)
+                        .userId(userId)
+                        .role("ROLE_MEMBER")
+                        .build()));
+        when(boardRepository.save(any(Board.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        projectService.createBoard(projectId, new BoardRequest("Delivery", "Sprint board", 0), userId);
+
+        verify(boardRepository).save(any(Board.class));
+    }
+
+    @Test
     void addMemberByEmailResolvesUserAndAddsMember() {
         UUID projectId = UUID.randomUUID();
         UUID actingUserId = UUID.randomUUID();
@@ -143,6 +169,23 @@ class ProjectServiceTest {
         verify(projectMemberRepository).save(captor.capture());
         assertThat(captor.getValue().getProjectId()).isEqualTo(projectId);
         assertThat(captor.getValue().getUserId()).isEqualTo(targetUserId);
+        assertThat(captor.getValue().getRole()).isEqualTo("MEMBER");
+    }
+
+    @Test
+    void addMemberStoresNormalizedProjectRole() {
+        UUID projectId = UUID.randomUUID();
+        UUID actingUserId = UUID.randomUUID();
+        UUID targetUserId = UUID.randomUUID();
+        Project project = Project.builder().id(projectId).ownerId(actingUserId).name("Platform").build();
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.existsByProjectIdAndUserId(projectId, targetUserId)).thenReturn(false);
+
+        projectService.addMember(projectId, targetUserId, null, "ROLE_MEMBER", actingUserId);
+
+        ArgumentCaptor<ProjectMember> captor = ArgumentCaptor.forClass(ProjectMember.class);
+        verify(projectMemberRepository).save(captor.capture());
         assertThat(captor.getValue().getRole()).isEqualTo("MEMBER");
     }
 

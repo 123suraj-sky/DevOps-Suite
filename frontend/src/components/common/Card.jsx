@@ -1,6 +1,6 @@
 import { cn } from '../../utils';
 
-export const Card = ({ children, className, padding = 'md' }) => {
+export const Card = ({ children, className, padding = 'md', ...rest }) => {
   const paddings = {
     none: '',
     sm: 'p-4',
@@ -15,6 +15,7 @@ export const Card = ({ children, className, padding = 'md' }) => {
         paddings[padding],
         className
       )}
+      {...rest}
     >
       {children}
     </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -6,19 +6,22 @@ import { taskApi } from '../../api/taskApi';
 import { projectApi } from '../../api/projectApi';
 import { useWebSocket } from '../../context/WebSocketContext';
 import { subscribe } from '../../services/websocketService';
-import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
 import { Spinner } from '../../components/common/Spinner';
+import { TaskCard } from './TaskCard';
+import { TaskContextMenu } from './TaskContextMenu';
+import { TaskDetailModal } from './TaskDetailModal';
 import toast from 'react-hot-toast';
 
+// ── Column definitions ─────────────────────────────────────────────────────
 const COLUMNS = [
-  { id: 'BACKLOG', title: 'Backlog', bg: 'bg-gray-100 text-gray-800' },
-  { id: 'TODO', title: 'To Do', bg: 'bg-blue-100 text-blue-800' },
+  { id: 'BACKLOG',     title: 'Backlog',     bg: 'bg-gray-100 text-gray-800'    },
+  { id: 'TODO',        title: 'To Do',       bg: 'bg-blue-100 text-blue-800'    },
   { id: 'IN_PROGRESS', title: 'In Progress', bg: 'bg-yellow-100 text-yellow-800' },
-  { id: 'DONE', title: 'Done', bg: 'bg-green-100 text-green-800' },
+  { id: 'DONE',        title: 'Done',        bg: 'bg-green-100 text-green-800'  },
 ];
 
 const normalizeStatusKey = (value) => {
@@ -26,23 +29,47 @@ const normalizeStatusKey = (value) => {
   return key === 'TO_DO' ? 'TODO' : key;
 };
 
+const EMPTY_TASK = { title: '', description: '', priority: 'MEDIUM', assigneeId: '', dueDate: '' };
+
+// ── Component ──────────────────────────────────────────────────────────────
 export const TasksPage = () => {
-  const { id: projectId } = useParams();
-  const { project } = useOutletContext();
-  const { isAdmin } = useAuth();
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const { id: projectId }       = useParams();
+  const { project }             = useOutletContext();
+  const { user: currentUser, isAdmin: isGlobalAdmin } = useAuth();
+
+  // Derive project-level role (OWNER/ADMIN → can create/delete tasks)
+  const userProjectRole = project?.members?.find(
+    (m) => m.userId === currentUser?.id || m.email === currentUser?.email
+  )?.role ?? 'MEMBER';
+  const isAdminOrOwner = userProjectRole === 'OWNER' || userProjectRole === 'ADMIN';
+
+  const [tasks,      setTasks]      = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Add-task modal
+  const [showAddModal,   setShowAddModal]   = useState(false);
   const [selectedColumn, setSelectedColumn] = useState('TODO');
-  const [taskData, setTaskData] = useState({ title: '', description: '', priority: 'MEDIUM' });
-  const [saving, setSaving] = useState(false);
-  // Map of status name (uppercased) → column UUID, built from the first board's columns
+  const [taskData,       setTaskData]       = useState(EMPTY_TASK);
+  const [saving,         setSaving]         = useState(false);
+
+  // Per-card delete tracking
+  const [deletingTaskId, setDeletingTaskId] = useState(null);
+
+  // Board / column mapping
   const [columnIdMap, setColumnIdMap] = useState({});
-  const [boardId, setBoardId] = useState(null);
+  const [boardId,     setBoardId]     = useState(null);
+
+  // Context menu  { x, y, task } | null
+  const [contextMenu, setContextMenu] = useState(null);
+
+  // Task detail modal  task | null
+  const [detailTask, setDetailTask] = useState(null);
+
   const { connected } = useWebSocket();
 
-  // Load initial tasks and resolve column IDs from the project's first board
-  const fetchData = async () => {
+  // ── Data loading ───────────────────────────────────────────────────────
+  const fetchData = useCallback(async () => {
     try {
       const [taskList, boards] = await Promise.all([
         projectApi.getTasks(projectId).catch(() => []),
@@ -51,15 +78,12 @@ export const TasksPage = () => {
 
       setTasks(taskList || []);
 
-      // Build a normalized status-name → columnId map from the first board's columns.
       if (boards && boards.length > 0) {
         const firstBoard = boards[0];
         setBoardId(firstBoard.id || firstBoard.board_id);
-        const cols = firstBoard.columns || [];
         const map = {};
-        cols.forEach((col) => {
-          const key = normalizeStatusKey(col.name);
-          map[key] = col.id || col.column_id;
+        (firstBoard.columns || []).forEach((col) => {
+          map[normalizeStatusKey(col.name)] = col.id || col.column_id;
         });
         setColumnIdMap(map);
       }
@@ -69,140 +93,181 @@ export const TasksPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, [projectId]);
 
-  // Subscribe to WebSocket live updates
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // ── WebSocket live updates ─────────────────────────────────────────────
   useEffect(() => {
     if (connected && projectId) {
-      const unsubscribe = subscribe(`/topic/tasks/${projectId}`, (updatedTasks) => {
-        if (Array.isArray(updatedTasks)) {
-          setTasks(updatedTasks);
-        } else {
-          // If a single task event is broadcasted, re-fetch
-          fetchData();
-        }
+      const unsub = subscribe(`/topic/tasks/${projectId}`, (updated) => {
+        if (Array.isArray(updated)) setTasks(updated);
+        else fetchData();
       });
-      return () => unsubscribe();
+      return () => unsub();
     }
-  }, [connected, projectId]);
+  }, [connected, projectId, fetchData]);
 
-  // Handle Drag & Drop status and order updates
+  // ── Drag & drop ────────────────────────────────────────────────────────
+  const onDragStart = () => setIsDragging(true);
+
   const onDragEnd = async (result) => {
+    setIsDragging(false);
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const destinationColumnId = columnIdMap[destination.droppableId];
-    if (!boardId || !destinationColumnId) {
+    const destColId = columnIdMap[destination.droppableId];
+    if (!boardId || !destColId) {
       toast.error('Task board is still loading. Please try again.');
       return;
     }
 
     const previousTasks = tasks;
-    const tasksByStatus = COLUMNS.reduce((acc, col) => {
+    const byStatus = COLUMNS.reduce((acc, col) => {
       acc[col.id] = tasks
-        .filter((task) => task.status === col.id)
+        .filter((t) => t.status === col.id)
         .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
       return acc;
     }, {});
 
-    const sourceTasks = [...tasksByStatus[source.droppableId]];
-    const destinationTasks =
-      source.droppableId === destination.droppableId
-        ? sourceTasks
-        : [...tasksByStatus[destination.droppableId]];
-    const sourceIndex = sourceTasks.findIndex((task) => task.id === draggableId);
-    if (sourceIndex === -1) return;
+    const srcList  = [...byStatus[source.droppableId]];
+    const dstList  = source.droppableId === destination.droppableId
+      ? srcList
+      : [...byStatus[destination.droppableId]];
 
-    const [movedTask] = sourceTasks.splice(sourceIndex, 1);
-    const updatedMovedTask = {
-      ...movedTask,
-      status: destination.droppableId,
-      columnId: destinationColumnId,
-      column_id: destinationColumnId,
-    };
+    const si = srcList.findIndex((t) => t.id === draggableId);
+    if (si === -1) return;
+
+    const [moved] = srcList.splice(si, 1);
+    const updMoved = { ...moved, status: destination.droppableId, columnId: destColId, column_id: destColId };
 
     if (source.droppableId === destination.droppableId) {
-      sourceTasks.splice(destination.index, 0, updatedMovedTask);
-      tasksByStatus[source.droppableId] = sourceTasks;
+      srcList.splice(destination.index, 0, updMoved);
+      byStatus[source.droppableId] = srcList;
     } else {
-      destinationTasks.splice(destination.index, 0, updatedMovedTask);
-      tasksByStatus[source.droppableId] = sourceTasks;
-      tasksByStatus[destination.droppableId] = destinationTasks;
+      dstList.splice(destination.index, 0, updMoved);
+      byStatus[source.droppableId]      = srcList;
+      byStatus[destination.droppableId] = dstList;
     }
 
-    const reorderedTasks = COLUMNS.flatMap((col) =>
-      tasksByStatus[col.id].map((task, index) => ({
-        ...task,
-        sortOrder: index,
-        sort_order: index,
-      }))
+    const reordered = COLUMNS.flatMap((col) =>
+      byStatus[col.id].map((t, idx) => ({ ...t, sortOrder: idx, sort_order: idx }))
     );
-
-    setTasks(reorderedTasks);
+    setTasks(reordered);
 
     try {
-      await taskApi.reorder(
-        projectId,
-        boardId,
-        reorderedTasks.map((task) => ({
-          id: task.id,
-          columnId: task.columnId || task.column_id,
-          sortOrder: task.sortOrder ?? task.sort_order ?? 0,
-        }))
-      );
+      await taskApi.reorder(projectId, boardId, reordered.map((t) => ({
+        id: t.id,
+        columnId: t.columnId || t.column_id,
+        sortOrder: t.sortOrder ?? t.sort_order ?? 0,
+      })));
       toast.success('Task board updated');
     } catch (err) {
       console.error('Failed to reorder tasks:', err);
-      toast.error('Failed to save task move. Rolling back...');
+      toast.error('Failed to save task move. Rolling back…');
       setTasks(previousTasks);
     }
   };
 
-  // Add new task
+  // ── Status change ──────────────────────────────────────────────────────
+  const handleStatusChange = async (taskId, newStatus) => {
+    const previous = tasks;
+    setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
+    try {
+      const updated = await taskApi.updateStatus(taskId, newStatus);
+      setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t));
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to update status';
+      toast.error(msg);
+      setTasks(previous);
+    }
+  };
+
+  // ── Delete ─────────────────────────────────────────────────────────────
+  const handleDeleteTask = async (e, taskId) => {
+    if (e?.stopPropagation) e.stopPropagation();
+    if (!window.confirm('Delete this task? This cannot be undone.')) return;
+    setDeletingTaskId(taskId);
+    try {
+      await taskApi.delete(taskId);
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      toast.success('Task deleted');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to delete task';
+      toast.error(msg);
+    } finally {
+      setDeletingTaskId(null);
+    }
+  };
+
+  // ── Duplicate ──────────────────────────────────────────────────────────
+  const handleDuplicate = async (task) => {
+    try {
+      const created = await taskApi.duplicate(task.id);
+      setTasks((prev) => [...prev, created]);
+      toast.success('Task duplicated');
+    } catch (err) {
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to duplicate task';
+      toast.error(msg);
+    }
+  };
+
+  // ── Add task ───────────────────────────────────────────────────────────
   const handleAddTask = async (e) => {
     e.preventDefault();
-
     const columnId = columnIdMap[selectedColumn];
     if (!columnId) {
       toast.error(`No column found for "${selectedColumn}". Please set up the project board first.`);
       return;
     }
-
     setSaving(true);
     try {
-      const created = await taskApi.create({
+      const payload = {
         columnId,
-        title: taskData.title,
+        title:       taskData.title,
         description: taskData.description,
-        status: selectedColumn,
-        priority: taskData.priority,
-      });
-
+        status:      selectedColumn,
+        priority:    taskData.priority,
+        assigneeId:  taskData.assigneeId,                          // required
+        ...(taskData.dueDate && { dueDate: taskData.dueDate }),    // nullable
+      };
+      const created = await taskApi.create(payload);
       setTasks((prev) => [...prev, created]);
       setShowAddModal(false);
-      setTaskData({ title: '', description: '', priority: 'MEDIUM' });
+      setTaskData(EMPTY_TASK);
       toast.success('Task created successfully');
     } catch (err) {
-      console.error('Failed to create task:', err);
-      toast.error('Failed to create task');
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to create task';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
+  const openAddModal = (colId) => {
+    setSelectedColumn(colId);
+    setTaskData(EMPTY_TASK);
+    setShowAddModal(true);
+  };
+
+  // ── Context menu ───────────────────────────────────────────────────────
+  const handleOpenContextMenu  = (x, y, task) => setContextMenu({ x, y, task });
+  const handleCloseContextMenu = () => setContextMenu(null);
+
+  // ── Render ─────────────────────────────────────────────────────────────
   if (loading) return <Spinner size="lg" className="mt-20" />;
+
+  // All project members are assignable, including the current user
+  const assignableMembers = project?.members || [];
 
   return (
     <div className="space-y-6 flex flex-col">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
         <div className="flex items-center space-x-2">
-          {isAdmin && (
+          {isGlobalAdmin && (
             <>
               <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="text-sm text-gray-500">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
@@ -211,29 +276,34 @@ export const TasksPage = () => {
         </div>
       </div>
 
-      <DragDropContext onDragEnd={onDragEnd}>
+      {/* Kanban board */}
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
             const columnTasks = tasks
               .filter((t) => t.status === col.id)
               .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
+
             return (
               <div key={col.id} className="bg-gray-50 p-4 rounded-lg flex flex-col min-w-[250px]">
+                {/* Column header */}
                 <div className="flex items-center justify-between mb-4">
                   <span className={`px-2 py-1 text-xs font-semibold rounded ${col.bg}`}>
                     {col.title} ({columnTasks.length})
                   </span>
-                  <button
-                    onClick={() => {
-                      setSelectedColumn(col.id);
-                      setShowAddModal(true);
-                    }}
-                    className="text-gray-500 hover:text-indigo-600 font-bold text-lg"
-                  >
-                    +
-                  </button>
+                  {/* Only admins/owners see the + button */}
+                  {isAdminOrOwner && (
+                    <button
+                      onClick={() => openAddModal(col.id)}
+                      className="text-gray-500 hover:text-indigo-600 font-bold text-lg leading-none"
+                      title={`Add task to ${col.title}`}
+                    >
+                      +
+                    </button>
+                  )}
                 </div>
 
+                {/* Droppable */}
                 <Droppable droppableId={col.id}>
                   {(provided) => (
                     <div
@@ -243,24 +313,21 @@ export const TasksPage = () => {
                     >
                       {columnTasks.map((task, idx) => (
                         <Draggable key={task.id} draggableId={task.id} index={idx}>
-                          {(providedDrag) => (
+                          {(drag) => (
                             <div
-                              ref={providedDrag.innerRef}
-                              {...providedDrag.draggableProps}
-                              {...providedDrag.dragHandleProps}
+                              ref={drag.innerRef}
+                              {...drag.draggableProps}
+                              {...drag.dragHandleProps}
+                              className="group"
                             >
-                              <Card className="hover:shadow cursor-grab active:cursor-grabbing p-3 space-y-2 bg-white">
-                                <div className="flex justify-between items-start">
-                                  <h4 className="font-semibold text-gray-900 text-sm line-clamp-1">{task.title}</h4>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                                    task.priority === 'HIGH' ? 'bg-red-100 text-red-800' :
-                                    task.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
-                                  }`}>
-                                    {task.priority}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>
-                              </Card>
+                              <TaskCard
+                                task={task}
+                                isDeleting={deletingTaskId === task.id}
+                                isAdminOrOwner={isAdminOrOwner}
+                                onDelete={handleDeleteTask}
+                                onContextMenu={handleOpenContextMenu}
+                                onOpenDetail={(t) => setDetailTask(t)}
+                              />
                             </div>
                           )}
                         </Draggable>
@@ -275,7 +342,45 @@ export const TasksPage = () => {
         </div>
       </DragDropContext>
 
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={`Add Task - ${selectedColumn}`}>
+      {/* Task detail modal */}
+      {detailTask && (
+        <TaskDetailModal
+          task={detailTask}
+          columns={COLUMNS}
+          onClose={() => setDetailTask(null)}
+        />
+      )}
+
+      {/* Context menu — portal, so it's never clipped by DragDropContext */}
+      {contextMenu && (
+        <TaskContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          task={contextMenu.task}
+          columns={COLUMNS}
+          isAdminOrOwner={isAdminOrOwner}
+          onMoveToColumn={(task, colId) => {
+            handleStatusChange(task.id, colId);
+            handleCloseContextMenu();
+          }}
+          onDuplicate={(task) => {
+            handleDuplicate(task);
+            handleCloseContextMenu();
+          }}
+          onDelete={(taskId) => {
+            handleDeleteTask(null, taskId);
+            handleCloseContextMenu();
+          }}
+          onClose={handleCloseContextMenu}
+        />
+      )}
+
+      {/* Add-task modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}
+        title={`Add Task — ${COLUMNS.find((c) => c.id === selectedColumn)?.title ?? selectedColumn}`}
+      >
         <form onSubmit={handleAddTask} className="space-y-4">
           <Input
             label="Task Title"
@@ -297,9 +402,37 @@ export const TasksPage = () => {
             <option value="MEDIUM">Medium</option>
             <option value="HIGH">High</option>
           </Select>
+
+          {/* Assigned To — required */}
+          <Select
+            label="Assign To"
+            value={taskData.assigneeId}
+            onChange={(e) => setTaskData((p) => ({ ...p, assigneeId: e.target.value }))}
+            required
+          >
+            <option value="" disabled>Select a member…</option>
+            {assignableMembers.map((m) => (
+              <option key={m.userId} value={m.userId}>
+                {m.displayName || m.email} ({m.role})
+              </option>
+            ))}
+          </Select>
+
+          {/* Due Date */}
+          <Input
+            label="Due Date (optional)"
+            type="date"
+            value={taskData.dueDate}
+            onChange={(e) => setTaskData((p) => ({ ...p, dueDate: e.target.value }))}
+          />
+
           <div className="flex justify-end space-x-2">
-            <Button variant="ghost" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit" loading={saving}>Add Task</Button>
+            <Button variant="ghost" onClick={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}>
+              Cancel
+            </Button>
+            <Button type="submit" loading={saving}>
+              Add Task
+            </Button>
           </div>
         </form>
       </Modal>

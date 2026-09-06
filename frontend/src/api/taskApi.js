@@ -25,6 +25,16 @@ export const taskApi = {
     await apiClient.delete(`/tasks/${id}`);
   },
 
+  duplicate: async (id) => {
+    const response = await apiClient.post(`/tasks/${id}/duplicate`);
+    return response.data.data;
+  },
+
+  getHistory: async (id) => {
+    const response = await apiClient.get(`/tasks/${id}/history`);
+    return response.data.data;
+  },
+
   reorder: async (projectId, boardId, tasks) => {
     await apiClient.put(`/projects/${projectId}/boards/${boardId}/tasks/reorder`, { tasks });
   },

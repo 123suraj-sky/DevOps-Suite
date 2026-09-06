@@ -18,6 +18,7 @@ export const ProjectDetailPage = () => {
   const [memberRole, setMemberRole] = useState('MEMBER');
   const [addingMember, setAddingMember] = useState(false);
   const [userNotFoundEmail, setUserNotFoundEmail] = useState(null);
+  const [changingRoleFor, setChangingRoleFor] = useState(null);
 
   const handleCloseModal = () => {
     setShowAddMemberModal(false);
@@ -75,6 +76,21 @@ export const ProjectDetailPage = () => {
     }
   };
 
+  const handleChangeRole = async (memberId, newRole) => {
+    setChangingRoleFor(memberId);
+    try {
+      await projectApi.changeMemberRole(projectId, memberId, newRole);
+      toast.success('Role updated successfully');
+      refreshProject();
+    } catch (err) {
+      console.error('Failed to change role:', err);
+      const message = err.response?.data?.message || err.response?.data?.error || 'Failed to update role';
+      toast.error(message);
+    } finally {
+      setChangingRoleFor(null);
+    }
+  };
+
   const userRole = project?.members?.find((m) => m.userId === currentUser?.id || m.email === currentUser?.email)?.role || 'MEMBER';
   const isOwnerOrAdmin = userRole === 'OWNER' || userRole === 'ADMIN';
 
@@ -94,30 +110,56 @@ export const ProjectDetailPage = () => {
           </div>
 
           <div className="divide-y divide-gray-100">
-            {project?.members?.map((member) => (
-              <div key={member.userId} className="flex justify-between items-center py-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
-                  <p className="text-xs text-gray-500">{member.email}</p>
+            {project?.members?.map((member) => {
+              const isSelf = member.userId === currentUser?.id || member.email === currentUser?.email;
+              const isTargetOwner = member.role === 'OWNER';
+
+              // OWNER can change anyone's role except their own and the owner row
+              // ADMIN can only change MEMBER-level users
+              const canChangeRole =
+                (userRole === 'OWNER' && !isTargetOwner && !isSelf) ||
+                (userRole === 'ADMIN' && member.role === 'MEMBER' && !isSelf);
+
+              // Only OWNER can remove — not self, not the owner row
+              const canRemove = userRole === 'OWNER' && !isTargetOwner && !isSelf;
+
+              return (
+                <div key={member.userId} className="flex justify-between items-center py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
+                    <p className="text-xs text-gray-500">{member.email}</p>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    {canChangeRole ? (
+                      <select
+                        value={member.role}
+                        disabled={changingRoleFor === member.userId}
+                        onChange={(e) => handleChangeRole(member.userId, e.target.value)}
+                        className="text-xs border border-gray-300 rounded-md px-2 py-0.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
+                      >
+                        <option value="MEMBER">MEMBER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    ) : (
+                      <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                        member.role === 'OWNER' ? 'bg-purple-100 text-purple-800' :
+                        member.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {member.role}
+                      </span>
+                    )}
+                    {canRemove && (
+                      <button
+                        onClick={() => handleRemoveMember(member.userId)}
+                        className="text-xs text-red-500 hover:text-red-700 font-semibold"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    member.role === 'OWNER' ? 'bg-purple-100 text-purple-800' :
-                    member.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {member.role}
-                  </span>
-                  {isOwnerOrAdmin && member.role !== 'OWNER' && member.userId !== currentUser?.id && (
-                    <button
-                      onClick={() => handleRemoveMember(member.userId)}
-                      className="text-xs text-red-500 hover:text-red-700 font-semibold"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

@@ -54,4 +54,41 @@ public class NotificationEventListener {
             log.error("Failed to create PROJECT_JOINED notification", e);
         }
     }
+
+    @Async
+    @EventListener
+    public void onMemberRoleChanged(MemberRoleChangedEvent event) {
+        log.debug("Handling MemberRoleChangedEvent: project={} user={} newRole={}",
+                event.projectId(), event.userId(), event.newRole());
+        try {
+            notificationService.createNotification(
+                    event.userId(),
+                    "ROLE_CHANGED",
+                    "Project Role Updated",
+                    "Your role in the project has been updated to " + event.newRole(),
+                    event.projectId(),
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Failed to create ROLE_CHANGED notification", e);
+        }
+    }
+
+    @Async
+    @EventListener
+    public void onMemberRemoved(MemberRemovedEvent event) {
+        log.debug("Handling MemberRemovedEvent: project={} user={}", event.projectId(), event.userId());
+        try {
+            notificationService.createNotification(
+                    event.userId(),
+                    "PROJECT_REMOVED",
+                    "Removed from Project",
+                    "You have been removed from a project",
+                    event.projectId(),
+                    null
+            );
+        } catch (Exception e) {
+            log.error("Failed to create PROJECT_REMOVED notification", e);
+        }
+    }
 }

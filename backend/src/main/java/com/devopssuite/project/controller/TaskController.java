@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -39,7 +40,7 @@ public class TaskController {
                         .build());
     }
 
-    @PostMapping({"/boards/{boardId}/tasks", "/api/v1/boards/{boardId}/tasks"})
+    @PostMapping({"/boards/{boardId}/tasks", "/api/boards/{boardId}/tasks", "/api/v1/boards/{boardId}/tasks"})
     public ResponseEntity<ApiResponse<TaskResponse>> createInBoard(
             @PathVariable("boardId") UUID boardId,
             @Valid @RequestBody TaskRequest request) {
@@ -52,7 +53,7 @@ public class TaskController {
                         .build());
     }
 
-    @GetMapping({"/tasks/{id}", "/api/v1/tasks/{id}"})
+    @GetMapping({"/tasks/{id}", "/api/tasks/{id}", "/api/v1/tasks/{id}"})
     public ResponseEntity<ApiResponse<TaskResponse>> getById(@PathVariable("id") UUID id) {
         UUID userId = getCurrentUserId();
         TaskResponse response = taskService.getTask(id, userId);
@@ -62,7 +63,7 @@ public class TaskController {
                 .build());
     }
 
-    @PutMapping({"/tasks/{id}", "/api/v1/tasks/{id}"})
+    @PutMapping({"/tasks/{id}", "/api/tasks/{id}", "/api/v1/tasks/{id}"})
     public ResponseEntity<ApiResponse<TaskResponse>> update(@PathVariable("id") UUID id, @Valid @RequestBody TaskRequest request) {
         UUID userId = getCurrentUserId();
         TaskResponse response = taskService.updateTask(id, request, userId);
@@ -72,7 +73,7 @@ public class TaskController {
                 .build());
     }
 
-    @PatchMapping({"/tasks/{id}/status", "/api/v1/tasks/{id}/status"})
+    @PatchMapping({"/tasks/{id}/status", "/api/tasks/{id}/status", "/api/v1/tasks/{id}/status"})
     public ResponseEntity<ApiResponse<TaskResponse>> updateStatus(@PathVariable("id") UUID id, @Valid @RequestBody TaskStatusRequest request) {
         UUID userId = getCurrentUserId();
         TaskResponse response = taskService.updateStatus(id, request.getStatus(), userId);
@@ -82,12 +83,33 @@ public class TaskController {
                 .build());
     }
 
-    @DeleteMapping({"/tasks/{id}", "/api/v1/tasks/{id}"})
+    @DeleteMapping({"/tasks/{id}", "/api/tasks/{id}", "/api/v1/tasks/{id}"})
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable("id") UUID id) {
         UUID userId = getCurrentUserId();
         taskService.deleteTask(id, userId);
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("Task deleted successfully")
+                .build());
+    }
+
+    @PostMapping({"/tasks/{id}/duplicate", "/api/tasks/{id}/duplicate", "/api/v1/tasks/{id}/duplicate"})
+    public ResponseEntity<ApiResponse<TaskResponse>> duplicate(@PathVariable("id") UUID id) {
+        UUID userId = getCurrentUserId();
+        TaskResponse response = taskService.duplicateTask(id, userId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.<TaskResponse>builder()
+                        .message("Task duplicated successfully")
+                        .data(response)
+                        .build());
+    }
+
+    @GetMapping({"/tasks/{id}/history", "/api/tasks/{id}/history", "/api/v1/tasks/{id}/history"})
+    public ResponseEntity<ApiResponse<List<TaskAuditHistoryResponse>>> getHistory(@PathVariable("id") UUID id) {
+        UUID userId = getCurrentUserId();
+        List<TaskAuditHistoryResponse> history = taskService.getTaskHistory(id, userId);
+        return ResponseEntity.ok(ApiResponse.<List<TaskAuditHistoryResponse>>builder()
+                .message("Task history fetched successfully")
+                .data(history)
                 .build());
     }
 }

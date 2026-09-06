@@ -34,6 +34,10 @@ export const projectApi = {
     await apiClient.post(`/projects/${projectId}/members`, payload);
   },
 
+  changeMemberRole: async (projectId, userId, role) => {
+    await apiClient.patch(`/projects/${projectId}/members/${userId}/role`, { role });
+  },
+
   removeMember: async (projectId, userId) => {
     await apiClient.delete(`/projects/${projectId}/members/${userId}`);
   },
