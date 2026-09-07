@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package.json package-lock.json ./
-RUN CYPRESS_INSTALL_BINARY=0 npm ci
+RUN CYPRESS_INSTALL_BINARY=0 npm install --legacy-peer-deps
 
 # Copy source and build static assets
 COPY . .
