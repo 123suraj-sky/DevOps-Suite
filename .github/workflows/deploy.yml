@@ -113,6 +113,34 @@ jobs:
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
+      - name: Keep only last 3 successful backend images
+        if: steps.push.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          PACKAGE_NAME="$(echo "${REPO}-backend" | tr '[:upper:]' '[:lower:]')"
+          OWNER_TYPE="${{ github.event.repository.owner.type }}"
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          else
+            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          fi
+
+          echo "Keeping the 3 newest successfully published backend versions..."
+
+          gh api --paginate "$API_PATH?per_page=100" \
+            --jq '.[] | [.id, .created_at] | @tsv' |
+            sort -k2 -r |
+            tail -n +4 |
+            cut -f1 |
+            while read -r VERSION_ID; do
+              echo "Deleting old backend package version: ${VERSION_ID}"
+              gh api --method DELETE "${API_PATH}/${VERSION_ID}"
+            done
+
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
@@ -170,6 +198,34 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
+
+      - name: Keep only last 3 successful frontend images
+        if: steps.push.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          PACKAGE_NAME="$(echo "${REPO}-frontend" | tr '[:upper:]' '[:lower:]')"
+          OWNER_TYPE="${{ github.event.repository.owner.type }}"
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          else
+            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          fi
+
+          echo "Keeping the 3 newest successfully published frontend versions..."
+
+          gh api --paginate "$API_PATH?per_page=100" \
+            --jq '.[] | [.id, .created_at] | @tsv' |
+            sort -k2 -r |
+            tail -n +4 |
+            cut -f1 |
+            while read -r VERSION_ID; do
+              echo "Deleting old frontend package version: ${VERSION_ID}"
+              gh api --method DELETE "${API_PATH}/${VERSION_ID}"
+            done
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
