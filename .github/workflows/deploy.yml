@@ -56,7 +56,7 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # PUBLISH JOBS
-  # Run on both push and pull_request once both test jobs pass.
+  # Publish only after both test jobs pass on master pushes or manual runs.
   # Both images are published in parallel.
   # Docker requires image names to be lowercase, so we derive them from
   # a lowercased github.repository value set in a step.
@@ -66,6 +66,7 @@ jobs:
     name: Publish Backend Image
     runs-on: ubuntu-latest
     needs: [ build-backend, build-frontend ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: read
@@ -113,11 +114,79 @@ jobs:
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
-      - name: Keep only last 3 successful backend images
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+      # Keep the 3 newest successfully published frontend image versions.
+      # GHCR also contains untagged attestation/provenance versions, so
+      # only tagged container versions are counted as releases. Everything
+      # older than the 3rd newest tagged release is removed, including
+      # old untagged artifacts.
+      - name: Keep only last 3 successful frontend releases
         if: steps.push.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          PACKAGE_NAME="$(echo "${REPO}-frontend" | tr '[:upper:]' '[:lower:]')"
+          OWNER_TYPE="${{ github.event.repository.owner.type }}"
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          else
+            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          fi
+
+          VERSIONS="$(gh api --paginate --slurp "$API_PATH?per_page=100" --jq 'add')"
+
+          TAGGED="$(echo "$VERSIONS" | jq -c '
+            map(select((.metadata.container.tags // []) | length > 0))
+            | sort_by(.created_at)
+            | reverse
+          ')"
+
+          TAGGED_COUNT="$(echo "$TAGGED" | jq 'length')"
+
+          if [ "$TAGGED_COUNT" -le 3 ]; then
+            echo "Only ${TAGGED_COUNT} tagged frontend release(s) exist. Nothing to delete."
+            exit 0
+          fi
+
+          CUTOFF="$(echo "$TAGGED" | jq -r '.[2].created_at')"
+
+          echo "Keeping the 3 newest tagged frontend releases."
+          echo "Retention cutoff: ${CUTOFF}"
+
+          echo "$VERSIONS" | jq -r --arg cutoff "$CUTOFF" '
+            .[]
+            | select(.created_at < $cutoff)
+            | [.id, .created_at, ((.metadata.container.tags // []) | join(","))]
+            | @tsv
+          ' |
+          while IFS=$'\t' read -r VERSION_ID CREATED_AT TAGS; do
+            echo "Deleting frontend package version ${VERSION_ID} (${CREATED_AT}) tags=[${TAGS}]"
+            gh api --method DELETE "$API_PATH/$VERSION_ID"
+          done
+
+      # Keep the 3 newest successfully published backend image versions.
+      # GHCR also contains untagged attestation/provenance versions, so
+      # only tagged container versions are counted as releases. Everything
+      # older than the 3rd newest tagged release is removed, including
+      # old untagged artifacts.
+      - name: Keep only last 3 successful backend releases
+        if: steps.push.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
           OWNER="${GITHUB_REPOSITORY%%/*}"
           REPO="${GITHUB_REPOSITORY#*/}"
           PACKAGE_NAME="$(echo "${REPO}-backend" | tr '[:upper:]' '[:lower:]')"
@@ -129,29 +198,42 @@ jobs:
             API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
           fi
 
-          echo "Keeping the 3 newest successfully published backend versions..."
+          VERSIONS="$(gh api --paginate --slurp "$API_PATH?per_page=100" --jq 'add')"
 
-          gh api --paginate "$API_PATH?per_page=100" \
-            --jq '.[] | [.id, .created_at] | @tsv' |
-            sort -k2 -r |
-            tail -n +4 |
-            cut -f1 |
-            while read -r VERSION_ID; do
-              echo "Deleting old backend package version: ${VERSION_ID}"
-              gh api --method DELETE "${API_PATH}/${VERSION_ID}"
-            done
+          TAGGED="$(echo "$VERSIONS" | jq -c '
+            map(select((.metadata.container.tags // []) | length > 0))
+            | sort_by(.created_at)
+            | reverse
+          ')"
 
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+          TAGGED_COUNT="$(echo "$TAGGED" | jq 'length')"
+
+          if [ "$TAGGED_COUNT" -le 3 ]; then
+            echo "Only ${TAGGED_COUNT} tagged backend release(s) exist. Nothing to delete."
+            exit 0
+          fi
+
+          CUTOFF="$(echo "$TAGGED" | jq -r '.[2].created_at')"
+
+          echo "Keeping the 3 newest tagged backend releases."
+          echo "Retention cutoff: ${CUTOFF}"
+
+          echo "$VERSIONS" | jq -r --arg cutoff "$CUTOFF" '
+            .[]
+            | select(.created_at < $cutoff)
+            | [.id, .created_at, ((.metadata.container.tags // []) | join(","))]
+            | @tsv
+          ' |
+          while IFS=$'\t' read -r VERSION_ID CREATED_AT TAGS; do
+            echo "Deleting backend package version ${VERSION_ID} (${CREATED_AT}) tags=[${TAGS}]"
+            gh api --method DELETE "$API_PATH/$VERSION_ID"
+          done
 
   publish-frontend:
     name: Publish Frontend Image
     runs-on: ubuntu-latest
     needs: [ build-backend, build-frontend ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: read
@@ -198,34 +280,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
           cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
-
-      - name: Keep only last 3 successful frontend images
-        if: steps.push.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          OWNER="${GITHUB_REPOSITORY%%/*}"
-          REPO="${GITHUB_REPOSITORY#*/}"
-          PACKAGE_NAME="$(echo "${REPO}-frontend" | tr '[:upper:]' '[:lower:]')"
-          OWNER_TYPE="${{ github.event.repository.owner.type }}"
-
-          if [ "$OWNER_TYPE" = "Organization" ]; then
-            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
-          else
-            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
-          fi
-
-          echo "Keeping the 3 newest successfully published frontend versions..."
-
-          gh api --paginate "$API_PATH?per_page=100" \
-            --jq '.[] | [.id, .created_at] | @tsv' |
-            sort -k2 -r |
-            tail -n +4 |
-            cut -f1 |
-            while read -r VERSION_ID; do
-              echo "Deleting old frontend package version: ${VERSION_ID}"
-              gh api --method DELETE "${API_PATH}/${VERSION_ID}"
-            done
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
