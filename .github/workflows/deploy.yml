@@ -1,4 +1,4 @@
-﻿name: CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ master ]
   workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
 
 jobs:
   build-backend:
@@ -51,8 +54,124 @@ jobs:
           cd frontend
           npm run build
 
-# ──────────────────────────────────────────────────────────────────────────────
-# DEPLOY JOB — COMMENTED OUT
+  # ---------------------------------------------------------------------------
+  # PUBLISH JOBS
+  # Run on both push and pull_request once both test jobs pass.
+  # Both images are published in parallel.
+  # ---------------------------------------------------------------------------
+
+  publish-backend:
+    name: Publish Backend Image
+    runs-on: ubuntu-latest
+    needs: [ build-backend, build-frontend ]
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push backend image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-backend:buildcache
+          cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-backend:buildcache,mode=max
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}-backend
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+  publish-frontend:
+    name: Publish Frontend Image
+    runs-on: ubuntu-latest
+    needs: [ build-backend, build-frontend ]
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref_name == 'master' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push frontend image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-frontend:buildcache
+          cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-frontend:buildcache,mode=max
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}-frontend
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+
+# ------------------------------------------------------------------------------
+# DEPLOY JOB -- COMMENTED OUT
 #
 # This job was fully implemented and working during the active phase of the
 # project. It automatically SSHed into an Azure VM on every push to master,
@@ -61,7 +180,7 @@ jobs:
 # It has been commented out because the Azure free-tier credits have been
 # fully used up and the VM is no longer running. The code is preserved here
 # as a reference to show that a complete CI/CD pipeline to Azure was in place.
-# ──────────────────────────────────────────────────────────────────────────────
+# ------------------------------------------------------------------------------
 #
 #  deploy:
 #    name: Deploy to Azure VM
