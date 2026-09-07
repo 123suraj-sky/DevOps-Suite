@@ -288,6 +288,8 @@ jobs:
 # It has been commented out because the Azure free-tier credits have been
 # fully used up and the VM is no longer running. The code is preserved here
 # as a reference to show that a complete CI/CD pipeline to Azure was in place.
+#
+# This was before the GHCR public release.
 # ------------------------------------------------------------------------------
 #
 #  deploy:
