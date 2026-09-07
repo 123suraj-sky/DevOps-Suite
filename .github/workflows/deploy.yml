@@ -58,6 +58,8 @@ jobs:
   # PUBLISH JOBS
   # Run on both push and pull_request once both test jobs pass.
   # Both images are published in parallel.
+  # Docker requires image names to be lowercase, so we derive them from
+  # a lowercased github.repository value set in a step.
   # ---------------------------------------------------------------------------
 
   publish-backend:
@@ -75,6 +77,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set lowercase image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-backend" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -86,7 +91,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}-backend
+          images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -105,13 +110,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-backend:buildcache
-          cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-backend:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}-backend
+          subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
@@ -130,6 +135,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set lowercase image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-frontend" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -141,7 +149,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}-frontend
+          images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -160,13 +168,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-frontend:buildcache
-          cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ github.repository }}-frontend:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to:   type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository }}-frontend
+          subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
