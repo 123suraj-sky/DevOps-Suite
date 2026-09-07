@@ -237,9 +237,18 @@ jobs:
             local VERSIONS
             VERSIONS="$(gh api --paginate "$API_PATH?per_page=100" | jq -s 'add')"
 
+            # Count only explicit release-* tags as successful releases.
+            # Ignore buildcache, latest, master, sha-* and untagged artifacts.
             local RELEASES
             RELEASES="$(echo "$VERSIONS" | jq -c '
-              map(select((.metadata.container.tags // []) | any(startswith("release-"))))
+              map(
+                select(
+                  any(
+                    (.metadata.container.tags // [])[];
+                    startswith("release-")
+                  )
+                )
+              )
               | sort_by(.created_at)
               | reverse
             ')"
@@ -263,7 +272,12 @@ jobs:
             echo "$VERSIONS" | jq -r --arg cutoff "$CUTOFF" '
               .[]
               | select(.created_at < $cutoff)
-              | select((.metadata.container.tags // []) | any(startswith("release-")))
+              | select(
+                  any(
+                    (.metadata.container.tags // [])[];
+                    startswith("release-")
+                  )
+                )
               | [.id, .created_at, ((.metadata.container.tags // []) | join(","))]
               | @tsv
             ' |
@@ -288,8 +302,6 @@ jobs:
 # It has been commented out because the Azure free-tier credits have been
 # fully used up and the VM is no longer running. The code is preserved here
 # as a reference to show that a complete CI/CD pipeline to Azure was in place.
-#
-# This was before the GHCR public release.
 # ------------------------------------------------------------------------------
 #
 #  deploy:
