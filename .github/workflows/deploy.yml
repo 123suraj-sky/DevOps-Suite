@@ -121,60 +121,6 @@ jobs:
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
-      # Keep the 3 newest successfully published frontend image versions.
-      # GHCR also contains untagged attestation/provenance versions, so
-      # only tagged container versions are counted as releases. Everything
-      # older than the 3rd newest tagged release is removed, including
-      # old untagged artifacts.
-      - name: Keep only last 3 successful frontend releases
-        if: steps.push.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          OWNER="${GITHUB_REPOSITORY%%/*}"
-          REPO="${GITHUB_REPOSITORY#*/}"
-          PACKAGE_NAME="$(echo "${REPO}-frontend" | tr '[:upper:]' '[:lower:]')"
-          OWNER_TYPE="${{ github.event.repository.owner.type }}"
-
-          if [ "$OWNER_TYPE" = "Organization" ]; then
-            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
-          else
-            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
-          fi
-
-          VERSIONS="$(gh api --paginate --slurp "$API_PATH?per_page=100" --jq 'add')"
-
-          TAGGED="$(echo "$VERSIONS" | jq -c '
-            map(select((.metadata.container.tags // []) | length > 0))
-            | sort_by(.created_at)
-            | reverse
-          ')"
-
-          TAGGED_COUNT="$(echo "$TAGGED" | jq 'length')"
-
-          if [ "$TAGGED_COUNT" -le 3 ]; then
-            echo "Only ${TAGGED_COUNT} tagged frontend release(s) exist. Nothing to delete."
-            exit 0
-          fi
-
-          CUTOFF="$(echo "$TAGGED" | jq -r '.[2].created_at')"
-
-          echo "Keeping the 3 newest tagged frontend releases."
-          echo "Retention cutoff: ${CUTOFF}"
-
-          echo "$VERSIONS" | jq -r --arg cutoff "$CUTOFF" '
-            .[]
-            | select(.created_at < $cutoff)
-            | [.id, .created_at, ((.metadata.container.tags // []) | join(","))]
-            | @tsv
-          ' |
-          while IFS=$'\t' read -r VERSION_ID CREATED_AT TAGS; do
-            echo "Deleting frontend package version ${VERSION_ID} (${CREATED_AT}) tags=[${TAGS}]"
-            gh api --method DELETE "$API_PATH/$VERSION_ID"
-          done
-
       # Keep the 3 newest successfully published backend image versions.
       # GHCR also contains untagged attestation/provenance versions, so
       # only tagged container versions are counted as releases. Everything
@@ -198,7 +144,7 @@ jobs:
             API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
           fi
 
-          VERSIONS="$(gh api --paginate --slurp "$API_PATH?per_page=100" --jq 'add')"
+          VERSIONS="$(gh api --paginate "$API_PATH?per_page=100" | jq -s 'add')"
 
           TAGGED="$(echo "$VERSIONS" | jq -c '
             map(select((.metadata.container.tags // []) | length > 0))
@@ -287,6 +233,61 @@ jobs:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
+
+      # Keep the 3 newest successfully published frontend image versions.
+      # GHCR also contains untagged attestation/provenance versions, so
+      # only tagged container versions are counted as releases. Everything
+      # older than the 3rd newest tagged release is removed, including
+      # old untagged artifacts.
+      - name: Keep only last 3 successful frontend releases
+        if: steps.push.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          PACKAGE_NAME="$(echo "${REPO}-frontend" | tr '[:upper:]' '[:lower:]')"
+          OWNER_TYPE="${{ github.event.repository.owner.type }}"
+
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            API_PATH="/orgs/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          else
+            API_PATH="/users/${OWNER}/packages/container/${PACKAGE_NAME}/versions"
+          fi
+
+          VERSIONS="$(gh api --paginate "$API_PATH?per_page=100" | jq -s 'add')"
+
+          TAGGED="$(echo "$VERSIONS" | jq -c '
+            map(select((.metadata.container.tags // []) | length > 0))
+            | sort_by(.created_at)
+            | reverse
+          ')"
+
+          TAGGED_COUNT="$(echo "$TAGGED" | jq 'length')"
+
+          if [ "$TAGGED_COUNT" -le 3 ]; then
+            echo "Only ${TAGGED_COUNT} tagged frontend release(s) exist. Nothing to delete."
+            exit 0
+          fi
+
+          CUTOFF="$(echo "$TAGGED" | jq -r '.[2].created_at')"
+
+          echo "Keeping the 3 newest tagged frontend releases."
+          echo "Retention cutoff: ${CUTOFF}"
+
+          echo "$VERSIONS" | jq -r --arg cutoff "$CUTOFF" '
+            .[]
+            | select(.created_at < $cutoff)
+            | [.id, .created_at, ((.metadata.container.tags // []) | join(","))]
+            | @tsv
+          ' |
+          while IFS=$'\t' read -r VERSION_ID CREATED_AT TAGS; do
+            echo "Deleting frontend package version ${VERSION_ID} (${CREATED_AT}) tags=[${TAGS}]"
+            gh api --method DELETE "$API_PATH/$VERSION_ID"
+          done
+
 
 # ------------------------------------------------------------------------------
 # DEPLOY JOB -- COMMENTED OUT
