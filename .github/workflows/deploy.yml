@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+﻿name: CI/CD Pipeline
 
 on:
   push:
@@ -51,30 +51,42 @@ jobs:
           cd frontend
           npm run build
 
-  deploy:
-    name: Deploy to Azure VM
-    needs: [build-backend, build-frontend]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    steps:
-      - name: SSH Deploy to VM
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: ${{ secrets.AZURE_VM_USER }}
-          key: ${{ secrets.AZURE_VM_SSH_KEY }}
-          script: |
-            if [ -d "$HOME/DevOps-Suite" ]; then
-              cd "$HOME/DevOps-Suite"
-            elif [ -d "$HOME/devops-suite" ]; then
-              cd "$HOME/devops-suite"
-            else
-              echo "Repository directory not found!"
-              exit 1
-            fi
-            
-            git pull origin master
-            docker system prune -af --volumes=false
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache backend
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache frontend
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ──────────────────────────────────────────────────────────────────────────────
+# DEPLOY JOB — COMMENTED OUT
+#
+# This job was fully implemented and working during the active phase of the
+# project. It automatically SSHed into an Azure VM on every push to master,
+# pulled the latest code, and rebuilt + restarted the Docker Compose stack.
+#
+# It has been commented out because the Azure free-tier credits have been
+# fully used up and the VM is no longer running. The code is preserved here
+# as a reference to show that a complete CI/CD pipeline to Azure was in place.
+# ──────────────────────────────────────────────────────────────────────────────
+#
+#  deploy:
+#    name: Deploy to Azure VM
+#    needs: [build-backend, build-frontend]
+#    runs-on: ubuntu-latest
+#    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+#    steps:
+#      - name: SSH Deploy to VM
+#        uses: appleboy/ssh-action@master
+#        with:
+#          host: ${{ secrets.AZURE_VM_IP }}
+#          username: ${{ secrets.AZURE_VM_USER }}
+#          key: ${{ secrets.AZURE_VM_SSH_KEY }}
+#          script: |
+#            if [ -d "$HOME/DevOps-Suite" ]; then
+#              cd "$HOME/DevOps-Suite"
+#            elif [ -d "$HOME/devops-suite" ]; then
+#              cd "$HOME/devops-suite"
+#            else
+#              echo "Repository directory not found!"
+#              exit 1
+#            fi
+#
+#            git pull origin master
+#            docker system prune -af --volumes=false
+#            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache backend
+#            docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache frontend
+#            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
