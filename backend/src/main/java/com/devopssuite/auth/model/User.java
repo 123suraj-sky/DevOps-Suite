@@ -32,7 +32,7 @@ public class User {
     @Column(name = "display_name")
     private String displayName;
 
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Enumerated(EnumType.STRING)

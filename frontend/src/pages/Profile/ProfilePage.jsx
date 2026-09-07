@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { AuthService } from '../../services';
 import { metricsApi } from '../../api';
@@ -7,20 +7,18 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { Spinner } from '../../components/common/Spinner';
+import { AvatarCropModal } from '../../components/common/AvatarCropModal';
 import { formatDate } from '../../utils/formatters';
 import { getDefaultAvatar } from '../../utils';
+import { generateBotAvatar, generateRandomBotAvatar, PRESET_BOT_SEEDS } from '../../utils/avatarGenerator';
 import toast from 'react-hot-toast';
+import uploadIcon from '../../assets/21_upload.svg';
+import removePhotoIcon from '../../assets/30_remove_photo.svg';
+import cameraIcon from '../../assets/17_edit.svg';
 
-const PRESET_AVATARS = [
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Felix',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Aiden',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Luna',
-  'https://api.dicebear.com/7.x/bottts/svg?seed=Oliver',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Sam',
-  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan',
-  'https://api.dicebear.com/7.x/identicon/svg?seed=DevOps',
-];
+// Tab id constants
+const TAB_AVATAR = 'avatar';
+const TAB_UPLOAD = 'upload';
 
 const STATUS_STYLES = {
   COMPLETED: 'bg-green-100 text-green-800',
@@ -35,7 +33,7 @@ export const ProfilePage = () => {
   const { user, updateUser } = useAuth();
   const [summary, setSummary] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
-  
+
   // Edit Profile state
   const [isEditing, setIsEditing] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -45,7 +43,22 @@ export const ProfilePage = () => {
 
   // Avatar picker modal
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [customAvatarInput, setCustomAvatarInput] = useState('');
+  const [avatarTab, setAvatarTab] = useState(TAB_AVATAR);
+
+  // Upload/crop sub-modal
+  const [showCropModal, setShowCropModal] = useState(false);
+
+  // Pending avatar selection (applied only when user clicks "Apply" inside the picker)
+  const [pendingAvatar, setPendingAvatar] = useState(null);
+
+  // The random cell state: { seed, dataUri } — regenerated each time Random is clicked
+  const [randomBot, setRandomBot] = useState(() => generateRandomBotAvatar());
+
+  // Pre-generate the 6 preset data URIs once at mount (synchronous, no network)
+  const presetBots = useMemo(
+    () => PRESET_BOT_SEEDS.map((seed) => ({ seed, dataUri: generateBotAvatar(seed) })),
+    []
+  );
 
   useEffect(() => {
     if (user) {
@@ -69,6 +82,41 @@ export const ProfilePage = () => {
     fetchStats();
   }, []);
 
+  // ── Open picker — reset pending state to current avatarUrl ────────────────
+  const openAvatarModal = () => {
+    setPendingAvatar(avatarUrl);
+    setAvatarTab(TAB_AVATAR);
+    setRandomBot(generateRandomBotAvatar());
+    setShowAvatarModal(true);
+  };
+
+  const closeAvatarModal = () => {
+    setShowAvatarModal(false);
+    setPendingAvatar(null);
+  };
+
+  // ── Generate a brand-new random avatar and select it ────────────────────
+  const handleGenerateRandom = useCallback(() => {
+    const bot = generateRandomBotAvatar();
+    setRandomBot(bot);
+    setPendingAvatar(bot.dataUri);
+  }, []);
+
+  // ── Apply the pending selection and close ─────────────────────────────────
+  const handleApplyAvatar = () => {
+    setAvatarUrl(pendingAvatar ?? '');
+    closeAvatarModal();
+  };
+
+  // ── Crop modal: receive data URL from AvatarCropModal ────────────────────
+  const handleCropConfirm = (dataUrl) => {
+    setShowCropModal(false);
+    setAvatarUrl(dataUrl);          // apply directly — no need for pending state
+    setShowAvatarModal(false);
+    toast.success('Photo cropped and ready — save your profile to apply.');
+  };
+
+  // ── Save profile ─────────────────────────────────────────────────────────
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
     if (!displayName.trim()) {
@@ -80,7 +128,7 @@ export const ProfilePage = () => {
     try {
       const updatedUser = await AuthService.updateProfile({
         display_name: displayName.trim(),
-        avatar_url: avatarUrl.trim(),
+        avatar_url: avatarUrl,
         gender: gender || null,
       });
       updateUser(updatedUser);
@@ -91,19 +139,6 @@ export const ProfilePage = () => {
       toast.error(err.response?.data?.message || 'Failed to update profile');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSelectPresetAvatar = (url) => {
-    setAvatarUrl(url);
-    setShowAvatarModal(false);
-  };
-
-  const handleCustomAvatarApply = () => {
-    if (customAvatarInput.trim()) {
-      setAvatarUrl(customAvatarInput.trim());
-      setCustomAvatarInput('');
-      setShowAvatarModal(false);
     }
   };
 
@@ -140,6 +175,7 @@ export const ProfilePage = () => {
       {/* Main Profile Info Card */}
       <Card className="p-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+
           {/* Avatar Section */}
           <div className="flex flex-col items-center space-y-3">
             <div className="relative group">
@@ -150,7 +186,7 @@ export const ProfilePage = () => {
                   className="w-28 h-28 rounded-full object-cover border-4 border-primary-50 shadow-md bg-white"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=DevOps';
+                    e.target.src = generateBotAvatar('DevOps');
                   }}
                 />
               ) : getDefaultAvatar(isEditing ? gender : user?.gender) ? (
@@ -168,13 +204,10 @@ export const ProfilePage = () => {
               {isEditing && (
                 <button
                   type="button"
-                  onClick={() => setShowAvatarModal(true)}
+                  onClick={openAvatarModal}
                   className="absolute inset-0 bg-black bg-opacity-40 rounded-full flex flex-col items-center justify-center text-white text-xs font-semibold opacity-90 hover:opacity-100 transition-opacity"
                 >
-                  <svg className="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                  <img src={cameraIcon} alt="" className="w-6 h-6 mb-1 invert opacity-90" />
                   Change Avatar
                 </button>
               )}
@@ -183,7 +216,7 @@ export const ProfilePage = () => {
             {isEditing && (
               <button
                 type="button"
-                onClick={() => setShowAvatarModal(true)}
+                onClick={openAvatarModal}
                 className="text-xs text-primary-600 hover:text-primary-800 font-medium"
               >
                 Change Profile Picture
@@ -211,6 +244,8 @@ export const ProfilePage = () => {
                   </div>
                 </div>
 
+                {/* email — inline SVG is a static icon: replaced with a Unicode envelope glyph
+                    to stay consistent with no-inline-SVG rule for static icons */}
                 <p className="text-gray-600 text-sm flex items-center justify-center md:justify-start gap-1.5">
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -253,12 +288,6 @@ export const ProfilePage = () => {
                   placeholder="Your full name"
                   required
                 />
-                <Input
-                  label="Avatar URL (or click Change Avatar)"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://example.com/avatar.png"
-                />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
                   <select
@@ -290,7 +319,7 @@ export const ProfilePage = () => {
       {/* User Statistics & Activity */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Activity & Statistics</h2>
-        
+
         {loadingStats ? (
           <div className="p-8 flex justify-center">
             <Spinner size="md" />
@@ -366,54 +395,183 @@ export const ProfilePage = () => {
         )}
       </div>
 
-      {/* Avatar Selection Modal */}
+      {/* ── Avatar Picker Modal ──────────────────────────────────────────────── */}
       <Modal
         isOpen={showAvatarModal}
-        onClose={() => setShowAvatarModal(false)}
+        onClose={closeAvatarModal}
         title="Choose Profile Picture"
       >
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Preset Avatars</label>
+        {/* ── 2-tab bar ── */}
+        <div className="flex border-b border-gray-200 mb-4 -mx-1">
+          {[
+            { id: TAB_AVATAR, label: 'Avatar'       },
+            { id: TAB_UPLOAD, label: 'Upload Photo'  },
+          ].map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setAvatarTab(id)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                avatarTab === id
+                  ? 'border-primary-600 text-primary-700'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB: Avatar ── */}
+        {avatarTab === TAB_AVATAR && (
+          <div className="space-y-4">
+            <p className="text-xs text-gray-500">
+              Click an avatar to select it, then press <strong>Apply</strong>.
+            </p>
+
+            {/*
+              8-cell grid, 4 per row:
+              Cells 1-6  → fixed preset bots
+              Cell 7     → "Random" — generates a new bot avatar on each click
+              Cell 8     → "Remove Photo"
+            */}
             <div className="grid grid-cols-4 gap-3">
-              {PRESET_AVATARS.map((presetUrl, idx) => (
+              {/* Cells 1–6: preset avatars */}
+              {presetBots.map(({ seed, dataUri }) => (
                 <button
-                  key={idx}
+                  key={seed}
                   type="button"
-                  onClick={() => handleSelectPresetAvatar(presetUrl)}
-                  className={`p-1.5 rounded-xl border-2 transition-all hover:scale-105 ${
-                    avatarUrl === presetUrl ? 'border-primary-600 ring-2 ring-primary-200' : 'border-gray-200 hover:border-gray-300'
+                  title={`Bot ${seed}`}
+                  onClick={() => setPendingAvatar(dataUri)}
+                  className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-300 ${
+                    pendingAvatar === dataUri
+                      ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <img src={presetUrl} alt={`Avatar preset ${idx + 1}`} className="w-16 h-16 rounded-lg object-cover mx-auto" />
+                  <img
+                    src={dataUri}
+                    alt={`Bot ${seed}`}
+                    className="w-full aspect-square rounded-lg object-cover bg-gray-50"
+                  />
                 </button>
               ))}
-            </div>
-          </div>
 
-          <div className="pt-3 border-t border-gray-100 space-y-2">
-            <label className="block text-sm font-medium text-gray-700">Or Paste Image URL</label>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={customAvatarInput}
-                onChange={(e) => setCustomAvatarInput(e.target.value)}
-                placeholder="https://example.com/my-photo.jpg"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              <Button type="button" size="sm" onClick={handleCustomAvatarApply}>
-                Use URL
+              {/* Cell 7: Random — click to generate a fresh bot avatar */}
+              <button
+                type="button"
+                title="Generate random avatar"
+                onClick={handleGenerateRandom}
+                className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-300 ${
+                  pendingAvatar === randomBot.dataUri
+                    ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50'
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src={randomBot.dataUri}
+                    alt="Random avatar"
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Shuffle badge — inline SVG justified: this is a dynamic/interactive indicator */}
+                  <span className="absolute bottom-0.5 right-0.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center border border-gray-200">
+                    <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 7l4 4m0 0l-4 4m4-4H3M7 17l-4-4m0 0l4-4m-4 4h18" />
+                    </svg>
+                  </span>
+                </div>
+                <p className="text-center text-xs text-gray-400 mt-1 leading-tight">Random</p>
+              </button>
+
+              {/* Cell 8: Remove photo */}
+              <button
+                type="button"
+                title="Remove profile photo"
+                onClick={() => setPendingAvatar('')}
+                className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-300 ${
+                  pendingAvatar === ''
+                    ? 'border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.2)] bg-red-50'
+                    : 'border-gray-200 hover:border-red-300 bg-white'
+                }`}
+              >
+                <div className="w-full aspect-square rounded-lg bg-gray-100 flex flex-col items-center justify-center gap-1">
+                  <img
+                    src={removePhotoIcon}
+                    alt=""
+                    className="w-7 h-7 opacity-40"
+                  />
+                </div>
+                <p className="text-center text-xs text-gray-400 mt-1 leading-tight">Remove</p>
+              </button>
+            </div>
+
+            {/* Action row */}
+            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+              <Button variant="ghost" type="button" onClick={closeAvatarModal}>Cancel</Button>
+              <Button
+                variant={pendingAvatar === '' ? 'danger' : 'primary'}
+                type="button"
+                onClick={handleApplyAvatar}
+                disabled={pendingAvatar === null}
+              >
+                Apply
               </Button>
             </div>
           </div>
+        )}
 
-          <div className="flex justify-end pt-2">
-            <Button variant="ghost" onClick={() => setShowAvatarModal(false)}>
-              Close
-            </Button>
+        {/* ── TAB: Upload Photo ── */}
+        {avatarTab === TAB_UPLOAD && (
+          <div className="space-y-4">
+            <p className="text-xs text-gray-500">
+              Upload a photo from your device. You can zoom and drag to position it within the circle before applying.
+            </p>
+
+            {/* Preview current pending upload (data URL) */}
+            {pendingAvatar && pendingAvatar.startsWith('data:') && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <img
+                  src={pendingAvatar}
+                  alt="Cropped preview"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary-100"
+                />
+                <p className="text-xs text-gray-600 flex-1">Photo cropped and ready. Press <strong>Apply</strong> or re-crop.</p>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowCropModal(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-primary-400 hover:text-primary-700 hover:bg-primary-50 transition-colors"
+            >
+              <img src={uploadIcon} alt="" className="w-5 h-5 opacity-70" />
+              {pendingAvatar?.startsWith('data:') ? 'Re-crop / Change Photo' : 'Choose & Crop Photo'}
+            </button>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+              <Button variant="ghost" type="button" onClick={closeAvatarModal}>Cancel</Button>
+              <Button
+                variant="primary"
+                type="button"
+                onClick={handleApplyAvatar}
+                disabled={!pendingAvatar?.startsWith('data:')}
+              >
+                Apply
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
+
+      {/* ── Upload & Crop sub-modal ──────────────────────────────────────────── */}
+      <AvatarCropModal
+        isOpen={showCropModal}
+        onClose={() => setShowCropModal(false)}
+        onConfirm={(dataUrl) => {
+          handleCropConfirm(dataUrl);
+        }}
+      />
     </div>
   );
 };
