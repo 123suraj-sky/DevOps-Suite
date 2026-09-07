@@ -47,4 +47,15 @@ export const authApi = {
     const response = await apiClient.put('/auth/me', data);
     return normalizeUser(response.data.data);
   },
+
+  uploadAvatar: async (blob) => {
+    const formData = new FormData();
+    formData.append('file', blob, 'avatar.png');
+    const response = await apiClient.post('/auth/me/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // Avatar uploads can be large — give them a generous timeout
+      timeout: 60000,
+    });
+    return normalizeUser(response.data.data);
+  },
 };

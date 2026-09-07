@@ -47,6 +47,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Shared temp volume for sandbox source files (DinD bind-mount workaround)
       - ./sandbox-temp:/tmp/devopssuite-sandbox
+      # Named volume for persisted user avatar images
+      - avatar_uploads:/app/uploads/avatars
     depends_on:
       postgres:
         condition: service_healthy
@@ -142,3 +144,4 @@ volumes:
   prometheus_data:
   grafana_data:
   elasticsearch_data:
+  avatar_uploads:

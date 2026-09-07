@@ -3,6 +3,11 @@ spring:
     uris: http://${ELASTICSEARCH_HOST:localhost}:${ELASTICSEARCH_PORT:9200}
   application:
     name: devops-suite-monolith
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 6MB
+      max-request-size: 6MB
   datasource:
     url: jdbc:postgresql://localhost:5432/devopssuite
     username: postgres
@@ -68,6 +73,10 @@ docker:
   sandbox-temp-dir: ${DOCKER_SANDBOX_TEMP_DIR:/tmp/devopssuite-sandbox}
   max-code-size-bytes: ${DOCKER_MAX_CODE_SIZE:65536}
   max-stdin-size-bytes: ${DOCKER_MAX_STDIN_SIZE:16384}
+
+app:
+  avatar:
+    upload-dir: ${AVATAR_UPLOAD_DIR:/app/uploads/avatars}
 
 logging:
   level:

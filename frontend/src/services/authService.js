@@ -36,6 +36,10 @@ export class AuthService {
     return await authApi.updateProfile(data);
   }
 
+  static async uploadAvatar(blob) {
+    return await authApi.uploadAvatar(blob);
+  }
+
   static isAuthenticated() {
     return !!localStorage.getItem('accessToken');
   }

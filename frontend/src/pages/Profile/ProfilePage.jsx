@@ -102,21 +102,60 @@ export const ProfilePage = () => {
     setPendingAvatar(bot.dataUri);
   }, []);
 
-  // ── Apply the pending selection and close ─────────────────────────────────
-  const handleApplyAvatar = () => {
-    setAvatarUrl(pendingAvatar ?? '');
+  // ── Apply the pending selection (bot preset / random) ────────────────────
+  const handleApplyAvatar = async () => {
+    const selected = pendingAvatar;
     closeAvatarModal();
+    if (selected === '' || selected === null) {
+      // Removing the avatar — update profile with empty URL immediately
+      try {
+        const updatedUser = await AuthService.updateProfile({
+          display_name: displayName.trim() || user?.displayName || user?.name || '',
+          avatar_url: '',
+          gender: gender || null,
+        });
+        updateUser(updatedUser);
+        setAvatarUrl('');
+        toast.success('Avatar removed');
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to remove avatar');
+      }
+      return;
+    }
+    // Bot/random preset is a data URI — convert to Blob and upload
+    if (selected && selected.startsWith('data:')) {
+      const uploadToast = toast.loading('Uploading avatar…');
+      try {
+        const res = await fetch(selected);
+        const blob = await res.blob();
+        const updatedUser = await AuthService.uploadAvatar(blob);
+        updateUser(updatedUser);
+        setAvatarUrl(updatedUser.avatarUrl || '');
+        toast.success('Avatar updated successfully', { id: uploadToast });
+      } catch (err) {
+        console.error('Failed to upload avatar:', err);
+        toast.error(err.response?.data?.message || 'Failed to upload avatar', { id: uploadToast });
+      }
+    }
   };
 
-  // ── Crop modal: receive data URL from AvatarCropModal ────────────────────
-  const handleCropConfirm = (dataUrl) => {
+  // ── Crop modal: receive Blob from AvatarCropModal, upload it immediately ──
+  const handleCropConfirm = async (blob) => {
     setShowCropModal(false);
-    setAvatarUrl(dataUrl);          // apply directly — no need for pending state
     setShowAvatarModal(false);
-    toast.success('Photo cropped and ready — save your profile to apply.');
+    const uploadToast = toast.loading('Uploading avatar…');
+    try {
+      const updatedUser = await AuthService.uploadAvatar(blob);
+      updateUser(updatedUser);
+      setAvatarUrl(updatedUser.avatarUrl || '');
+      toast.success('Avatar updated successfully', { id: uploadToast });
+    } catch (err) {
+      console.error('Failed to upload avatar:', err);
+      toast.error(err.response?.data?.message || 'Failed to upload avatar', { id: uploadToast });
+    }
   };
 
-  // ── Save profile ─────────────────────────────────────────────────────────
+  // ── Save profile (display name + gender only; avatar is uploaded eagerly) ─
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
     if (!displayName.trim()) {
@@ -128,6 +167,7 @@ export const ProfilePage = () => {
     try {
       const updatedUser = await AuthService.updateProfile({
         display_name: displayName.trim(),
+        // Keep the current avatar URL (a stored path) — don't send base64 here
         avatar_url: avatarUrl,
         gender: gender || null,
       });
@@ -525,18 +565,18 @@ export const ProfilePage = () => {
         {avatarTab === TAB_UPLOAD && (
           <div className="space-y-4">
             <p className="text-xs text-gray-500">
-              Upload a photo from your device. You can zoom and drag to position it within the circle before applying.
+              Upload a photo from your device. You can zoom and drag to position it within the circle. The photo uploads automatically once you confirm the crop.
             </p>
 
-            {/* Preview current pending upload (data URL) */}
-            {pendingAvatar && pendingAvatar.startsWith('data:') && (
+            {/* Preview current avatar if it's already an uploaded file */}
+            {avatarUrl && !avatarUrl.startsWith('data:') && (
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
                 <img
-                  src={pendingAvatar}
-                  alt="Cropped preview"
+                  src={avatarUrl}
+                  alt="Current avatar"
                   className="w-12 h-12 rounded-full object-cover border-2 border-primary-100"
                 />
-                <p className="text-xs text-gray-600 flex-1">Photo cropped and ready. Press <strong>Apply</strong> or re-crop.</p>
+                <p className="text-xs text-gray-600 flex-1">Current uploaded photo. You can replace it below.</p>
               </div>
             )}
 
@@ -546,19 +586,11 @@ export const ProfilePage = () => {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-primary-400 hover:text-primary-700 hover:bg-primary-50 transition-colors"
             >
               <img src={uploadIcon} alt="" className="w-5 h-5 opacity-70" />
-              {pendingAvatar?.startsWith('data:') ? 'Re-crop / Change Photo' : 'Choose & Crop Photo'}
+              Choose &amp; Crop Photo
             </button>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
-              <Button variant="ghost" type="button" onClick={closeAvatarModal}>Cancel</Button>
-              <Button
-                variant="primary"
-                type="button"
-                onClick={handleApplyAvatar}
-                disabled={!pendingAvatar?.startsWith('data:')}
-              >
-                Apply
-              </Button>
+              <Button variant="ghost" type="button" onClick={closeAvatarModal}>Close</Button>
             </div>
           </div>
         )}
@@ -568,8 +600,8 @@ export const ProfilePage = () => {
       <AvatarCropModal
         isOpen={showCropModal}
         onClose={() => setShowCropModal(false)}
-        onConfirm={(dataUrl) => {
-          handleCropConfirm(dataUrl);
+        onConfirm={(blob) => {
+          handleCropConfirm(blob);
         }}
       />
     </div>

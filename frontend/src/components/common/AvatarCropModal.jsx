@@ -253,7 +253,11 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
     ctx.drawImage(img, drawX, drawY, scaledW, scaledH);
     ctx.restore();
 
-    onConfirm(out.toDataURL('image/png'));
+    // Export as a Blob so the caller can POST it as multipart instead of
+    // embedding a huge base64 string inside JSON.
+    out.toBlob((blob) => {
+      if (blob) onConfirm(blob);
+    }, 'image/png');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
