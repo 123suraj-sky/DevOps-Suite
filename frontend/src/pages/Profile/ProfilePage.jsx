@@ -49,6 +49,10 @@ const ToggleSwitch = ({ checked, onChange, disabled, label }) => (
   </button>
 );
 
+// Tab id constants
+const TAB_AVATAR = 'avatar';
+const TAB_UPLOAD = 'upload';
+
 const STATUS_STYLES = {
   COMPLETED: 'bg-green-100 text-green-800',
   FAILED: 'bg-red-100 text-red-800',

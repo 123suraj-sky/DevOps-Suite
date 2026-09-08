@@ -12,7 +12,7 @@ export const NotificationProvider = ({ children }) => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const { connected } = useWebSocket();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const addNotification = useCallback((notification) => {
     setNotifications((prev) => [notification, ...prev]);
@@ -72,10 +72,13 @@ export const NotificationProvider = ({ children }) => {
 
   const refresh = useCallback(() => loadPage(0), [loadPage]);
 
-  // Bug 4 fix: seed notifications list on mount (not just the count)
+  // Seed notifications list on mount — but only once the user is authenticated.
+  // Without this guard, the effect fires during the loading phase and gets a 403.
   useEffect(() => {
-    loadPage(0);
-  }, [loadPage]);
+    if (isAuthenticated) {
+      loadPage(0);
+    }
+  }, [isAuthenticated, loadPage]);
 
   // Bug 1 fix: subscribe to /topic/notifications/{userId} not /topic/notifications
   useEffect(() => {
