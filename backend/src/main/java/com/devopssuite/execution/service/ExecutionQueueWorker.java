@@ -8,10 +8,12 @@ import com.devopssuite.execution.repository.ExecutionResultRepository;
 import com.devopssuite.execution.sandbox.DockerSandbox;
 import com.devopssuite.ide.model.IdeFile;
 import com.devopssuite.ide.service.IdeFileService;
+import com.devopssuite.notification.event.ExecutionFailedEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -33,6 +35,7 @@ public class ExecutionQueueWorker {
     private final DockerSandbox dockerSandbox;
     private final ExecutionProperties props;
     private final IdeFileService ideFileService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private ExecutorService executorService;
     private volatile boolean running = true;
@@ -119,6 +122,16 @@ public class ExecutionQueueWorker {
         request.setStatus(terminalStatus);
         request.setCompletedAt(Instant.now());
         requestRepository.saveAndFlush(request);
+
+        // Publish failure event so the user gets an in-app + email notification
+        if (!"COMPLETED".equals(terminalStatus)) {
+            try {
+                eventPublisher.publishEvent(
+                        new ExecutionFailedEvent(request.getId(), request.getUserId(), terminalStatus));
+            } catch (Exception e) {
+                log.warn("Failed to publish ExecutionFailedEvent for request {}: {}", requestId, e.getMessage());
+            }
+        }
 
         log.info("Request {} finished with status={} exitCode={} timedOut={} oomKilled={}",
                 requestId, terminalStatus, sandboxResult.exitCode,

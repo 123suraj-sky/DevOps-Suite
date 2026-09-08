@@ -2,6 +2,7 @@ package com.devopssuite.notification.service;
 
 import com.devopssuite.notification.dto.NotificationDto;
 import com.devopssuite.notification.model.Notification;
+import com.devopssuite.notification.model.NotificationPreference;
 import com.devopssuite.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +21,25 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationPreferenceService preferenceService;
 
-    /** Creates a notification, persists it, then broadcasts it over WebSocket. */
+    /**
+     * Creates an in-app notification, persists it, and broadcasts it over WebSocket —
+     * but only if the user's preference for this type has {@code inApp = true}.
+     *
+     * <p>Returns {@code null} if the preference suppresses the in-app channel.</p>
+     */
     @Transactional
     public NotificationDto.NotificationResponse createNotification(
             UUID userId, String type, String title, String message,
             UUID projectId, UUID taskId) {
+
+        NotificationPreference pref = preferenceService.getEffective(userId, type);
+
+        if (!pref.isInApp()) {
+            log.debug("In-app notification suppressed by preference: userId={} type={}", userId, type);
+            return null;
+        }
 
         Notification notification = Notification.builder()
                 .userId(userId)
@@ -47,6 +61,15 @@ public class NotificationService {
         }
 
         return response;
+    }
+
+    /**
+     * Returns {@code true} if the user's email preference for this type is enabled.
+     * Used by {@link com.devopssuite.notification.event.NotificationEventListener}
+     * to decide whether to call {@link EmailNotificationService}.
+     */
+    public boolean isEmailEnabled(UUID userId, String type) {
+        return preferenceService.getEffective(userId, type).isEmail();
     }
 
     @Transactional(readOnly = true)

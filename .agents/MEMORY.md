@@ -39,13 +39,14 @@
 - Metrics Dashboard (`/api/metrics/dashboard`) — fully implemented and integrated with Actuator/Service Health checking
 - Code Execution Sandbox (all languages executing securely with correct status mapping and user history) — fully verified
 - Frontend API paths pointing to `http://localhost:8081/api` — confirmed
+- **Notification system** — fully implemented end-to-end (see details below)
 
 ---
 
 ## 🔧 Partially Implemented
 
 - **Logging pipeline to Elasticsearch** — Structured log emission in place; Elasticsearch write pipeline needs wiring
-- **WebSocket real-time features** — Config exists; end-to-end testing with live backend not yet completed
+- **WebSocket real-time features** — Config and topics exist; end-to-end testing with live backend not yet completed
 
 ---
 
@@ -77,3 +78,72 @@
 | 2026-08-29 | Antigravity | Resolved C++ execution failure: built local `devopssuite-cpp:latest` runtime, added Flyway `V5` migration, and enabled `rw,exec,nosuid,size=64m` on `/tmp` tmpfs mount so compiled binaries execute in read-only containers. All 4 languages (Python, JS, Java, C++) now verified working. |
 | 2026-08-30 | Antigravity | Fixed login redirect bug on page reload: implemented missing `AuthService.getCurrentUser()` to call `authApi.getCurrentUser()`, preventing unhandled exceptions in `AuthContext` initialization from triggering logout. Documented in `docs/Debugging/03_page_reload_login_redirect.md`. |
 | 2026-08-30 | Antigravity | Fixed Add Member functionality in Project module: enabled backend user resolution via `email` (as well as `userId`), added 404 response on un-registered users, and implemented frontend mailto invitation modal flow for inviting unregistered teammates. Added unit tests for email resolution. |
+| 2026-09-08 | Kiro | Full notification system implemented (Options A–G). See notification section in MEMORY.md for details. |
+
+---
+
+## 🔔 Notification System (implemented 2026-09-08)
+
+### Architecture
+
+```
+Service Layer (TaskService / ProjectService / ExecutionQueueWorker)
+    │  publishEvent(...)
+    ▼
+ApplicationEventPublisher  (in-JVM Spring Events)
+    │  @Async @EventListener
+    ▼
+NotificationEventListener
+    ├── notificationService.createNotification()  → PostgreSQL + WebSocket push
+    │   └── checks NotificationPreferenceService.getEffective() — in-app opt-out respected
+    └── emailNotificationService.send*Email()     → SMTP (optional, no-op if unconfigured)
+        └── checks notificationService.isEmailEnabled() — email opt-in respected
+```
+
+### Event types and triggers
+
+| Type | Trigger location | Event record |
+|---|---|---|
+| `TASK_ASSIGNED` | `TaskService.createTask()` — when assigneeId is set | `TaskAssignedEvent` |
+| `TASK_REASSIGNED` | `TaskService.updateTask()` — when assigneeId changes | `TaskReassignedEvent` |
+| `TASK_COMPLETED` | `TaskService.updateStatus()` + `reorderTasks()` — when status→DONE | `TaskCompletedEvent` |
+| `PROJECT_JOINED` | `ProjectService` — on member add | `MemberAddedEvent` |
+| `ROLE_CHANGED` | `ProjectService` — on role update | `MemberRoleChangedEvent` |
+| `PROJECT_REMOVED` | `ProjectService` — on member remove | `MemberRemovedEvent` |
+| `EXECUTION_FAILED` | `ExecutionQueueWorker` — on FAILED/TIMEOUT/OOM_KILLED | `ExecutionFailedEvent` |
+
+### WebSocket
+
+- STOMP endpoint: `ws://localhost:8081/ws` (SockJS)
+- Per-user topic: `/topic/notifications/{userId}` (UUID string)
+- Kanban live topic: `/topic/tasks/{projectId}`
+- JWT validated on STOMP CONNECT via `StompAuthChannelInterceptor` (checks signature + Redis blacklist)
+
+### REST API
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/notifications` | Paginated inbox (Spring `Page`) |
+| `GET` | `/api/notifications/unread-count` | Returns `{ count: N }` |
+| `PUT` | `/api/notifications/{id}/read` | Mark one read |
+| `PUT` | `/api/notifications/read-all` | Mark all read |
+| `DELETE` | `/api/notifications/{id}` | Delete one |
+| `GET` | `/api/notifications/preferences` | All preferences for current user (defaults included) |
+| `PUT` | `/api/notifications/preferences/{type}` | Upsert one preference |
+
+### Frontend
+
+- `NotificationContext` — subscribes to `/topic/notifications/${user.userId}`, seeds list via `getAll()` on mount, exposes `{ notifications, unreadCount, hasMore, markAsRead, markAllAsRead, deleteNotification, loadMore, refresh }`
+- `NotificationsPage` — full inbox with All/Unread tabs, load-more pagination, per-item mark-as-read + delete
+- `NotificationItem` — shared component (compact mode for header dropdown, full mode for page)
+- `Header.jsx` — bell + badge + dropdown using compact `NotificationItem`, "See all" link to `/notifications`
+- `ProfilePage` — Notification Preferences card with per-type in-app/email toggles
+
+### Known gotchas
+
+- `NotificationPreferenceService.getEffective()` returns an **unsaved** entity with defaults when no row exists — do not call `notificationRepository.save()` on it or it will create a row. It is read-only.
+- Email is **opt-in** by default (`email=false`). Users must explicitly enable it in Preferences. In-app is **opt-out** (`inApp=true` by default).
+- `EmailNotificationService` is injected with `@Autowired(required=false)` — if `spring.mail.host` is blank, `JavaMailSender` is not configured and all email sends are silently skipped.
+- The `notification/consumer/` and `notification/config/` directories remain empty — they were Kafka-era placeholders. Do not delete them (they are ignored by the compiler).
+- `TaskUpdateDto` is a nested static class inside `ProjectDto.java` — import it as `com.devopssuite.project.dto.ProjectDto.TaskUpdateDto`.
+- Frontend `notificationApi.getAll()` returns the raw Spring `Page` object (`{ content, totalElements, last, ... }`). Access items via `.content`, not `.data.content`.

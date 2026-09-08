@@ -5,4 +5,5 @@ export { codeExecutionApi } from './codeExecutionApi';
 export { logApi } from './logApi';
 export { metricsApi } from './metricsApi';
 export { notificationApi } from './notificationApi';
+export { notificationPreferenceApi } from './notificationPreferenceApi';
 export { default as apiClient } from './client';

@@ -1,6 +1,9 @@
 package com.devopssuite.project.service;
 
 import com.devopssuite.notification.event.TaskAssignedEvent;
+import com.devopssuite.notification.event.TaskCompletedEvent;
+import com.devopssuite.notification.event.TaskReassignedEvent;
+import com.devopssuite.project.dto.ProjectDto.TaskUpdateDto;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
@@ -11,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +33,7 @@ public class TaskService {
     private final ApplicationEventPublisher eventPublisher;
     private final UserRepository userRepository;
     private final TaskAuditHistoryRepository auditHistoryRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule());
@@ -67,7 +72,9 @@ public class TaskService {
         }
 
         writeAudit(savedTask, userId, "CREATED");
-        return mapToTaskResponse(savedTask);
+        TaskResponse response = mapToTaskResponse(savedTask);
+        broadcastTaskUpdate("CREATED", response, projectId);
+        return response;
     }
 
     @Transactional
@@ -109,6 +116,9 @@ public class TaskService {
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
         projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
 
+        // Capture old assignee before mutating the entity
+        UUID oldAssigneeId = task.getAssigneeId();
+
         if (request.getColumnId() != null && !request.getColumnId().equals(task.getColumnId())) {
             Column column = columnRepository.findById(request.getColumnId())
                     .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
@@ -132,7 +142,23 @@ public class TaskService {
 
         Task savedTask = taskRepository.saveAndFlush(task);
         writeAudit(savedTask, userId, "UPDATED");
-        return mapToTaskResponse(savedTask);
+
+        UUID newAssigneeId = savedTask.getAssigneeId();
+
+        // New assignment on a previously-unassigned task → TASK_ASSIGNED
+        if (newAssigneeId != null && oldAssigneeId == null) {
+            eventPublisher.publishEvent(new TaskAssignedEvent(
+                    savedTask.getId(), newAssigneeId, projectId, savedTask.getTitle()));
+        }
+        // Reassigned to a different person → TASK_REASSIGNED
+        else if (newAssigneeId != null && !newAssigneeId.equals(oldAssigneeId)) {
+            eventPublisher.publishEvent(new TaskReassignedEvent(
+                    savedTask.getId(), newAssigneeId, projectId, savedTask.getTitle()));
+        }
+
+        TaskResponse updateResponse = mapToTaskResponse(savedTask);
+        broadcastTaskUpdate("UPDATED", updateResponse, projectId);
+        return updateResponse;
     }
 
     @Transactional
@@ -167,7 +193,17 @@ public class TaskService {
             extra.put("previous_status", previousStatus);
         }
         writeAudit(savedTask, userId, "STATUS_CHANGED", extra);
-        return mapToTaskResponse(savedTask);
+
+        // Notify when a task is moved to Done — notify the assignee (or updater as fallback)
+        if ("DONE".equals(normalizedStatus) && !"DONE".equals(previousStatus)) {
+            UUID notifyId = savedTask.getAssigneeId() != null ? savedTask.getAssigneeId() : userId;
+            eventPublisher.publishEvent(new TaskCompletedEvent(
+                    savedTask.getId(), projectId, savedTask.getTitle(), notifyId));
+        }
+
+        TaskResponse statusResponse = mapToTaskResponse(savedTask);
+        broadcastTaskUpdate("STATUS_CHANGED", statusResponse, projectId);
+        return statusResponse;
     }
 
     @Transactional
@@ -177,6 +213,7 @@ public class TaskService {
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
         projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
         taskRepository.delete(task);
+        broadcastTaskUpdate("DELETED", null, taskId, projectId);
     }
 
     @Transactional
@@ -204,7 +241,9 @@ public class TaskService {
 
         Task saved = taskRepository.saveAndFlush(duplicate);
         writeAudit(saved, userId, "DUPLICATED");
-        return mapToTaskResponse(saved);
+        TaskResponse dupResponse = mapToTaskResponse(saved);
+        broadcastTaskUpdate("CREATED", dupResponse, projectId);
+        return dupResponse;
     }
 
     @Transactional
@@ -242,6 +281,15 @@ public class TaskService {
                     extra.put("previous_status", oldStatus);
                     writeAudit(saved, userId, "STATUS_CHANGED", extra);
                 }
+
+                // Notify when dragged to the Done column
+                if ("DONE".equals(newStatus) && !"DONE".equals(oldStatus)) {
+                    UUID notifyId = saved.getAssigneeId() != null ? saved.getAssigneeId() : userId;
+                    eventPublisher.publishEvent(new TaskCompletedEvent(
+                            saved.getId(), projectId, saved.getTitle(), notifyId));
+                }
+
+                broadcastTaskUpdate("MOVED", mapToTaskResponse(saved), projectId);
             }
         }
     }
@@ -435,5 +483,28 @@ public class TaskService {
             return "MEDIUM";
         }
         return requestedPriority.trim().toUpperCase();
+    }
+
+    /**
+     * Broadcasts a task mutation event to all clients subscribed to
+     * {@code /topic/tasks/{projectId}} so the Kanban board updates in real time.
+     * Failures are swallowed — the broadcast must never fail the transaction.
+     */
+    private void broadcastTaskUpdate(String action, TaskResponse task, UUID projectId) {
+        broadcastTaskUpdate(action, task, null, projectId);
+    }
+
+    private void broadcastTaskUpdate(String action, TaskResponse task, UUID deletedTaskId, UUID projectId) {
+        try {
+            TaskUpdateDto update = TaskUpdateDto.builder()
+                    .action(action)
+                    .task(task)
+                    .taskId(deletedTaskId)
+                    .projectId(projectId)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/tasks/" + projectId, update);
+        } catch (Exception e) {
+            // Non-fatal — board still works via manual refresh
+        }
     }
 }

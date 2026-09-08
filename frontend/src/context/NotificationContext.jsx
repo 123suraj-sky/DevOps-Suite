@@ -2,13 +2,17 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import { notificationApi } from '../api';
 import { subscribe } from '../services/websocketService';
 import { useWebSocket } from './WebSocketContext';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext(undefined);
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
   const { connected } = useWebSocket();
+  const { user } = useAuth();
 
   const addNotification = useCallback((notification) => {
     setNotifications((prev) => [notification, ...prev]);
@@ -29,34 +33,73 @@ export const NotificationProvider = ({ children }) => {
     setUnreadCount(0);
   }, []);
 
-  const refresh = useCallback(async () => {
+  const deleteNotification = useCallback(async (id) => {
+    await notificationApi.deleteNotification(id);
+    setNotifications((prev) => {
+      const removed = prev.find((n) => n.id === id);
+      const next = prev.filter((n) => n.id !== id);
+      if (removed && !removed.read) {
+        setUnreadCount((c) => Math.max(0, c - 1));
+      }
+      return next;
+    });
+  }, []);
+
+  // Fetches one page and merges into state. Called on mount and by "load more".
+  const loadPage = useCallback(async (pageNum = 0) => {
     try {
-      const count = await notificationApi.getUnreadCount();
-      setUnreadCount(count);
+      const data = await notificationApi.getAll(pageNum, 20);
+      // Spring Page shape: { content: [...], last: bool, totalElements: N }
+      const items = data?.content ?? [];
+      setNotifications((prev) =>
+        pageNum === 0 ? items : [...prev, ...items]
+      );
+      setHasMore(!data?.last);
+      setPage(pageNum);
+      // Derive unread count from the fresh first page rather than making a second request
+      if (pageNum === 0) {
+        const count = await notificationApi.getUnreadCount();
+        setUnreadCount(count);
+      }
     } catch (error) {
-      console.error('Failed to refresh notifications:', error);
+      console.error('Failed to load notifications:', error);
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  const loadMore = useCallback(() => {
+    if (hasMore) loadPage(page + 1);
+  }, [hasMore, page, loadPage]);
 
+  const refresh = useCallback(() => loadPage(0), [loadPage]);
+
+  // Bug 4 fix: seed notifications list on mount (not just the count)
   useEffect(() => {
-    if (connected) {
-      const unsub = subscribe('/topic/notifications', (message) => {
+    loadPage(0);
+  }, [loadPage]);
+
+  // Bug 1 fix: subscribe to /topic/notifications/{userId} not /topic/notifications
+  useEffect(() => {
+    if (connected && user?.userId) {
+      const unsub = subscribe(`/topic/notifications/${user.userId}`, (message) => {
         addNotification(message);
       });
-
-      return () => {
-        unsub();
-      };
+      return () => unsub();
     }
-  }, [connected, addNotification]);
+  }, [connected, user?.userId, addNotification]);
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, addNotification, markAsRead, markAllAsRead, refresh }}
+      value={{
+        notifications,
+        unreadCount,
+        hasMore,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        loadMore,
+        refresh,
+      }}
     >
       {children}
     </NotificationContext.Provider>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { AuthService } from '../../services';
-import { metricsApi } from '../../api';
+import { metricsApi, notificationPreferenceApi } from '../../api';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -16,9 +16,38 @@ import uploadIcon from '../../assets/21_upload.svg';
 import removePhotoIcon from '../../assets/30_remove_photo.svg';
 import cameraIcon from '../../assets/17_edit.svg';
 
-// Tab id constants
-const TAB_AVATAR = 'avatar';
-const TAB_UPLOAD = 'upload';
+// ── Notification type display labels ──────────────────────────────────────
+const PREF_TYPE_LABELS = {
+  TASK_ASSIGNED:   'Task assigned to you',
+  TASK_REASSIGNED: 'Task reassigned to you',
+  TASK_COMPLETED:  'Task marked as done',
+  PROJECT_JOINED:  'Added to a project',
+  ROLE_CHANGED:    'Your project role changed',
+  PROJECT_REMOVED: 'Removed from a project',
+  EXECUTION_FAILED:'Code execution failed / timed out',
+};
+
+// ── Accessible toggle switch ───────────────────────────────────────────────
+const ToggleSwitch = ({ checked, onChange, disabled, label }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={label}
+    disabled={disabled}
+    onClick={onChange}
+    className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
+      transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1
+      disabled:opacity-50 disabled:cursor-not-allowed
+      ${checked ? 'bg-primary-600' : 'bg-gray-200'}`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0
+        transition duration-200 ease-in-out
+        ${checked ? 'translate-x-4' : 'translate-x-0'}`}
+    />
+  </button>
+);
 
 const STATUS_STYLES = {
   COMPLETED: 'bg-green-100 text-green-800',
@@ -47,6 +76,11 @@ export const ProfilePage = () => {
 
   // Upload/crop sub-modal
   const [showCropModal, setShowCropModal] = useState(false);
+
+  // Notification preferences
+  const [preferences, setPreferences] = useState([]);
+  const [prefLoading, setPrefLoading] = useState(true);
+  const [updatingPref, setUpdatingPref] = useState(null); // type string being toggled
 
   // Pending avatar selection (applied only when user clicks "Apply" inside the picker)
   const [pendingAvatar, setPendingAvatar] = useState(null);
@@ -81,6 +115,37 @@ export const ProfilePage = () => {
     };
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const data = await notificationPreferenceApi.getAll();
+        setPreferences(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to load notification preferences:', err);
+      } finally {
+        setPrefLoading(false);
+      }
+    };
+    fetchPreferences();
+  }, []);
+
+  const handleTogglePreference = async (type, channel) => {
+    const key = `${type}:${channel}`;
+    setUpdatingPref(key);
+    try {
+      const current = preferences.find((p) => p.type === type);
+      const currentValue = current ? current[channel === 'in_app' ? 'inApp' : 'email'] : channel === 'in_app';
+      const updated = await notificationPreferenceApi.update(type, { [channel]: !currentValue });
+      setPreferences((prev) =>
+        prev.map((p) => (p.type === type ? { ...p, inApp: updated.in_app ?? updated.inApp, email: updated.email } : p))
+      );
+    } catch (err) {
+      toast.error('Failed to update preference');
+    } finally {
+      setUpdatingPref(null);
+    }
+  };
 
   // ── Open picker — reset pending state to current avatarUrl ────────────────
   const openAvatarModal = () => {
@@ -433,6 +498,61 @@ export const ProfilePage = () => {
             </Card>
           </div>
         )}
+      </div>
+
+      {/* Notification Preferences */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Notification Preferences</h2>
+        <Card className="p-6">
+          {prefLoading ? (
+            <Spinner size="sm" />
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="text-left pb-3 text-gray-600 font-medium">Notification type</th>
+                    <th className="text-center pb-3 text-gray-600 font-medium w-28">In-app</th>
+                    <th className="text-center pb-3 text-gray-600 font-medium w-28">Email</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {preferences.map((pref) => {
+                    const inAppKey = `${pref.type}:in_app`;
+                    const emailKey = `${pref.type}:email`;
+                    return (
+                      <tr key={pref.type}>
+                        <td className="py-3 text-gray-700">
+                          {PREF_TYPE_LABELS[pref.type] ?? pref.type}
+                        </td>
+                        <td className="py-3 text-center">
+                          <ToggleSwitch
+                            checked={pref.inApp ?? true}
+                            disabled={updatingPref === inAppKey}
+                            onChange={() => handleTogglePreference(pref.type, 'in_app')}
+                            label="Toggle in-app"
+                          />
+                        </td>
+                        <td className="py-3 text-center">
+                          <ToggleSwitch
+                            checked={pref.email ?? false}
+                            disabled={updatingPref === emailKey}
+                            onChange={() => handleTogglePreference(pref.type, 'email')}
+                            label="Toggle email"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="text-xs text-gray-400 mt-4">
+                Email notifications are sent to <strong>{user?.email}</strong>.
+                SMTP must be configured on the server for email delivery to work.
+              </p>
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* ── Avatar Picker Modal ──────────────────────────────────────────────── */}

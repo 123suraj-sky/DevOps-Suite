@@ -105,9 +105,50 @@ export const TasksPage = () => {
   // ── WebSocket live updates ─────────────────────────────────────────────
   useEffect(() => {
     if (connected && projectId) {
-      const unsub = subscribe(`/topic/tasks/${projectId}`, (updated) => {
-        if (Array.isArray(updated)) setTasks(updated);
-        else fetchData();
+      const unsub = subscribe(`/topic/tasks/${projectId}`, (update) => {
+        // update shape: { action, task, task_id, project_id }
+        // Gracefully fall back to a full reload if the shape is unexpected.
+        const action = update?.action;
+        const incoming = update?.task;
+
+        if (!action) {
+          // Legacy / unexpected shape — just reload
+          fetchData();
+          return;
+        }
+
+        setTasks((prev) => {
+          switch (action) {
+            case 'CREATED':
+              // Add only if not already present (guard against own-user echoes)
+              if (!incoming || prev.some((t) => t.id === incoming.id)) return prev;
+              return [...prev, incoming];
+
+            case 'UPDATED':
+            case 'STATUS_CHANGED':
+            case 'MOVED':
+              if (!incoming) return prev;
+              return prev.map((t) => (t.id === incoming.id ? incoming : t));
+
+            case 'DELETED': {
+              const removedId = update.task_id || update.taskId;
+              if (!removedId) return prev;
+              return prev.filter((t) => t.id !== removedId);
+            }
+
+            default:
+              return prev;
+          }
+        });
+
+        // If the detail modal is open for an updated task, refresh it too
+        if ((action === 'UPDATED' || action === 'STATUS_CHANGED' || action === 'MOVED') && incoming) {
+          setDetailTask((prev) => (prev && prev.id === incoming.id ? incoming : prev));
+        }
+        if (action === 'DELETED') {
+          const removedId = update.task_id || update.taskId;
+          setDetailTask((prev) => (prev && prev.id === removedId ? null : prev));
+        }
       });
       return () => unsub();
     }

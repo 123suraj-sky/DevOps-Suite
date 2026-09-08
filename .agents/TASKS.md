@@ -43,8 +43,11 @@
   - Ref: `docs/09-monitoring-observability.md`
 
 - [ ] **WebSocket end-to-end testing**
-  - Config and topics exist; need live integration testing with frontend
-  - Topics: `/topic/notifications/{userId}`, `/topic/logs/{projectId}`, `/topic/tasks/{projectId}`
+  - All WebSocket topics now implemented and wired:
+    - `/topic/notifications/{userId}` — in-app notifications (full pipeline)
+    - `/topic/tasks/{projectId}` — live Kanban board updates
+    - `/topic/logs/{projectId}` — log streaming (not yet wired server-side)
+  - Need live integration testing with frontend running against the backend
 
 - [ ] **CI/CD Pipeline — GitHub Actions**
   - No `.github/workflows/` files exist
@@ -78,6 +81,14 @@
 - [x] **Architecture conversion** — Converted from microservices to monolith; removed Kafka, Zookeeper, API Gateway
 - [x] **Agent context files** — AGENTS.md, GEMINI.md, .agents/ directory created
 - [x] **User Profile & Details** — Added User Profile page (`/profile`) with avatar customization (presets and custom URLs), user stats, `PUT/PATCH /api/auth/me` endpoints, and resolved real user names/emails for project members.
+- [x] **Full Notification System (Options A–G)** — Implemented 2026-09-08:
+  - **Option A** — Fixed 4 frontend bugs: wrong WS topic (`/topic/notifications/${userId}`), HTTP method mismatch (PATCH→PUT), unread count parsing (`response.data.count`), empty list on page load
+  - **Option B** — Full `NotificationsPage` with All/Unread tabs, paginated list, per-item mark-as-read + delete; `NotificationItem` component (compact + full modes) with 6 type-specific SVG icons; `Header.jsx` uses compact `NotificationItem` + "See all" link
+  - **Option C** — `EmailNotificationService` with per-type HTML email templates; injected into `NotificationEventListener`; graceful no-op when SMTP unconfigured
+  - **Option D** — `StompAuthChannelInterceptor` validates JWT on STOMP CONNECT (signature + Redis blacklist); registered in `WebSocketConfig`
+  - **Option E** — New event triggers: `TaskReassignedEvent` (assignee change on update), `TaskCompletedEvent` (status→DONE from `updateStatus` and `reorderTasks`), `ExecutionFailedEvent` (FAILED/TIMEOUT/OOM_KILLED in `ExecutionQueueWorker`)
+  - **Option F** — `TaskUpdateDto` + `SimpMessagingTemplate` in `TaskService`; broadcasts CREATED/UPDATED/STATUS_CHANGED/MOVED/DELETED to `/topic/tasks/{projectId}`; `TasksPage` applies granular diffs without re-fetch
+  - **Option G** — `V14` Flyway migration (`notification_preferences` table); full preference entity/repository/service/controller; `NotificationService.createNotification` and email sends gated by user preference; profile page preference toggle grid (in-app × email per type)
 
 ---
 
@@ -86,7 +97,8 @@
 - [x] **Add more code execution languages (Java, C++)** — Added and verified full sandboxed execution support for Java 21 and C++ (g++ 15) alongside Python and JavaScript.
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)
 - [ ] Health page with status of all infrastructure components
-- [ ] Notification email delivery (currently only in-app via WebSocket)
+- [x] Notification email delivery — `EmailNotificationService` with per-type HTML templates; gated by user preferences
+- [x] **Full notification system (Options A–G)** — in-app WebSocket, email, STOMP auth, expanded triggers, live Kanban, preferences
 - [ ] **Migrate PostgreSQL to Neon** — Replace the self-hosted `postgres:16-alpine` Docker container with a [Neon](https://neon.tech) serverless PostgreSQL instance. Steps: provision a Neon project, update `SPRING_DATASOURCE_URL` in `docker-compose.yml` with the Neon connection string, add credentials to `.env`, and remove the `postgres` service + `postgres_data` volume from Compose.
 - [ ] **Reset Password flow** — `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` with time-limited token via email link. Requires an email service to be wired first (e.g. Mailtrap for dev, SendGrid for prod). Add `spring-boot-starter-mail` to `pom.xml` and configure SMTP credentials in `.env` before implementing.
 
@@ -102,3 +114,5 @@
 | Code Execution Sandbox | Docker Desktop must be running on the host. Test with simple Python `print("hello")` first. |
 | Elasticsearch pipeline | Kibana index pattern `devopssuite-logs-*` should be the target. |
 | GitHub Actions | Use Java 21 + Maven in CI. Cache `.m2` directory for faster builds. |
+| Notification email | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` in `.env`. Use Mailtrap for dev. Email is opt-in per user (default off) — users must enable it in Profile → Notification Preferences. |
+| Notification preferences | `NotificationPreferenceService.getEffective()` returns an unsaved default entity — never call `.save()` on it directly. |

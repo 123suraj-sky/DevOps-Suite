@@ -300,6 +300,31 @@ public class ProjectDto {
         private int sortOrder;
     }
 
+    /**
+     * Lightweight WebSocket push payload sent to {@code /topic/tasks/{projectId}}
+     * after any task mutation.  The frontend uses the {@code action} field to
+     * decide whether to apply a diff or fall back to a full reload.
+     *
+     * <p>Actions: {@code CREATED | UPDATED | DELETED | MOVED | STATUS_CHANGED}</p>
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class TaskUpdateDto {
+        /** What happened */
+        private String action;
+        /** The mutated task — null for DELETED */
+        private TaskResponse task;
+        /** Only set for DELETED — the ID of the removed task */
+        @JsonProperty("task_id")
+        private UUID taskId;
+        /** The project this task belongs to */
+        @JsonProperty("project_id")
+        private UUID projectId;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor
