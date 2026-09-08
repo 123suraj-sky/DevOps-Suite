@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,13 +53,17 @@ class TaskServiceTest {
     @Mock
     private TaskAuditHistoryRepository auditHistoryRepository;
 
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+
     private TaskService taskService;
 
     @BeforeEach
     void setUp() {
         taskService = new TaskService(
                 taskRepository, columnRepository, boardRepository,
-                projectService, eventPublisher, userRepository, auditHistoryRepository);
+                projectService, eventPublisher, userRepository,
+                auditHistoryRepository, messagingTemplate);
     }
 
     @Test

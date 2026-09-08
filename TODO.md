@@ -19,47 +19,27 @@ Track and display how many times a user's profile has been viewed.
 
 ## Task Board Enhancements
 
-### 4. Status Dropdowns / Properties
-Add an inline status dropdown to every task card and table row, matching the behavior of tools like Trello, Jira, Notion, and Asana.
-- Backend: Ensure task status field supports all required states; expose PATCH endpoint for status-only updates
-- Frontend: Clickable status badge on each card that opens a dropdown to change status without opening the full task detail view
-
-### 5. Context / Right-Click Menus
-Support right-clicking a task card to reveal quick actions: move to column, duplicate, archive/delete.
-- Frontend: Attach a context menu to each card (onContextMenu); actions dispatch the appropriate API calls (move, duplicate, archive)
-
-### 6. Keyboard Shortcuts
+### 4. Keyboard Shortcuts
 Add keyboard shortcuts for common task board actions (e.g., press `M` to move a card, `E` to edit, `D` to set due date).
 - Frontend: Global keydown listener scoped to the focused card; show a shortcuts reference modal (e.g., `?` to open)
 
-### 7. Command Palette
+### 5. Command Palette
 Add a Cmd+K / Ctrl+K command palette for quick navigation and actions across the board (create task, search, change status, move card).
 - Frontend: Floating palette overlay triggered by Ctrl+K; fuzzy-search over tasks, columns, and actions; executes the selected command
 
-### 8. Automated Rules & Triggers
+### 6. Automated Rules & Triggers
 Allow users to configure automation rules on a board (e.g., "When due date arrives → set status to In Progress", "When card moved to Done → notify assignee").
 - Backend: `automation_rules` table (trigger type, condition, action); rule evaluation service triggered by task events
 - Frontend: Automation settings panel per board; UI to create/edit/delete rules with trigger + action selectors
 
-### 9. Git / PR Integration
+### 7. Git / PR Integration
 Link a GitHub/GitLab repository to a project board so that PR and commit activity automatically updates task status or posts a comment.
 - Backend: Webhook receiver endpoint for GitHub/GitLab events; map branch names or PR titles to task IDs; update task status or add activity log entry on matching events
 - Frontend: Repository link settings per project; display linked PR/commit references on task cards
 
-## Kanban Dashboard Enhancements
-
-### 11. Task Metadata — Created At, Last Modified, Creator & Last Modified By
-Display audit information on each task so users can see when it was created, when it was last changed, and who made those changes.
-- Backend:
-  - Ensure `Task` entity has `createdAt`, `updatedAt` (JPA `@CreationTimestamp` / `@UpdateTimestamp`) and `createdBy`, `lastModifiedBy` fields (Spring Data Auditing or manual population in the service layer)
-  - Include these fields in the task response DTO
-- Frontend:
-  - Show "Created by \<user\> on \<date\>" and "Last modified by \<user\> on \<date\>" inside the task detail modal/drawer
-  - Optionally show a compact "Created \<relative time\>" tooltip on the card itself (e.g., "Created 2 days ago")
-
 ## UI Theme
 
-### 12. Dark Mode
+### 8. Dark Mode
 First, ensure the entire UI is fully polished in light mode. Once light mode is stable, add a toggle to switch the whole app to dark mode.
 - Phase 1 — Light mode: Audit all pages and components to make sure they look consistent and complete in light mode; fix any unstyled or broken elements
 - Phase 2 — Dark mode toggle:
@@ -67,7 +47,7 @@ First, ensure the entire UI is fully polished in light mode. Once light mode is 
   - Use Tailwind's `dark:` variant (enable `darkMode: 'class'` in `tailwind.config.js`) so a single class on `<html>` flips the entire app
   - This includes the Monaco code editor — switch its theme between a light variant (e.g., `vs`) and a dark variant (e.g., `vs-dark`) based on the selected mode
 
-### 13. Responsive Design
+### 9. Responsive Design
 Make the entire website fully responsive so it works well on mobile, tablet, and desktop screen sizes.
 - Audit all pages and components for fixed widths, overflow issues, and desktop-only layouts
 - Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`) to adapt layouts at each breakpoint
@@ -79,15 +59,19 @@ Make the entire website fully responsive so it works well on mobile, tablet, and
   - Metrics/Logs pages: make charts and tables scrollable or reflowed for narrow viewports
   - Profile page: single-column layout on mobile
 
-## Task Assignment & Visibility
+## Code Editor
 
-### 14. Task Assignment — Assigned To / Assigned By
-Show who a task is assigned to and who assigned it. Apply role-based visibility so members only see their own tasks while project admins have full visibility.
-- Backend:
-  - Ensure `Task` entity has both `assignedTo` (the member doing the work) and `assignedBy` (the member who made the assignment) fields, populated in the service layer on create/update
-  - Include both fields in the task response DTO
-  - Enforce visibility in the query layer: if the requesting user is the project OWNER or the user who created the project, return all tasks; otherwise return only tasks where `assignedTo` matches the requesting user
-- Frontend:
-  - Display "Assigned to \<user\>" and "Assigned by \<user\>" on the task card and in the task detail modal
-  - Project admin/owner view: shows all tasks across all members with full assignment info
-  - Member view: Kanban board only renders tasks assigned to the logged-in user; tasks assigned to others are hidden
+### 10. Persistent Open Files & Full-Screen IDE Button
+Improve the code editor experience with two enhancements:
+
+**a) Persistent Open Files (Tab Persistence)**
+Keep editor tabs open for the duration of the session — switching to another page and returning should not close open files.
+- Frontend: Store the list of open file tabs (and the active tab) in a React context or a top-level state slice (e.g. `EditorContext`) so the state survives route changes
+- On mount, restore the previously open tabs and re-select the last active file
+- Optionally persist to `sessionStorage` so a manual page refresh also restores the tabs
+
+**b) Open IDE in Full-Screen (New Tab)**
+Add a button in the code editor toolbar that opens the IDE view in a dedicated full-screen browser tab.
+- Frontend: Add a "Open in full screen" icon button (e.g. `expand` SVG asset) next to the existing toolbar actions
+- The button calls `window.open('/editor?fullscreen=true', '_blank')` (or equivalent route)
+- When the `fullscreen` query param is present, hide the main navbar/sidebar so the editor occupies the entire viewport
