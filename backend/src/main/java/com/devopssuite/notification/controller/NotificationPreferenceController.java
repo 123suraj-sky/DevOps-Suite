@@ -27,15 +27,22 @@ public class NotificationPreferenceController {
 
     private final NotificationPreferenceService preferenceService;
 
+    private UUID getCurrentUserId() {
+        org.springframework.security.core.Authentication auth = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("Authentication is required");
+        }
+        return UUID.fromString((String) auth.getPrincipal());
+    }
+
     /**
      * Returns the full preferences list for the authenticated user.
      * Every known type is returned; types with no stored row use defaults.
      */
     @GetMapping
-    public ResponseEntity<List<PreferenceResponse>> getPreferences(
-            @AuthenticationPrincipal UserDetails userDetails) {
-
-        UUID userId = UUID.fromString(userDetails.getUsername());
+    public ResponseEntity<List<PreferenceResponse>> getPreferences() {
+        UUID userId = getCurrentUserId();
         return ResponseEntity.ok(preferenceService.getAllForUser(userId));
     }
 
@@ -49,10 +56,9 @@ public class NotificationPreferenceController {
     @PutMapping("/{type}")
     public ResponseEntity<PreferenceResponse> updatePreference(
             @PathVariable String type,
-            @RequestBody PreferenceUpdateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            @RequestBody PreferenceUpdateRequest request) {
 
-        UUID userId = UUID.fromString(userDetails.getUsername());
+        UUID userId = getCurrentUserId();
         return ResponseEntity.ok(preferenceService.upsertPreference(userId, type.toUpperCase(), request));
     }
 }

@@ -6,5 +6,6 @@ import java.util.UUID;
 public record MemberRoleChangedEvent(
         UUID projectId,
         UUID userId,
-        String newRole
+        String newRole,
+        UUID actingUserId   // the user who performed the role change
 ) {}

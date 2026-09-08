@@ -5,6 +5,10 @@ const normalizeUser = (user) => {
   if (!user) return user;
   return {
     ...user,
+    // user_id is sent as snake_case via @JsonProperty("user_id") on UserResponse.
+    // The NotificationContext subscribes to /topic/notifications/{user.userId},
+    // so this mapping is critical — without it the subscription is never registered.
+    userId: user.userId ?? user.user_id ?? null,
     displayName: user.displayName ?? user.display_name ?? null,
     avatarUrl: user.avatarUrl ?? user.avatar_url ?? null,
     createdAt: user.createdAt ?? user.created_at ?? null,

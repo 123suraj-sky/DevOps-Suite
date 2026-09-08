@@ -12,7 +12,7 @@ export const NotificationProvider = ({ children }) => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(0);
   const { connected } = useWebSocket();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
   const addNotification = useCallback((notification) => {
     setNotifications((prev) => [notification, ...prev]);
@@ -72,13 +72,14 @@ export const NotificationProvider = ({ children }) => {
 
   const refresh = useCallback(() => loadPage(0), [loadPage]);
 
-  // Seed notifications list on mount — but only once the user is authenticated.
-  // Without this guard, the effect fires during the loading phase and gets a 403.
+  // Seed notifications list once auth finishes loading and the user is authenticated.
+  // Guarding on both authLoading and isAuthenticated prevents a 403 from firing
+  // during the initial render when the token hasn't been validated yet.
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && isAuthenticated) {
       loadPage(0);
     }
-  }, [isAuthenticated, loadPage]);
+  }, [authLoading, isAuthenticated, loadPage]);
 
   // Bug 1 fix: subscribe to /topic/notifications/{userId} not /topic/notifications
   useEffect(() => {

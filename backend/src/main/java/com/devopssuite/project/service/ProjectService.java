@@ -230,7 +230,7 @@ public class ProjectService {
         targetMember.setRole(normalizeProjectRole(newRole));
         projectMemberRepository.save(targetMember);
 
-        eventPublisher.publishEvent(new MemberRoleChangedEvent(projectId, targetUserId, normalizeProjectRole(newRole)));
+        eventPublisher.publishEvent(new MemberRoleChangedEvent(projectId, targetUserId, normalizeProjectRole(newRole), actingUserId));
     }
 
     private String resolveEffectiveRole(Project project, UUID userId) {

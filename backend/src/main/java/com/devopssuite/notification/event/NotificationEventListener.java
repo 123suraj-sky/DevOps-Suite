@@ -6,9 +6,10 @@ import com.devopssuite.notification.service.NotificationService;
 import com.devopssuite.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Consumes Spring application events from the project/task domain and:
@@ -19,9 +20,14 @@ import org.springframework.stereotype.Component;
  *       {@link EmailNotificationService} (no-op when SMTP is not configured).</li>
  * </ol>
  *
- * <p>All handlers are {@code @Async} so they never block the calling thread.
- * Every handler wraps its body in try/catch to prevent async-thread failures
- * from being swallowed silently — they are logged at ERROR level instead.</p>
+ * <p>All handlers use {@code @TransactionalEventListener(AFTER_COMMIT)} so they
+ * only fire after the publishing transaction has fully committed. This prevents
+ * the race condition where {@code @Async @EventListener} fires on a separate
+ * thread before the outer transaction commits, causing DB reads to return stale
+ * or missing data (the root cause of role-change notifications not working).</p>
+ *
+ * <p>Combined with {@code @Async}, the notification work runs off the main
+ * thread without blocking the HTTP response.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -38,11 +44,10 @@ public class NotificationEventListener {
     // ------------------------------------------------------------------
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTaskAssigned(TaskAssignedEvent event) {
         log.debug("Handling TaskAssignedEvent: task={} assignee={}", event.taskId(), event.assigneeId());
         try {
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.assigneeId(),
                     "TASK_ASSIGNED",
@@ -52,7 +57,6 @@ public class NotificationEventListener {
                     event.taskId()
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.assigneeId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.assigneeId(), "TASK_ASSIGNED")) {
                     String projectName = projectRepository.findById(event.projectId())
@@ -68,11 +72,10 @@ public class NotificationEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTaskReassigned(TaskReassignedEvent event) {
         log.debug("Handling TaskReassignedEvent: task={} newAssignee={}", event.taskId(), event.newAssigneeId());
         try {
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.newAssigneeId(),
                     "TASK_REASSIGNED",
@@ -82,7 +85,6 @@ public class NotificationEventListener {
                     event.taskId()
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.newAssigneeId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.newAssigneeId(), "TASK_REASSIGNED")) {
                     String projectName = projectRepository.findById(event.projectId())
@@ -98,13 +100,12 @@ public class NotificationEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTaskCompleted(TaskCompletedEvent event) {
         log.debug("Handling TaskCompletedEvent: task={} project={}", event.taskId(), event.projectId());
         try {
             if (event.notifyUserId() == null) return;
 
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.notifyUserId(),
                     "TASK_COMPLETED",
@@ -114,7 +115,6 @@ public class NotificationEventListener {
                     event.taskId()
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.notifyUserId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.notifyUserId(), "TASK_COMPLETED")) {
                     emailNotificationService.sendTaskCompletedEmail(user.getEmail(), event.taskTitle());
@@ -126,12 +126,11 @@ public class NotificationEventListener {
     }
 
     @Async
-    @EventListener
+    @org.springframework.context.event.EventListener
     public void onExecutionFailed(ExecutionFailedEvent event) {
         log.debug("Handling ExecutionFailedEvent: execution={} user={} status={}",
                 event.executionId(), event.userId(), event.status());
         try {
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.userId(),
                     "EXECUTION_FAILED",
@@ -141,7 +140,6 @@ public class NotificationEventListener {
                     null
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.userId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.userId(), "EXECUTION_FAILED")) {
                     emailNotificationService.sendExecutionFailedEmail(user.getEmail(), event.status());
@@ -157,11 +155,10 @@ public class NotificationEventListener {
     // ------------------------------------------------------------------
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMemberAdded(MemberAddedEvent event) {
         log.debug("Handling MemberAddedEvent: project={} user={}", event.projectId(), event.userId());
         try {
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.userId(),
                     "PROJECT_JOINED",
@@ -171,7 +168,6 @@ public class NotificationEventListener {
                     null
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.userId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.userId(), "PROJECT_JOINED")) {
                     emailNotificationService.sendProjectJoinedEmail(
@@ -184,26 +180,32 @@ public class NotificationEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMemberRoleChanged(MemberRoleChangedEvent event) {
-        log.debug("Handling MemberRoleChangedEvent: project={} user={} newRole={}",
-                event.projectId(), event.userId(), event.newRole());
+        log.debug("Handling MemberRoleChangedEvent: project={} user={} newRole={} actingUser={}",
+                event.projectId(), event.userId(), event.newRole(), event.actingUserId());
         try {
             String projectName = projectRepository.findById(event.projectId())
                     .map(p -> p.getName())
                     .orElse("your project");
 
-            // In-app + WebSocket
+            // Resolve the display name of the person who made the change
+            String changedBy = userRepository.findById(event.actingUserId())
+                    .map(u -> u.getDisplayName() != null && !u.getDisplayName().isBlank()
+                            ? u.getDisplayName()
+                            : u.getEmail())
+                    .orElse("a project admin");
+
             notificationService.createNotification(
                     event.userId(),
                     "ROLE_CHANGED",
                     "Project Role Updated",
-                    "Your role in project '" + projectName + "' has been updated to " + event.newRole(),
+                    "Your role in project '" + projectName + "' has been changed to "
+                            + event.newRole() + " by " + changedBy + ".",
                     event.projectId(),
                     null
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.userId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.userId(), "ROLE_CHANGED")) {
                     emailNotificationService.sendRoleChangedEmail(
@@ -216,7 +218,7 @@ public class NotificationEventListener {
     }
 
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onMemberRemoved(MemberRemovedEvent event) {
         log.debug("Handling MemberRemovedEvent: project={} user={}", event.projectId(), event.userId());
         try {
@@ -224,7 +226,6 @@ public class NotificationEventListener {
                     .map(p -> p.getName())
                     .orElse("a project");
 
-            // In-app + WebSocket
             notificationService.createNotification(
                     event.userId(),
                     "PROJECT_REMOVED",
@@ -234,7 +235,6 @@ public class NotificationEventListener {
                     null
             );
 
-            // Email — only if user's preference enables it
             userRepository.findById(event.userId()).ifPresent(user -> {
                 if (notificationService.isEmailEnabled(event.userId(), "PROJECT_REMOVED")) {
                     emailNotificationService.sendProjectRemovedEmail(user.getEmail(), projectName);
