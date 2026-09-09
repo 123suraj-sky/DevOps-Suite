@@ -135,7 +135,7 @@ export const ProfilePage = () => {
       .finally(() => setLoadingProfile(false));
 
     // Fetch heatmap for the target user
-    codeExecutionApi.getActivityHeatmap(365)
+    codeExecutionApi.getActivityHeatmap(365, isSelf ? null : (routeUserId ?? null))
       .then(setHeatmapData)
       .catch((err) => console.error('Failed to load heatmap:', err))
       .finally(() => setLoadingHeatmap(false));

@@ -83,15 +83,17 @@ public class ExecutionController {
     // ── Activity heatmap ─────────────────────────────────────────────────────────
 
     /**
-     * GET /api/code-execution/activity?days=365
-     * Returns daily execution counts for the authenticated user.
+     * GET /api/code-execution/activity?days=365[&userId=<uuid>]
+     * Returns daily execution counts for the requested user (defaults to the
+     * authenticated user when no userId param is supplied).
      * Only days with ≥ 1 execution are returned (sparse); the frontend fills gaps.
      */
     @GetMapping("/activity")
     public ResponseEntity<ApiResponse<List<ActivityDay>>> getActivity(
-            @RequestParam(defaultValue = "365") int days) {
-        UUID userId = getCurrentUserId();
-        List<ActivityDay> activity = executionService.getActivityHeatmap(userId, days);
+            @RequestParam(defaultValue = "365") int days,
+            @RequestParam(required = false) UUID userId) {
+        UUID targetId = (userId != null) ? userId : getCurrentUserId();
+        List<ActivityDay> activity = executionService.getActivityHeatmap(targetId, days);
         return ResponseEntity.ok(ApiResponse.<List<ActivityDay>>builder()
                 .message("Activity retrieved")
                 .data(activity)

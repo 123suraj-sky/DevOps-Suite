@@ -50,15 +50,15 @@ export const codeExecutionApi = {
   },
 
   /**
-   * GET /api/code-execution/activity?days=365
-   * Returns daily execution counts for the authenticated user over the past
-   * `days` days. Only days with ≥ 1 run are returned (sparse array).
+   * GET /api/code-execution/activity?days=365[&userId=<uuid>]
+   * Returns daily execution counts for the given user (defaults to self when
+   * userId is omitted).
    * Each item: { date: "2025-08-01", count: 3 }
    */
-  getActivityHeatmap: async (days = 365) => {
-    const response = await apiClient.get('/code-execution/activity', {
-      params: { days },
-    });
+  getActivityHeatmap: async (days = 365, userId = null) => {
+    const params = { days };
+    if (userId) params.userId = userId;
+    const response = await apiClient.get('/code-execution/activity', { params });
     return response.data.data ?? [];
   },
 };
