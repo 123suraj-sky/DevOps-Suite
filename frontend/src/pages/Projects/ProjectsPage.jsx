@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectApi } from '../../api';
+import { useProjects } from '../../context/ProjectsContext';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Modal } from '../../components/common/Modal';
@@ -9,6 +10,7 @@ import { Spinner } from '../../components/common/Spinner';
 import { formatDate } from '../../utils/formatters';
 
 export const ProjectsPage = () => {
+  const { refresh: refreshSidebar } = useProjects();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -36,6 +38,7 @@ export const ProjectsPage = () => {
     try {
       const project = await projectApi.create(newProject);
       setProjects((prev) => [project, ...prev]);
+      refreshSidebar();
       setShowCreateModal(false);
       setNewProject({ name: '', description: '' });
     } catch (err) {

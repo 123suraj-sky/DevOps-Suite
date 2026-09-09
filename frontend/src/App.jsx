@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { EditorProvider } from './context/EditorContext';
+import { ProjectsProvider } from './context/ProjectsContext';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProjectLayout } from './components/layout/ProjectLayout';
 import { Spinner } from './components/common/Spinner';
@@ -139,7 +140,9 @@ const App = () => {
         <WebSocketProvider>
           <NotificationProvider>
             <EditorProvider>
-              <AppRoutes />
+              <ProjectsProvider>
+                <AppRoutes />
+              </ProjectsProvider>
             </EditorProvider>
           </NotificationProvider>
         </WebSocketProvider>
