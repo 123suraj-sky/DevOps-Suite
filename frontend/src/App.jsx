@@ -113,6 +113,7 @@ const AppRoutes = () => {
           <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/users/:userId" element={<ProfilePage />} />
         </Route>
 
         {/* ── Standalone full-screen IDE (no sidebar / navbar) ── */}
