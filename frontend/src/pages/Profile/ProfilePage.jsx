@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AuthService } from '../../services';
 import { metricsApi, notificationPreferenceApi } from '../../api';
@@ -115,6 +115,12 @@ export const ProfilePage = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followLoading, setFollowLoading]   = useState(false);
 
+  // ── Followers / Following modal ───────────────────────────────────────
+  // 'followers' | 'following' | null
+  const [followModal, setFollowModal]           = useState(null);
+  const [followModalList, setFollowModalList]   = useState([]);
+  const [followModalLoading, setFollowModalLoading] = useState(false);
+
   // ── Fetch profile data ────────────────────────────────────────────────
   useEffect(() => {
     const targetId = isSelf ? currentUserId : routeUserId;
@@ -195,6 +201,25 @@ export const ProfilePage = () => {
       setFollowLoading(false);
     }
   }, [followLoading, isFollowing, routeUserId]);
+
+  // ── Open followers / following modal ─────────────────────────────────
+  const openFollowModal = useCallback(async (type) => {
+    const targetId = isSelf ? currentUserId : routeUserId;
+    if (!targetId) return;
+    setFollowModal(type);
+    setFollowModalList([]);
+    setFollowModalLoading(true);
+    try {
+      const list = type === 'followers'
+        ? await userApi.getFollowers(targetId)
+        : await userApi.getFollowing(targetId);
+      setFollowModalList(list);
+    } catch (err) {
+      console.error(`Failed to load ${type}:`, err);
+    } finally {
+      setFollowModalLoading(false);
+    }
+  }, [isSelf, currentUserId, routeUserId]);
 
   // ── Notification prefs toggle ─────────────────────────────────────────
   const handleTogglePreference = async (type, channel) => {
@@ -508,18 +533,26 @@ export const ProfilePage = () => {
 
                 {/* Followers / Following / Profile Views */}
                 <div className="flex flex-wrap gap-6 pt-3 border-t border-gray-100">
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-gray-900">
+                  <button
+                    type="button"
+                    onClick={() => openFollowModal('followers')}
+                    className="text-center group"
+                  >
+                    <p className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
                       {loadingProfile ? '—' : followersCount.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Followers</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-gray-900">
+                    <p className="text-xs text-gray-500 mt-0.5 group-hover:text-primary-500 transition-colors">Followers</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openFollowModal('following')}
+                    className="text-center group"
+                  >
+                    <p className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
                       {loadingProfile ? '—' : (profileData?.followingCount ?? 0).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Following</p>
-                  </div>
+                    <p className="text-xs text-gray-500 mt-0.5 group-hover:text-primary-500 transition-colors">Following</p>
+                  </button>
                   <div className="text-center">
                     <p className="text-xl font-bold text-gray-900">
                       {loadingProfile ? '—' : (profileData?.profileViewCount ?? 0).toLocaleString()}
@@ -745,6 +778,62 @@ export const ProfilePage = () => {
           />
         </>
       )}
+
+      {/* ── Followers / Following modal ── */}
+      <Modal
+        isOpen={followModal !== null}
+        onClose={() => setFollowModal(null)}
+        title={followModal === 'followers' ? 'Followers' : 'Following'}
+      >
+        {followModalLoading ? (
+          <div className="flex justify-center py-8">
+            <Spinner size="md" />
+          </div>
+        ) : followModalList.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-8">
+            {followModal === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
+          </p>
+        ) : (
+          <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            {followModalList.map((u) => (
+              <li key={u.userId ?? u.id}>
+                <Link
+                  to={`/users/${u.userId ?? u.id}`}
+                  onClick={() => setFollowModal(null)}
+                  className="flex items-center gap-3 py-3 px-1 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  {/* Avatar */}
+                  {u.avatarUrl ? (
+                    <img
+                      src={u.avatarUrl}
+                      alt={u.displayName || 'User'}
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 bg-white shrink-0"
+                      onError={(e) => { e.target.onerror = null; e.target.src = generateBotAvatar('User'); }}
+                    />
+                  ) : getDefaultAvatar(u.gender) ? (
+                    <img
+                      src={getDefaultAvatar(u.gender)}
+                      alt={u.displayName || 'User'}
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 bg-white shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold border border-gray-200 shrink-0">
+                      {(u.displayName || u.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  {/* Name + email */}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {u.displayName || 'Unnamed User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
     </div>
   );
 };
