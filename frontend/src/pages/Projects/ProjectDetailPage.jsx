@@ -126,7 +126,16 @@ export const ProjectDetailPage = () => {
               return (
                 <div key={member.userId} className="flex justify-between items-center py-3">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
+                    {isSelf ? (
+                      <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
+                    ) : (
+                      <Link
+                        to={`/users/${member.userId}`}
+                        className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline"
+                      >
+                        {member.displayName || member.email}
+                      </Link>
+                    )}
                     <p className="text-xs text-gray-500">{member.email}</p>
                   </div>
                   <div className="flex items-center space-x-3">
