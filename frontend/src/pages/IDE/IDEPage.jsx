@@ -4,12 +4,14 @@ import toast from 'react-hot-toast';
 
 import { ideFilesApi }       from '../../api/ideFilesApi';
 import { codeExecutionApi }  from '../../api/codeExecutionApi';
+import { useEditor }         from '../../context/EditorContext';
 import { FileExplorer }      from './FileExplorer';
 import { EditorTabs }        from './EditorTabs';
 import { IDEEditor, disposeEditorModel } from './IDEEditor';
 import { IDEOutputPanel }    from './IDEOutputPanel';
-import circleDotIcon from '../../assets/27_circle_dot.svg';
-import playIcon from '../../assets/28_play.svg';
+import circleDotIcon   from '../../assets/27_circle_dot.svg';
+import playIcon        from '../../assets/28_play.svg';
+import fullscreenIcon  from '../../assets/37_fullscreen.svg';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -44,29 +46,59 @@ function langFromPath(path) {
  *
  * Layout:
  *   [FileExplorer 220px] | [EditorTabs + IDEEditor flex-1] | [IDEOutputPanel 320px]
+ *
+ * Props:
+ *   projectIdOverride — used by FullScreenIDEPage (no :id route param available)
+ *   projectOverride   — project object passed by FullScreenIDEPage after it fetches it
+ *   isFullScreen      — when true, hides the "open in full screen" button to avoid
+ *                       opening a new full-screen tab from inside a full-screen tab
  */
-export function IDEPage() {
-  const { id: projectId } = useParams();
-  const { project } = useOutletContext() ?? {};
+export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = false }) {
+  // projectId comes from the route param (/projects/:id/code) normally,
+  // or from the prop when rendered inside FullScreenIDEPage (/editor?project=).
+  const { id: routeProjectId } = useParams();
+  const projectId = projectIdOverride ?? routeProjectId;
 
-  // ── File tree state ────────────────────────────────────────────────────────
-  const [files, setFiles]         = useState([]);    // FileListItem[]
-  const [loadingFiles, setLoadingFiles] = useState(true);
+  // OutletContext is only available in the normal route; full-screen has none.
+  const outletCtx = useOutletContext() ?? {};
+  const project = projectOverride ?? outletCtx.project;
   const projectName = project?.name ?? 'Project';
 
-  // ── Tab state ─────────────────────────────────────────────────────────────
-  // tabs: Array<{ id, name, path, language, content, isDirty }>
-  const [tabs, setTabs]             = useState([]);
-  const [activeTabId, setActiveTabId] = useState(null);
+  // ── EditorContext — persistent tab state ───────────────────────────────────
+  const {
+    tabs,
+    activeTabId,
+    activeTab,
+    setProjectId,
+    openFile:       ctxOpenFile,
+    openNewFile:    ctxOpenNewFile,
+    selectTab:      ctxSelectTab,
+    closeTab:       ctxCloseTab,
+    updateTabContent,
+    markTabClean,
+    updateTabMeta,
+    closeTabsById,
+    broadcastSave,
+    incomingSyncTab,
+  } = useEditor();
+
+  // Tell the context which project we are in so it loads/saves the right snapshot
+  useEffect(() => {
+    if (projectId) setProjectId(projectId);
+  }, [projectId, setProjectId]);
+
+  // ── File tree state ────────────────────────────────────────────────────────
+  const [files, setFiles]               = useState([]);
+  const [loadingFiles, setLoadingFiles] = useState(true);
 
   // ── Execution state ───────────────────────────────────────────────────────
-  const [stdin, setStdin]           = useState('');
-  const [running, setRunning]       = useState(false);
-  const [executionId, setExecutionId] = useState(null);
-  const [pollStatus, setPollStatus] = useState(null);
-  const [result, setResult]         = useState(null);
+  const [stdin, setStdin]               = useState('');
+  const [running, setRunning]           = useState(false);
+  const [executionId, setExecutionId]   = useState(null);
+  const [pollStatus, setPollStatus]     = useState(null);
+  const [result, setResult]             = useState(null);
 
-  // Auto-save debounce timer per file
+  // Auto-save debounce timer per file (keyed by tab id)
   const autoSaveTimers = useRef({});
 
   // ── Load file list ─────────────────────────────────────────────────────────
@@ -86,111 +118,104 @@ export function IDEPage() {
     refreshFiles().finally(() => setLoadingFiles(false));
   }, [refreshFiles]);
 
-  // ── Derived helpers ────────────────────────────────────────────────────────
-
-  const activeTab = tabs.find((t) => t.id === activeTabId) ?? null;
-
   // ── Open a file (from explorer click) ─────────────────────────────────────
 
   const handleOpenFile = useCallback(async (fileListItem) => {
     if (fileListItem.isFolder) return;
-
-    // If already open, just switch to it
-    const existing = tabs.find((t) => t.id === fileListItem.id);
-    if (existing) { setActiveTabId(fileListItem.id); return; }
-
     try {
-      const detail = await ideFilesApi.getFile(fileListItem.id);
-      const tab = {
-        id:       detail.id,
-        name:     detail.name,
-        path:     detail.path,
-        language: detail.language || langFromPath(detail.path),
-        content:  detail.content ?? '',
-        isDirty:  false,
-      };
-      setTabs((prev) => [...prev, tab]);
-      setActiveTabId(tab.id);
+      await ctxOpenFile(fileListItem);
     } catch (err) {
       console.error('Failed to open file:', err);
       toast.error(`Failed to open "${fileListItem.name}".`);
     }
-  }, [tabs]);
+  }, [ctxOpenFile]);
 
   // ── Editor content change (marks tab dirty, schedules auto-save) ───────────
 
   const handleEditorChange = useCallback((newContent) => {
     if (!activeTabId) return;
 
-    setTabs((prev) =>
-      prev.map((t) =>
-        t.id === activeTabId ? { ...t, content: newContent, isDirty: true } : t
-      )
-    );
+    updateTabContent(activeTabId, newContent);
 
     // Debounced auto-save
     clearTimeout(autoSaveTimers.current[activeTabId]);
     autoSaveTimers.current[activeTabId] = setTimeout(() => {
-      setTabs((current) => {
-        const tab = current.find((t) => t.id === activeTabId);
-        if (tab?.isDirty) saveTab(tab);
-        return current;
-      });
+      // Read tabs directly from context via ref to avoid stale closure
+      // We use a functional approach: grab the current tab from the context
+      // by calling the API directly if it is still dirty.
+      // The context always has the latest content so we reach into it via
+      // a stable callback pattern.
+      autoSaveCurrentTab(activeTabId);
     }, AUTOSAVE_DELAY);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTabId]);
+  }, [activeTabId, updateTabContent]);
 
-  // ── Save a tab ─────────────────────────────────────────────────────────────
+  // Stable ref to the tabs array so the auto-save timeout can read current state
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
 
-  const saveTab = useCallback(async (tab) => {
+  // Ref to the IDEEditor instance — used to push content on cross-tab sync
+  const editorRef = useRef(null);
+
+  // ── Incoming cross-tab sync (BroadcastChannel) ────────────────────────────
+  // EditorContext sets `incomingSyncTab` whenever another tab broadcasts a save.
+  // The context has already updated the tab's content in state; here we push it
+  // into the live Monaco editor if that file is currently active.
+  const lastSyncRef = useRef(null);
+  useEffect(() => {
+    if (!incomingSyncTab) return;
+    // Deduplicate — same object reference means we already handled it
+    if (lastSyncRef.current === incomingSyncTab) return;
+    lastSyncRef.current = incomingSyncTab;
+
+    const { fileId, content } = incomingSyncTab;
+    if (fileId === activeTabId) {
+      editorRef.current?.pushContent(content);
+    }
+  }, [incomingSyncTab, activeTabId]);
+
+  const autoSaveCurrentTab = useCallback(async (tabId) => {
+    const tab = tabsRef.current.find((t) => t.id === tabId);
+    if (!tab?.isDirty) return;
     try {
       await ideFilesApi.updateFile(tab.id, { content: tab.content });
-      setTabs((prev) =>
-        prev.map((t) => t.id === tab.id ? { ...t, isDirty: false } : t)
-      );
+      markTabClean(tab.id);
+      // Notify other open tabs (e.g. the full-screen IDE) about the saved content
+      broadcastSave({ type: 'file_saved', fileId: tab.id, content: tab.content, path: tab.path });
     } catch (err) {
       console.error('Auto-save failed:', err);
       // Silent fail for auto-save; manual save shows a toast
     }
-  }, []);
+  }, [markTabClean, broadcastSave]);
+
+  // ── Manual save ───────────────────────────────────────────────────────────
 
   const handleManualSave = useCallback(async () => {
     if (!activeTab) return;
     try {
       await ideFilesApi.updateFile(activeTab.id, { content: activeTab.content });
-      setTabs((prev) =>
-        prev.map((t) => t.id === activeTab.id ? { ...t, isDirty: false } : t)
-      );
+      markTabClean(activeTab.id);
+      broadcastSave({ type: 'file_saved', fileId: activeTab.id, content: activeTab.content, path: activeTab.path });
       toast.success('Saved');
     } catch (err) {
       toast.error('Save failed.');
     }
-  }, [activeTab]);
+  }, [activeTab, markTabClean, broadcastSave]);
 
   // ── Close a tab ────────────────────────────────────────────────────────────
 
   const handleCloseTab = useCallback((tabId) => {
     clearTimeout(autoSaveTimers.current[tabId]);
 
-    const tab = tabs.find((t) => t.id === tabId);
+    const tab = tabsRef.current.find((t) => t.id === tabId);
     if (tab?.isDirty) {
       // Flush unsaved content synchronously before closing
       ideFilesApi.updateFile(tabId, { content: tab.content }).catch(console.error);
     }
 
     disposeEditorModel(tab?.path ?? '');
-
-    setTabs((prev) => {
-      const remaining = prev.filter((t) => t.id !== tabId);
-      if (activeTabId === tabId) {
-        // Activate adjacent tab
-        const idx = prev.findIndex((t) => t.id === tabId);
-        const next = remaining[idx] ?? remaining[idx - 1] ?? null;
-        setActiveTabId(next?.id ?? null);
-      }
-      return remaining;
-    });
-  }, [tabs, activeTabId]);
+    ctxCloseTab(tabId);
+  }, [ctxCloseTab]);
 
   // ── Create file / folder ───────────────────────────────────────────────────
 
@@ -205,24 +230,20 @@ export function IDEPage() {
       await refreshFiles();
 
       if (!isFolder) {
-        // Auto-open newly created file
-        const tab = {
+        ctxOpenNewFile({
           id:       created.id,
           name:     created.name,
           path:     created.path,
           language: created.language || langFromPath(created.path),
           content:  '',
-          isDirty:  false,
-        };
-        setTabs((prev) => [...prev, tab]);
-        setActiveTabId(tab.id);
+        });
       }
       toast.success(`Created "${path.split('/').pop()}"`);
     } catch (err) {
       const msg = err.response?.data?.message ?? 'Failed to create file.';
       toast.error(msg);
     }
-  }, [projectId, refreshFiles]);
+  }, [projectId, refreshFiles, ctxOpenNewFile]);
 
   // ── Rename / move ──────────────────────────────────────────────────────────
 
@@ -231,20 +252,17 @@ export function IDEPage() {
       await ideFilesApi.updateFile(fileListItem.id, { path: newPath });
       await refreshFiles();
 
-      // Update tab if it's open
-      setTabs((prev) =>
-        prev.map((t) =>
-          t.id === fileListItem.id
-            ? { ...t, path: newPath, name: newPath.split('/').pop(), language: langFromPath(newPath) }
-            : t
-        )
-      );
+      updateTabMeta(fileListItem.id, {
+        path:     newPath,
+        name:     newPath.split('/').pop(),
+        language: langFromPath(newPath),
+      });
       toast.success('Renamed');
     } catch (err) {
       const msg = err.response?.data?.message ?? 'Rename failed.';
       toast.error(msg);
     }
-  }, [refreshFiles]);
+  }, [refreshFiles, updateTabMeta]);
 
   // ── Delete ─────────────────────────────────────────────────────────────────
 
@@ -254,31 +272,24 @@ export function IDEPage() {
         // Real DB entry — single API call; backend cascade-deletes all children
         await ideFilesApi.deleteFile(fileListItem.id);
 
-        // Close tabs for the deleted entry AND any open tabs that were inside it
-        // (backend has already removed the rows, tabs would become ghost tabs)
         if (fileListItem.isFolder) {
+          // Close all tabs inside the deleted folder
           const prefix = fileListItem.path + '/';
-          setTabs((prev) => {
-            const toClose = prev.filter(
-              (t) => t.id === fileListItem.id || t.path.startsWith(prefix)
-            );
-            toClose.forEach((t) => {
-              clearTimeout(autoSaveTimers.current[t.id]);
-              disposeEditorModel(t.path);
-            });
-            const remaining = prev.filter(
-              (t) => t.id !== fileListItem.id && !t.path.startsWith(prefix)
-            );
-            setActiveTabId((cur) => {
-              const stillOpen = remaining.find((t) => t.id === cur);
-              return stillOpen ? cur : (remaining[0]?.id ?? null);
-            });
-            return remaining;
+          const toClose = tabsRef.current.filter(
+            (t) => t.id === fileListItem.id || t.path.startsWith(prefix)
+          );
+          toClose.forEach((t) => {
+            clearTimeout(autoSaveTimers.current[t.id]);
+            disposeEditorModel(t.path);
           });
+          closeTabsById(new Set(toClose.map((t) => t.id)));
         } else {
-          // Single file — close its tab if open
-          if (tabs.find((t) => t.id === fileListItem.id)) {
-            handleCloseTab(fileListItem.id);
+          // Single file — flush and close its tab if open
+          const tab = tabsRef.current.find((t) => t.id === fileListItem.id);
+          if (tab) {
+            clearTimeout(autoSaveTimers.current[tab.id]);
+            disposeEditorModel(tab.path);
+            closeTabsById(new Set([tab.id]));
           }
         }
       } else if (fileListItem.isFolder) {
@@ -289,10 +300,13 @@ export function IDEPage() {
         );
         await Promise.all(children.map((f) => ideFilesApi.deleteFile(f.id)));
 
-        // Close any open tabs that were inside this folder
-        children.forEach((f) => {
-          if (tabs.find((t) => t.id === f.id)) handleCloseTab(f.id);
+        const childIds = new Set(children.map((f) => f.id));
+        const toClose = tabsRef.current.filter((t) => childIds.has(t.id));
+        toClose.forEach((t) => {
+          clearTimeout(autoSaveTimers.current[t.id]);
+          disposeEditorModel(t.path);
         });
+        closeTabsById(childIds);
       }
 
       await refreshFiles();
@@ -301,7 +315,7 @@ export function IDEPage() {
       const msg = err.response?.data?.message ?? 'Delete failed.';
       toast.error(msg);
     }
-  }, [refreshFiles, tabs, files, handleCloseTab, autoSaveTimers]);
+  }, [refreshFiles, files, closeTabsById]);
 
   // ── Execution polling ──────────────────────────────────────────────────────
 
@@ -320,7 +334,7 @@ export function IDEPage() {
           setPollStatus(null);
           clearInterval(interval);
 
-          if (res.status === 'COMPLETED') toast.success('Execution completed!');
+          if (res.status === 'COMPLETED')     toast.success('Execution completed!');
           else if (res.status === 'TIMEOUT')    toast.error('Execution timed out.');
           else if (res.status === 'OOM_KILLED') toast.error('Killed: out of memory.');
           else                                   toast.error('Execution failed.');
@@ -351,9 +365,8 @@ export function IDEPage() {
     if (activeTab.isDirty) {
       try {
         await ideFilesApi.updateFile(activeTab.id, { content: activeTab.content });
-        setTabs((prev) =>
-          prev.map((t) => t.id === activeTab.id ? { ...t, isDirty: false } : t)
-        );
+        markTabClean(activeTab.id);
+        broadcastSave({ type: 'file_saved', fileId: activeTab.id, content: activeTab.content, path: activeTab.path });
       } catch {
         toast.error('Could not save file before running.');
         return;
@@ -380,7 +393,13 @@ export function IDEPage() {
       setRunning(false);
       setPollStatus(null);
     }
-  }, [activeTab, stdin]);
+  }, [activeTab, stdin, markTabClean]);
+
+  // ── Full-screen handler ────────────────────────────────────────────────────
+
+  const handleOpenFullScreen = useCallback(() => {
+    window.open(`/editor?project=${projectId}`, '_blank', 'noopener,noreferrer');
+  }, [projectId]);
 
   // ── Resize handle state (explorer / output panel) ─────────────────────────
 
@@ -437,7 +456,14 @@ export function IDEPage() {
           {activeTab && (
             <span className="text-xs text-[#858585] font-mono ml-2 truncate max-w-[300px]">
               {activeTab.path}
-              {activeTab.isDirty && <img src={circleDotIcon} alt="unsaved" className="w-2 h-2 inline-block ml-1 text-[#e8c070]" style={{ filter: 'invert(85%) sepia(30%) saturate(500%) hue-rotate(5deg)' }} />}
+              {activeTab.isDirty && (
+                <img
+                  src={circleDotIcon}
+                  alt="unsaved"
+                  className="w-2 h-2 inline-block ml-1"
+                  style={{ filter: 'invert(85%) sepia(30%) saturate(500%) hue-rotate(5deg)' }}
+                />
+              )}
             </span>
           )}
         </div>
@@ -451,12 +477,25 @@ export function IDEPage() {
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded
                        text-[#cccccc] hover:bg-[#3c3c3c] disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586l-1.293-1.293z" />
               <path d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5z" />
             </svg>
             Save
           </button>
+
+          {/* Open in full-screen button — hidden when already in full-screen */}
+          {!isFullScreen && (
+            <button
+              onClick={handleOpenFullScreen}
+              title="Open IDE in full screen (new tab)"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded
+                         text-[#cccccc] hover:bg-[#3c3c3c]"
+            >
+              <img src={fullscreenIcon} alt="" className="w-3.5 h-3.5 invert opacity-70" aria-hidden="true" />
+              Full screen
+            </button>
+          )}
 
           {/* Run button */}
           <button
@@ -473,7 +512,7 @@ export function IDEPage() {
           >
             {running ? (
               <>
-                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
                   <path d="M12 2a10 10 0 0110 10" />
                 </svg>
@@ -525,10 +564,11 @@ export function IDEPage() {
           <EditorTabs
             tabs={tabs}
             activeTabId={activeTabId}
-            onSelect={setActiveTabId}
+            onSelect={ctxSelectTab}
             onClose={handleCloseTab}
           />
           <IDEEditor
+            ref={editorRef}
             activeTab={activeTab}
             onChange={handleEditorChange}
             onSave={handleManualSave}

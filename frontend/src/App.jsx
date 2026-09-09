@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { EditorProvider } from './context/EditorContext';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProjectLayout } from './components/layout/ProjectLayout';
 import { Spinner } from './components/common/Spinner';
@@ -16,6 +17,7 @@ const ProjectDetailPage = lazy(() => import('./pages/Projects').then((m) => ({ d
 const TasksPage = lazy(() => import('./pages/Tasks').then((m) => ({ default: m.TasksPage })));
 const CodeEditorPage = lazy(() => import('./pages/CodeEditor').then((m) => ({ default: m.CodeEditorPage })));
 const IDEPage = lazy(() => import('./pages/IDE').then((m) => ({ default: m.IDEPage })));
+const FullScreenIDEPage = lazy(() => import('./pages/IDE').then((m) => ({ default: m.FullScreenIDEPage })));
 const LogsPage = lazy(() => import('./pages/Logs').then((m) => ({ default: m.LogsPage })));
 const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
 const NotificationsPage = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })));
@@ -113,6 +115,16 @@ const AppRoutes = () => {
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
+        {/* ── Standalone full-screen IDE (no sidebar / navbar) ── */}
+        <Route
+          path="/editor"
+          element={
+            <ProtectedRoute>
+              <FullScreenIDEPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
@@ -125,7 +137,9 @@ const App = () => {
       <AuthProvider>
         <WebSocketProvider>
           <NotificationProvider>
-            <AppRoutes />
+            <EditorProvider>
+              <AppRoutes />
+            </EditorProvider>
           </NotificationProvider>
         </WebSocketProvider>
       </AuthProvider>

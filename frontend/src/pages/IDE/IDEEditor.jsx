@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import MonacoEditor, { loader } from '@monaco-editor/react';
 
 // ── Configure Monaco loader — explicit CDN ensures all workers load correctly ─
@@ -211,7 +211,10 @@ function makeSnippet(s, range, monaco) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function IDEEditor({ activeTab, onChange, onSave, readOnly = false }) {
+export const IDEEditor = forwardRef(function IDEEditor(
+  { activeTab, onChange, onSave, readOnly = false },
+  ref
+) {
   const editorRef    = useRef(null);
   const monacoRef    = useRef(null);
   const onSaveRef    = useRef(onSave);
@@ -222,6 +225,37 @@ export function IDEEditor({ activeTab, onChange, onSave, readOnly = false }) {
   useEffect(() => { onSaveRef.current    = onSave;    }, [onSave]);
   useEffect(() => { onChangeRef.current  = onChange;  }, [onChange]);
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+
+  // ── Imperative API (used by IDEPage for cross-tab sync) ───────────────────
+  useImperativeHandle(ref, () => ({
+    /**
+     * Push new content into the active Monaco model.
+     * Called when a BroadcastChannel message arrives from the other tab.
+     * Preserves cursor position where possible.
+     */
+    pushContent(content) {
+      const editor = editorRef.current;
+      const monaco = monacoRef.current;
+      if (!editor || !monaco) return;
+
+      const model = editor.getModel();
+      if (!model || model.isDisposed()) return;
+
+      // Only update if content actually differs — avoids a pointless undo entry
+      if (model.getValue() === content) return;
+
+      // Save + restore cursor/scroll so the user's position is preserved
+      const position    = editor.getPosition();
+      const scrollTop   = editor.getScrollTop();
+      const scrollLeft  = editor.getScrollLeft();
+
+      model.setValue(content);
+
+      if (position) editor.setPosition(position);
+      editor.setScrollTop(scrollTop);
+      editor.setScrollLeft(scrollLeft);
+    },
+  }), []);
 
   // ── Register completion providers (once) ─────────────────────────────────
 
@@ -394,7 +428,7 @@ export function IDEEditor({ activeTab, onChange, onSave, readOnly = false }) {
       />
     </div>
   );
-}
+});
 
 // ── Model management ──────────────────────────────────────────────────────────
 
