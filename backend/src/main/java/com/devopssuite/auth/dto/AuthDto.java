@@ -145,6 +145,25 @@ public class AuthDto {
 
         @JsonProperty("last_login_at")
         private Instant lastLoginAt;
+
+        @JsonProperty("followers_count")
+        @Builder.Default
+        private long followersCount = 0;
+
+        @JsonProperty("following_count")
+        @Builder.Default
+        private long followingCount = 0;
+
+        /**
+         * Whether the requesting user follows this profile.
+         * Null when viewing your own profile or when unauthenticated.
+         */
+        @JsonProperty("is_following")
+        private Boolean isFollowing;
+
+        @JsonProperty("profile_view_count")
+        @Builder.Default
+        private long profileViewCount = 0;
     }
 
     @Data

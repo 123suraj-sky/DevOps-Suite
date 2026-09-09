@@ -1,10 +1,10 @@
 package com.devopssuite.auth.service;
 
 import com.devopssuite.auth.dto.AuthDto.*;
-import com.devopssuite.auth.model.Gender;
 import com.devopssuite.auth.model.Role;
 import com.devopssuite.auth.model.User;
 import com.devopssuite.auth.repository.RoleRepository;
+import com.devopssuite.auth.repository.UserFollowRepository;
 import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +31,37 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final StringRedisTemplate redisTemplate;
+    private final UserFollowRepository followRepository;
 
     private static final String PASSWORD_PATTERN =
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$";
+
+    // ── Internal helper: map User → UserResponse (self-view, no isFollowing) ─
+
+    /**
+     * Builds a {@link UserResponse} for the profile owner themselves.
+     * Follow counts and view count are populated; {@code isFollowing} is null
+     * (you cannot follow yourself).
+     */
+    private UserResponse toSelfResponse(User user) {
+        return UserResponse.builder()
+                .userId(user.getId())
+                .id(user.getId())
+                .email(user.getEmail())
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .gender(user.getGender())
+                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
+                .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt())
+                .followersCount(followRepository.countByFollowingId(user.getId()))
+                .followingCount(followRepository.countByFollowerId(user.getId()))
+                .isFollowing(null)   // self-view — no follow relationship to check
+                .profileViewCount(user.getProfileViewCount())
+                .build();
+    }
+
+    // ── Register ──────────────────────────────────────────────────────────────
 
     @Transactional
     public LoginResponse register(SignupRequest request) {
@@ -45,7 +73,6 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        // Get or create default ROLE_MEMBER role
         Role memberRole = roleRepository.findByName("ROLE_MEMBER")
                 .orElseGet(() -> roleRepository.save(
                         Role.builder()
@@ -63,30 +90,20 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtUtils.generateAccessToken(savedUser);
+        String accessToken  = jwtUtils.generateAccessToken(savedUser);
         String refreshToken = jwtUtils.generateRefreshToken(savedUser);
-
-        UserResponse userResponse = UserResponse.builder()
-                .userId(savedUser.getId())
-                .id(savedUser.getId())
-                .email(savedUser.getEmail())
-                .displayName(savedUser.getDisplayName())
-                .avatarUrl(savedUser.getAvatarUrl())
-                .gender(savedUser.getGender())
-                .roles(savedUser.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                .createdAt(savedUser.getCreatedAt())
-                .lastLoginAt(savedUser.getLastLoginAt())
-                .build();
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .accessTokenSnake(accessToken)
                 .refreshToken(refreshToken)
                 .refreshTokenSnake(refreshToken)
-                .expiresIn(86400) // 24 hours
-                .user(userResponse)
+                .expiresIn(86400)
+                .user(toSelfResponse(savedUser))
                 .build();
     }
+
+    // ── Login ─────────────────────────────────────────────────────────────────
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
@@ -97,52 +114,32 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        // Update last login
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        String accessToken = jwtUtils.generateAccessToken(user);
+        String accessToken  = jwtUtils.generateAccessToken(user);
         String refreshToken = jwtUtils.generateRefreshToken(user);
-
-        UserResponse userResponse = UserResponse.builder()
-                .userId(user.getId())
-                .id(user.getId())
-                .email(user.getEmail())
-                .displayName(user.getDisplayName())
-                .avatarUrl(user.getAvatarUrl())
-                .gender(user.getGender())
-                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                .createdAt(user.getCreatedAt())
-                .lastLoginAt(user.getLastLoginAt())
-                .build();
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .accessTokenSnake(accessToken)
                 .refreshToken(refreshToken)
                 .refreshTokenSnake(refreshToken)
-                .expiresIn(86400) // 24 hours
-                .user(userResponse)
+                .expiresIn(86400)
+                .user(toSelfResponse(user))
                 .build();
     }
+
+    // ── Get current user (GET /api/auth/me) ───────────────────────────────────
 
     @Transactional(readOnly = true)
     public UserResponse getCurrentUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        return UserResponse.builder()
-                .userId(user.getId())
-                .id(user.getId())
-                .email(user.getEmail())
-                .displayName(user.getDisplayName())
-                .avatarUrl(user.getAvatarUrl())
-                .gender(user.getGender())
-                .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                .createdAt(user.getCreatedAt())
-                .lastLoginAt(user.getLastLoginAt())
-                .build();
+        return toSelfResponse(user);
     }
+
+    // ── Update profile ────────────────────────────────────────────────────────
 
     @Transactional
     public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
@@ -160,19 +157,10 @@ public class AuthService {
         }
 
         User saved = userRepository.save(user);
-
-        return UserResponse.builder()
-                .userId(saved.getId())
-                .id(saved.getId())
-                .email(saved.getEmail())
-                .displayName(saved.getDisplayName())
-                .avatarUrl(saved.getAvatarUrl())
-                .gender(saved.getGender())
-                .roles(saved.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
-                .createdAt(saved.getCreatedAt())
-                .lastLoginAt(saved.getLastLoginAt())
-                .build();
+        return toSelfResponse(saved);
     }
+
+    // ── Refresh token ─────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public RefreshResponse refreshAccessToken(String refreshToken) {
@@ -196,6 +184,8 @@ public class AuthService {
                 .expiresIn(86400)
                 .build();
     }
+
+    // ── Logout ────────────────────────────────────────────────────────────────
 
     public void logout(String accessToken, String refreshToken) {
         if (accessToken != null && !accessToken.isBlank()) {
@@ -221,15 +211,17 @@ public class AuthService {
                 }
             }
         } catch (Exception ignored) {
-            // Already invalid, no need to blacklist
+            // Already invalid — no need to blacklist
         }
     }
+
+    // ── Password reset (optional — requires SMTP config) ──────────────────────
+
     @Autowired(required = false)
     private com.devopssuite.auth.repository.PasswordResetTokenRepository tokenRepository;
 
     @Autowired(required = false)
     private org.springframework.mail.javamail.JavaMailSender mailSender;
-
 
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
@@ -240,20 +232,16 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Email address not found"));
 
-        // Revoke any existing tokens
         tokenRepository.deleteByUserId(user.getId());
 
-        // Generate token (expires in 1 hour)
         String token = UUID.randomUUID().toString();
         com.devopssuite.auth.model.PasswordResetToken resetToken = com.devopssuite.auth.model.PasswordResetToken.builder()
                 .userId(user.getId())
                 .token(token)
                 .expiryDate(Instant.now().plusSeconds(3600))
                 .build();
-
         tokenRepository.save(resetToken);
 
-        // Send reset email
         try {
             org.springframework.mail.SimpleMailMessage message = new org.springframework.mail.SimpleMailMessage();
             message.setTo(user.getEmail());
@@ -284,11 +272,8 @@ public class AuthService {
         User user = userRepository.findById(token.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Update password hash
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepository.save(user);
-
-        // Delete token
         tokenRepository.delete(token);
     }
 }

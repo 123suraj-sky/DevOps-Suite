@@ -10,6 +10,21 @@ import java.util.UUID;
 
 public class ExecutionDto {
 
+    /**
+     * One cell in the activity heatmap — a calendar date and how many
+     * code runs were submitted on that day (UTC).
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ActivityDay {
+        /** ISO-8601 date string, e.g. "2025-08-01". */
+        private String date;
+        /** Number of executions submitted on this date (≥ 1). */
+        private long count;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

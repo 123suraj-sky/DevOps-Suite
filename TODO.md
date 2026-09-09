@@ -17,29 +17,9 @@ Track and display how many times a user's profile has been viewed.
 - Backend: Increment view count on every `GET /api/auth/users/:id` (or equivalent public profile endpoint), store count in DB
 - Frontend: Display view count on the profile page
 
-## Task Board Enhancements
-
-### 4. Keyboard Shortcuts
-Add keyboard shortcuts for common task board actions (e.g., press `M` to move a card, `E` to edit, `D` to set due date).
-- Frontend: Global keydown listener scoped to the focused card; show a shortcuts reference modal (e.g., `?` to open)
-
-### 5. Command Palette
-Add a Cmd+K / Ctrl+K command palette for quick navigation and actions across the board (create task, search, change status, move card).
-- Frontend: Floating palette overlay triggered by Ctrl+K; fuzzy-search over tasks, columns, and actions; executes the selected command
-
-### 6. Automated Rules & Triggers
-Allow users to configure automation rules on a board (e.g., "When due date arrives → set status to In Progress", "When card moved to Done → notify assignee").
-- Backend: `automation_rules` table (trigger type, condition, action); rule evaluation service triggered by task events
-- Frontend: Automation settings panel per board; UI to create/edit/delete rules with trigger + action selectors
-
-### 7. Git / PR Integration
-Link a GitHub/GitLab repository to a project board so that PR and commit activity automatically updates task status or posts a comment.
-- Backend: Webhook receiver endpoint for GitHub/GitLab events; map branch names or PR titles to task IDs; update task status or add activity log entry on matching events
-- Frontend: Repository link settings per project; display linked PR/commit references on task cards
-
 ## UI Theme
 
-### 8. Dark Mode
+### 4. Dark Mode
 First, ensure the entire UI is fully polished in light mode. Once light mode is stable, add a toggle to switch the whole app to dark mode.
 - Phase 1 — Light mode: Audit all pages and components to make sure they look consistent and complete in light mode; fix any unstyled or broken elements
 - Phase 2 — Dark mode toggle:
@@ -47,7 +27,7 @@ First, ensure the entire UI is fully polished in light mode. Once light mode is 
   - Use Tailwind's `dark:` variant (enable `darkMode: 'class'` in `tailwind.config.js`) so a single class on `<html>` flips the entire app
   - This includes the Monaco code editor — switch its theme between a light variant (e.g., `vs`) and a dark variant (e.g., `vs-dark`) based on the selected mode
 
-### 9. Responsive Design
+### 5. Responsive Design
 Make the entire website fully responsive so it works well on mobile, tablet, and desktop screen sizes.
 - Audit all pages and components for fixed widths, overflow issues, and desktop-only layouts
 - Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`) to adapt layouts at each breakpoint

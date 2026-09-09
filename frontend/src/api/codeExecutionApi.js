@@ -48,4 +48,17 @@ export const codeExecutionApi = {
     });
     return response.data.data;
   },
+
+  /**
+   * GET /api/code-execution/activity?days=365
+   * Returns daily execution counts for the authenticated user over the past
+   * `days` days. Only days with ≥ 1 run are returned (sparse array).
+   * Each item: { date: "2025-08-01", count: 3 }
+   */
+  getActivityHeatmap: async (days = 365) => {
+    const response = await apiClient.get('/code-execution/activity', {
+      params: { days },
+    });
+    return response.data.data ?? [];
+  },
 };

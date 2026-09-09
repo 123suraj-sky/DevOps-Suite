@@ -208,6 +208,25 @@ public class ExecutionService {
 
     // ── Utilities ────────────────────────────────────────────────────────────────
 
+    /**
+     * Returns daily execution counts for {@code userId} going back {@code days} days.
+     * Only days with executions are returned (sparse list); the frontend fills gaps.
+     */
+    @Transactional(readOnly = true)
+    public List<ActivityDay> getActivityHeatmap(UUID userId, int days) {
+        int safeDays = Math.max(1, Math.min(days, 730)); // cap at 2 years
+        Instant from = Instant.now().minusSeconds((long) safeDays * 86_400);
+
+        List<Object[]> rows = requestRepository.countByUserIdGroupedByDay(userId, from);
+
+        return rows.stream()
+                .map(row -> ActivityDay.builder()
+                        .date(row[0].toString())          // java.sql.Date → "yyyy-MM-dd"
+                        .count(((Number) row[1]).longValue())
+                        .build())
+                .toList();
+    }
+
     private boolean isTerminalStatus(String status) {
         return status != null &&
                (status.equals("COMPLETED") || status.equals("FAILED") ||

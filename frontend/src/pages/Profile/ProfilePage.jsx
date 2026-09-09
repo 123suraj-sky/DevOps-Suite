@@ -2,11 +2,14 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { AuthService } from '../../services';
 import { metricsApi, notificationPreferenceApi } from '../../api';
+import { codeExecutionApi } from '../../api/codeExecutionApi';
+import { userApi } from '../../api/userApi';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 import { Spinner } from '../../components/common/Spinner';
+import { ActivityHeatmap } from '../../components/common/ActivityHeatmap';
 import { AvatarCropModal } from '../../components/common/AvatarCropModal';
 import { formatDate } from '../../utils/formatters';
 import { getDefaultAvatar } from '../../utils';
@@ -53,19 +56,18 @@ const ToggleSwitch = ({ checked, onChange, disabled, label }) => (
 const TAB_AVATAR = 'avatar';
 const TAB_UPLOAD = 'upload';
 
-const STATUS_STYLES = {
-  COMPLETED: 'bg-green-100 text-green-800',
-  FAILED: 'bg-red-100 text-red-800',
-  TIMEOUT: 'bg-orange-100 text-orange-800',
-  OOM_KILLED: 'bg-orange-100 text-orange-800',
-  RUNNING: 'bg-blue-100 text-blue-800',
-  QUEUED: 'bg-gray-100 text-gray-700',
-};
-
 export const ProfilePage = () => {
   const { user, updateUser } = useAuth();
   const [summary, setSummary] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  // Activity heatmap
+  const [heatmapData, setHeatmapData]       = useState([]);
+  const [loadingHeatmap, setLoadingHeatmap] = useState(true);
+
+  // Follow counts + profile view count (refreshed from /api/users/{id})
+  const [profileStats, setProfileStats]       = useState(null);
+  const [loadingProfile, setLoadingProfile]   = useState(true);
 
   // Edit Profile state
   const [isEditing, setIsEditing] = useState(false);
@@ -119,6 +121,38 @@ export const ProfilePage = () => {
     };
     fetchStats();
   }, []);
+
+  // Fetch activity heatmap data
+  useEffect(() => {
+    const fetchHeatmap = async () => {
+      try {
+        const data = await codeExecutionApi.getActivityHeatmap(365);
+        setHeatmapData(data);
+      } catch (err) {
+        console.error('Failed to load activity heatmap:', err);
+      } finally {
+        setLoadingHeatmap(false);
+      }
+    };
+    fetchHeatmap();
+  }, []);
+
+  // Fetch follow counts + profile view count from /api/users/{id}
+  useEffect(() => {
+    if (!user?.id && !user?.userId) return;
+    const userId = user.id ?? user.userId;
+    const fetchProfile = async () => {
+      try {
+        const data = await userApi.getProfile(userId);
+        setProfileStats(data);
+      } catch (err) {
+        console.error('Failed to load profile stats:', err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchProfile();
+  }, [user?.id, user?.userId]);
 
   useEffect(() => {
     const fetchPreferences = async () => {
@@ -251,7 +285,7 @@ export const ProfilePage = () => {
     }
   };
 
-  const { taskStats, executionsThisWeek, recentExecutions } = summary ?? {};
+  const { taskStats, executionsThisWeek } = summary ?? {};
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-10">
@@ -387,6 +421,28 @@ export const ProfilePage = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Follow counts + Profile Views row */}
+                <div className="flex flex-wrap gap-6 pt-3 border-t border-gray-100 text-sm">
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-gray-900">
+                      {loadingProfile ? '—' : (profileStats?.followersCount ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">Followers</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-gray-900">
+                      {loadingProfile ? '—' : (profileStats?.followingCount ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">Following</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xl font-bold text-gray-900">
+                      {loadingProfile ? '—' : (profileStats?.profileViewCount ?? 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">Profile Views</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -435,11 +491,12 @@ export const ProfilePage = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* ── Stat cards ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card className="p-4">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Open Tasks</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{taskStats?.open ?? 0}</p>
-                <p className="text-xs text-gray-400 mt-1">Tasks in backlog & todo</p>
+                <p className="text-xs text-gray-400 mt-1">Tasks in backlog &amp; todo</p>
               </Card>
               <Card className="p-4">
                 <p className="text-xs font-medium text-yellow-600 uppercase tracking-wider">In Progress</p>
@@ -458,47 +515,13 @@ export const ProfilePage = () => {
               </Card>
             </div>
 
-            {/* Recent Executions Section */}
+            {/* ── Activity heatmap ── */}
             <Card className="p-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Recent Code Executions</h3>
-              {recentExecutions && recentExecutions.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="border-b border-gray-100 text-xs text-gray-500 uppercase">
-                      <tr>
-                        <th className="pb-3">Language</th>
-                        <th className="pb-3">Status</th>
-                        <th className="pb-3">Execution Time</th>
-                        <th className="pb-3">Timestamp</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {recentExecutions.map((exec) => (
-                        <tr key={exec.executionId} className="hover:bg-gray-50">
-                          <td className="py-3 font-medium text-gray-900 capitalize">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
-                              {exec.language}
-                            </span>
-                          </td>
-                          <td className="py-3">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[exec.status] || 'bg-gray-100 text-gray-700'}`}>
-                              {exec.status}
-                            </span>
-                          </td>
-                          <td className="py-3 text-gray-500 text-xs font-mono">
-                            {exec.executionTimeMs > 0 ? `${exec.executionTimeMs}ms` : '—'}
-                          </td>
-                          <td className="py-3 text-gray-400 text-xs">
-                            {formatDate(exec.createdAt)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 py-4 text-center">No recent code executions found.</p>
-              )}
+              <ActivityHeatmap
+                data={heatmapData}
+                loading={loadingHeatmap}
+                totalDays={365}
+              />
             </Card>
           </div>
         )}
