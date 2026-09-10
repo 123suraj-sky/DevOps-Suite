@@ -1,5 +1,6 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.metrics.AppMetrics;
 import com.devopssuite.notification.event.TaskAssignedEvent;
 import com.devopssuite.notification.event.TaskCompletedEvent;
 import com.devopssuite.notification.event.TaskReassignedEvent;
@@ -34,6 +35,7 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TaskAuditHistoryRepository auditHistoryRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final AppMetrics appMetrics;
 
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .registerModule(new JavaTimeModule());
@@ -72,6 +74,7 @@ public class TaskService {
         }
 
         writeAudit(savedTask, userId, "CREATED");
+        appMetrics.recordTaskOperation("created");
         TaskResponse response = mapToTaskResponse(savedTask);
         broadcastTaskUpdate("CREATED", response, projectId);
         return response;
@@ -142,9 +145,9 @@ public class TaskService {
 
         Task savedTask = taskRepository.saveAndFlush(task);
         writeAudit(savedTask, userId, "UPDATED");
+        appMetrics.recordTaskOperation("updated");
 
         UUID newAssigneeId = savedTask.getAssigneeId();
-
         // New assignment on a previously-unassigned task → TASK_ASSIGNED
         if (newAssigneeId != null && oldAssigneeId == null) {
             eventPublisher.publishEvent(new TaskAssignedEvent(
@@ -200,6 +203,7 @@ public class TaskService {
             eventPublisher.publishEvent(new TaskCompletedEvent(
                     savedTask.getId(), projectId, savedTask.getTitle(), notifyId));
         }
+        appMetrics.recordTaskOperation("status_changed");
 
         TaskResponse statusResponse = mapToTaskResponse(savedTask);
         broadcastTaskUpdate("STATUS_CHANGED", statusResponse, projectId);
@@ -213,6 +217,7 @@ public class TaskService {
         UUID projectId = projectService.getProjectIdForColumn(task.getColumnId());
         projectService.checkPermission(projectId, userId, "ADMIN", "OWNER");
         taskRepository.delete(task);
+        appMetrics.recordTaskOperation("deleted");
         broadcastTaskUpdate("DELETED", null, taskId, projectId);
     }
 

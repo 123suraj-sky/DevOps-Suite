@@ -1,6 +1,7 @@
 package com.devopssuite.project.service;
 
 import com.devopssuite.auth.repository.UserRepository;
+import com.devopssuite.metrics.AppMetrics;
 import com.devopssuite.project.repository.TaskAuditHistoryRepository;
 import com.devopssuite.project.dto.ProjectDto.TaskRequest;
 import com.devopssuite.project.dto.ProjectDto.ReorderTaskItem;
@@ -56,6 +57,9 @@ class TaskServiceTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @Mock
+    private AppMetrics appMetrics;
+
     private TaskService taskService;
 
     @BeforeEach
@@ -63,7 +67,7 @@ class TaskServiceTest {
         taskService = new TaskService(
                 taskRepository, columnRepository, boardRepository,
                 projectService, eventPublisher, userRepository,
-                auditHistoryRepository, messagingTemplate);
+                auditHistoryRepository, messagingTemplate, appMetrics);
     }
 
     @Test

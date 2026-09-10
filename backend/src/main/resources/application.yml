@@ -87,3 +87,12 @@ logging:
 elasticsearch:
   host: ${ELASTICSEARCH_HOST:localhost}
   port: ${ELASTICSEARCH_PORT:9200}
+
+# ── Redis rate limiting ────────────────────────────────────────────────────────
+# Limits are per-identity (userId or IP) per 60-second window.
+# Override via environment variable: RATE_LIMIT_EXECUTION_MAX=5 etc.
+rate-limit:
+  window-seconds: 60
+  execution-max: ${RATE_LIMIT_EXECUTION_MAX:10}
+  auth-max: ${RATE_LIMIT_AUTH_MAX:20}
+  api-max: ${RATE_LIMIT_API_MAX:300}

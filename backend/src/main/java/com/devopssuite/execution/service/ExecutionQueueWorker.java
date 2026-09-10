@@ -8,6 +8,7 @@ import com.devopssuite.execution.repository.ExecutionResultRepository;
 import com.devopssuite.execution.sandbox.DockerSandbox;
 import com.devopssuite.ide.model.IdeFile;
 import com.devopssuite.ide.service.IdeFileService;
+import com.devopssuite.metrics.AppMetrics;
 import com.devopssuite.notification.event.ExecutionFailedEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -36,6 +37,7 @@ public class ExecutionQueueWorker {
     private final ExecutionProperties props;
     private final IdeFileService ideFileService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AppMetrics appMetrics;
 
     private ExecutorService executorService;
     private volatile boolean running = true;
@@ -122,6 +124,10 @@ public class ExecutionQueueWorker {
         request.setStatus(terminalStatus);
         request.setCompletedAt(Instant.now());
         requestRepository.saveAndFlush(request);
+
+        // Record custom metric
+        String languageName = request.getLanguage() != null ? request.getLanguage().getName() : "unknown";
+        appMetrics.recordExecution(languageName, terminalStatus);
 
         // Publish failure event so the user gets an in-app + email notification
         if (!"COMPLETED".equals(terminalStatus)) {

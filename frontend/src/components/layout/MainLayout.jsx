@@ -7,8 +7,10 @@ export const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // IDE route needs full-height flex — no scroll, no padding (ProjectLayout handles it)
-  const isIDE = location.pathname.endsWith('/code');
+  // IDE and embedded admin tools need full-height flex — no scroll, no padding
+  const isFullHeight = location.pathname.endsWith('/code')
+    || location.pathname === '/grafana'
+    || location.pathname === '/kibana';
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -17,8 +19,8 @@ export const MainLayout = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-        {isIDE ? (
-          // Full-height flex: IDE fills everything below the header
+        {isFullHeight ? (
+          // Full-height flex: IDE / Grafana / Kibana fill everything below the header
           <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <Outlet />
           </main>

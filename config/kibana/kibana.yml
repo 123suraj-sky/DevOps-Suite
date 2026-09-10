@@ -1,0 +1,15 @@
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# Disable telemetry and news feed
+telemetry.enabled: false
+newsfeed.enabled: false
+
+# Logging
+logging.root.level: warn
+
+# Allow embedding in iframes — disables the X-Frame-Options: SAMEORIGIN header
+# that Kibana sets by default. Security is enforced by the nginx Basic Auth proxy.
+server.securityResponseHeaders.xframe: false
+
+server.publicBaseUrl: "http://localhost:8083"

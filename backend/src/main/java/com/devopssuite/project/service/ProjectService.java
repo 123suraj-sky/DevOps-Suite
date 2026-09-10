@@ -2,12 +2,14 @@ package com.devopssuite.project.service;
 
 import com.devopssuite.auth.model.User;
 import com.devopssuite.auth.repository.UserRepository;
+import com.devopssuite.config.RedisCacheService;
 import com.devopssuite.notification.event.MemberAddedEvent;
 import com.devopssuite.notification.event.MemberRemovedEvent;
 import com.devopssuite.notification.event.MemberRoleChangedEvent;
 import com.devopssuite.project.dto.ProjectDto.*;
 import com.devopssuite.project.model.*;
 import com.devopssuite.project.repository.*;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ public class ProjectService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final RedisCacheService cacheService;
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request, UUID ownerId) {
@@ -83,9 +86,18 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public ProjectResponse getProject(UUID projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
-        return mapToProjectResponse(project);
+        String cacheKey = RedisCacheService.projectKey(projectId.toString());
+        return cacheService.getOrLoad(
+                cacheKey,
+                "project",
+                RedisCacheService.PROJECT_TTL_MINUTES,
+                new TypeReference<ProjectResponse>() {},
+                () -> {
+                    Project project = projectRepository.findById(projectId)
+                            .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+                    return mapToProjectResponse(project);
+                }
+        );
     }
 
     @Transactional(readOnly = true)
@@ -105,6 +117,7 @@ public class ProjectService {
         project.setName(request.getName());
         project.setDescription(request.getDescription());
         Project savedProject = projectRepository.save(project);
+        cacheService.evict(RedisCacheService.projectKey(projectId.toString()));
         return mapToProjectResponse(savedProject);
     }
 
@@ -135,6 +148,7 @@ public class ProjectService {
         boardRepository.deleteAll(boards);
 
         projectRepository.delete(project);
+        cacheService.evict(RedisCacheService.projectKey(projectId.toString()));
     }
 
     @Transactional(readOnly = true)
@@ -191,6 +205,7 @@ public class ProjectService {
             String projectName = project != null ? project.getName() : projectId.toString();
             eventPublisher.publishEvent(new MemberAddedEvent(projectId, resolvedUserId, projectName, normalizedRole));
         }
+        cacheService.evict(RedisCacheService.projectKey(projectId.toString()));
     }
 
     @Transactional
@@ -231,6 +246,7 @@ public class ProjectService {
         projectMemberRepository.save(targetMember);
 
         eventPublisher.publishEvent(new MemberRoleChangedEvent(projectId, targetUserId, normalizeProjectRole(newRole), actingUserId));
+        cacheService.evict(RedisCacheService.projectKey(projectId.toString()));
     }
 
     private String resolveEffectiveRole(Project project, UUID userId) {
@@ -266,6 +282,7 @@ public class ProjectService {
         projectMemberRepository.delete(member);
 
         eventPublisher.publishEvent(new MemberRemovedEvent(projectId, memberUserId));
+        cacheService.evict(RedisCacheService.projectKey(projectId.toString()));
     }
 
     @Transactional(readOnly = true)

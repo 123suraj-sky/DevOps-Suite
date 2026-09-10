@@ -1,8 +1,11 @@
 package com.devopssuite.security;
 
+import com.devopssuite.metrics.AppMetrics;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -23,6 +26,20 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private AppMetrics appMetrics;
+
+    @Autowired
+    private RateLimitProperties rateLimitProperties;
+
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter(redisTemplate, appMetrics, rateLimitProperties);
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -59,7 +76,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/ide/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(rateLimitFilter(), JwtRequestFilter.class);
 
         return http.build();
     }

@@ -6,12 +6,19 @@ import dashboardIcon from '../../assets/07_dashboard.svg';
 import projectsIcon from '../../assets/08_folder.svg';
 import metricsIcon from '../../assets/10_metrics.svg';
 import notificationsIcon from '../../assets/09_notification_bell.svg';
+import grafanaIcon from '../../assets/39_grafana.svg';
+import kibanaIcon from '../../assets/40_kibana.svg';
 
 const baseNavLinks = [
   { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard' },
   { path: '/projects', label: 'Projects', icon: projectsIcon, iconAlt: 'Projects' },
-  { path: '/metrics', label: 'Metrics', icon: metricsIcon, iconAlt: 'Metrics', adminOnly: true },
   { path: '/notifications', label: 'Notifications', icon: notificationsIcon, iconAlt: 'Notifications' },
+];
+
+const adminNavLinks = [
+  { path: '/metrics', label: 'Metrics', icon: metricsIcon, iconAlt: 'Metrics' },
+  { path: '/grafana', label: 'Grafana', icon: grafanaIcon, iconAlt: 'Grafana' },
+  { path: '/kibana', label: 'Kibana', icon: kibanaIcon, iconAlt: 'Kibana' },
 ];
 
 export const Sidebar = ({ isOpen = true, onClose }) => {
@@ -19,7 +26,23 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
   const { isAdmin } = useAuth();
   const { recent, hasMore, loading } = useProjects();
 
-  const navLinks = baseNavLinks.filter(link => !link.adminOnly || isAdmin);
+  // helper to build a nav link element
+  const NavLink = ({ link }) => (
+    <Link
+      key={link.path}
+      to={link.path}
+      className={cn(
+        'flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+        location.pathname === link.path
+          ? 'bg-primary-50 text-primary-700'
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+      )}
+      onClick={onClose}
+    >
+      <img src={link.icon} alt={link.iconAlt} className="w-5 h-5 object-contain" />
+      <span>{link.label}</span>
+    </Link>
+  );
 
   return (
     <>
@@ -46,23 +69,24 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
         <div className="flex-1 overflow-y-auto">
           {/* Main nav links */}
           <nav className="p-4 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  'flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                  location.pathname === link.path
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                )}
-                onClick={onClose}
-              >
-                <img src={link.icon} alt={link.iconAlt} className="w-5 h-5 object-contain" />
-                <span>{link.label}</span>
-              </Link>
+            {baseNavLinks.map((link) => (
+              <NavLink key={link.path} link={link} />
             ))}
           </nav>
+
+          {/* Admin tools section — only visible to ROLE_ADMIN / ROLE_OWNER */}
+          {isAdmin && (
+            <div className="px-4 pb-2">
+              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Admin
+              </p>
+              <div className="space-y-1">
+                {adminNavLinks.map((link) => (
+                  <NavLink key={link.path} link={link} />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Recent Projects ─────────────────────────────────────────── */}
           <div className="px-4 pb-4">

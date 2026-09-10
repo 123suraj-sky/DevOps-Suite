@@ -1,7 +1,6 @@
 services:
+
   # ── Frontend: React SPA served by Nginx on port 80 ──────────────────────────
-  # Builds the Vite production bundle and serves it via Nginx.
-  # Nginx also reverse-proxies /api/ and /ws/ to the backend container.
   frontend:
     build:
       context: ./frontend
@@ -12,6 +11,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - app
 
   # ── Spring Boot Monolith Backend ─────────────────────────────────────────────
   backend:
@@ -21,7 +22,7 @@ services:
     container_name: devopssuite-backend
     user: root
     ports:
-      - "8081:8081"
+      - "8082:8081"   # Expose on 8082 externally; internal services use port 8081
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/devopssuite
       SPRING_DATASOURCE_USERNAME: postgres
@@ -31,23 +32,18 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      ELASTICSEARCH_HOST: ${ELASTICSEARCH_HOST}
-      ELASTICSEARCH_PORT: ${ELASTICSEARCH_PORT}
-      # Docker daemon socket host
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
       DOCKER_HOST: unix:///var/run/docker.sock
-      # Sandbox: in-container path where source files are written
       DOCKER_SANDBOX_TEMP_DIR: /tmp/devopssuite-sandbox
-      # Sandbox: host-visible path the Docker daemon uses for bind mounts (DinD).
-      # Must be the absolute host path that corresponds to ./sandbox-temp.
-      # On Linux: set to the absolute path of this directory on the host, e.g. /home/user/DevOps Suite/sandbox-temp
-      # On Windows (Docker Desktop): use the Windows path, e.g. C:\Users\you\DevOps Suite\sandbox-temp
       DOCKER_HOST_TEMP_DIR: ${DOCKER_HOST_TEMP_DIR:-}
+      # Rate limit overrides (optional)
+      RATE_LIMIT_EXECUTION_MAX: ${RATE_LIMIT_EXECUTION_MAX:-10}
+      RATE_LIMIT_AUTH_MAX: ${RATE_LIMIT_AUTH_MAX:-20}
+      RATE_LIMIT_API_MAX: ${RATE_LIMIT_API_MAX:-300}
     volumes:
-      # Mount Docker socket so the sandbox can spin up ephemeral sibling containers
       - /var/run/docker.sock:/var/run/docker.sock
-      # Shared temp volume for sandbox source files (DinD bind-mount workaround)
       - ./sandbox-temp:/tmp/devopssuite-sandbox
-      # Named volume for persisted user avatar images
       - avatar_uploads:/app/uploads/avatars
     depends_on:
       postgres:
@@ -55,8 +51,11 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - app
+      - observability
 
-  # PostgreSQL Database
+  # ── PostgreSQL Database ───────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: devopssuite-postgres
@@ -64,8 +63,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_DB: devopssuite
-    ports:
-      - "5432:5432"
+    # NOT exposed to host — accessible only within the app network
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -73,13 +73,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app
 
-  # Redis Cache
+  # ── Redis Cache ───────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: devopssuite-redis
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    # NOT exposed to host — accessible only within the app network
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -87,34 +91,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app
 
-
-
-  # Prometheus Monitoring
-  prometheus:
-    image: prom/prometheus:v2.51.0
-    container_name: devopssuite-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-  # Grafana Dashboards
-  grafana:
-    image: grafana/grafana:10.4.0
-    container_name: devopssuite-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-    volumes:
-      - grafana_data:/var/lib/grafana
-
-  # ELK Stack - Elasticsearch
+  # ── Elasticsearch ─────────────────────────────────────────────────────────────
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: devopssuite-elasticsearch
@@ -122,22 +102,151 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
+    # NOT exposed to host — only backend and Kibana access it internally
+    expose:
+      - "9200"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qv '\"status\":\"red\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - observability
 
-  # Kibana
+  # ── Kibana ────────────────────────────────────────────────────────────────────
   kibana:
     image: docker.elastic.co/kibana/kibana:8.12.0
     container_name: devopssuite-kibana
     depends_on:
-      - elasticsearch
-    ports:
-      - "5601:5601"
+      elasticsearch:
+        condition: service_healthy
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    volumes:
+      - ./config/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    # NOT exposed directly to host — accessed via admin-proxy on port 8081
+    expose:
+      - "5601"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status | grep -q '\"overall\"'"]
+      interval: 20s
+      timeout: 10s
+      retries: 12
+      start_period: 60s
+    networks:
+      - observability
 
+  # ── Kibana init: provisions data view on first start ─────────────────────────
+  kibana-init:
+    image: curlimages/curl:8.7.1
+    container_name: devopssuite-kibana-init
+    depends_on:
+      kibana:
+        condition: service_healthy
+    volumes:
+      - ./config/kibana/init-kibana.sh:/init-kibana.sh:ro
+    entrypoint: ["/bin/sh", "/init-kibana.sh"]
+    restart: "no"
+    networks:
+      - observability
+
+  # ── Prometheus ────────────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: devopssuite-prometheus
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    # NOT exposed to host — Grafana queries it internally
+    expose:
+      - "9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - observability
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: devopssuite-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      # Disable sign-up and anonymous access — all access goes through nginx basic-auth
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s:8080/"
+      # Allow embedding in iframes (admin dashboard)
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SECURITY_COOKIE_SAMESITE: "none"
+      GF_SECURITY_COOKIE_SECURE: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/etc/grafana/dashboards:ro
+    # NOT exposed directly to host — accessed via admin-proxy on port 8080
+    expose:
+      - "3000"
+    depends_on:
+      - prometheus
+    networks:
+      - observability
+
+  # ── Admin proxy: nginx with HTTP Basic Auth ───────────────────────────────────
+  # Exposes Grafana on :8080 and Kibana on :8081 — both behind Basic Auth.
+  # Elasticsearch, Prometheus, and Redis are NOT exposed through this proxy.
+  admin-proxy:
+    image: nginx:1.27-alpine
+    container_name: devopssuite-admin-proxy
+    depends_on:
+      htpasswd-init:
+        condition: service_completed_successfully
+      grafana:
+        condition: service_started
+      kibana:
+        condition: service_started
+    ports:
+      - "8080:8080"   # Grafana (admin)
+      - "8083:8081"   # Kibana  (admin) — host port 8083 to avoid clash with backend
+    volumes:
+      - ./config/nginx/nginx-admin.conf:/etc/nginx/nginx.conf:ro
+      - htpasswd_vol:/etc/nginx/conf.d
+    networks:
+      - observability
+    restart: unless-stopped
+
+  # ── htpasswd init: writes .htpasswd to the shared volume ─────────────────────
+  htpasswd-init:
+    image: httpd:2.4-alpine
+    container_name: devopssuite-htpasswd-init
+    environment:
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+    volumes:
+      - htpasswd_vol:/etc/nginx/conf.d
+    entrypoint: ["/bin/sh", "-c", "htpasswd -cb /etc/nginx/conf.d/.htpasswd \"$$ADMIN_USER\" \"$$ADMIN_PASSWORD\" && echo '[htpasswd-init] .htpasswd written for user '\"$$ADMIN_USER\""]
+    restart: "no"
+
+# ── Networks ─────────────────────────────────────────────────────────────────────
+# app:          backend ↔ postgres, redis, frontend
+# observability: backend ↔ elasticsearch, kibana, prometheus, grafana
+# Both networks are internal — no direct host access to infra services.
+networks:
+  app:
+    driver: bridge
+  observability:
+    driver: bridge
+
+# ── Volumes ───────────────────────────────────────────────────────────────────────
 volumes:
   postgres_data:
   redis_data:
@@ -145,3 +254,4 @@ volumes:
   grafana_data:
   elasticsearch_data:
   avatar_uploads:
+  htpasswd_vol:

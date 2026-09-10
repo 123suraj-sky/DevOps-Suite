@@ -5,6 +5,8 @@ import com.devopssuite.auth.model.User;
 import com.devopssuite.auth.model.UserFollow;
 import com.devopssuite.auth.repository.UserFollowRepository;
 import com.devopssuite.auth.repository.UserRepository;
+import com.devopssuite.config.RedisCacheService;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +38,7 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserFollowRepository followRepository;
+    private final RedisCacheService cacheService;
 
     // ── GET /api/users/{id} ───────────────────────────────────────────────────
 
@@ -48,32 +51,56 @@ public class UserController {
     @Transactional
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(@PathVariable("id") UUID targetId) {
         UUID requesterId = getCurrentUserId();
+        boolean isSelf = requesterId.equals(targetId);
 
-        User target = userRepository.findById(targetId)
-                .orElse(null);
-        if (target == null) {
+        // Non-self visits increment the view count — must bypass cache and evict after
+        if (!isSelf) {
+            User target = userRepository.findById(targetId).orElse(null);
+            if (target == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.<UserResponse>builder()
+                                .status("error")
+                                .message("User not found")
+                                .build());
+            }
+            userRepository.incrementProfileViewCount(targetId);
+            target = userRepository.findById(targetId).orElse(target);
+            // Evict stale cache entry so the updated view count is visible next time
+            cacheService.evict(RedisCacheService.userKey(targetId.toString()));
+
+            long followersCount = followRepository.countByFollowingId(targetId);
+            long followingCount = followRepository.countByFollowerId(targetId);
+            Boolean isFollowing = followRepository.existsByFollowerIdAndFollowingId(requesterId, targetId);
+            UserResponse response = buildResponse(target, followersCount, followingCount, isFollowing);
+            return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
+                    .message("Profile retrieved")
+                    .data(response)
+                    .build());
+        }
+
+        // Self-view: serve from cache (follow counts rarely change for self-view)
+        String cacheKey = RedisCacheService.userKey(targetId.toString());
+        UserResponse response = cacheService.getOrLoad(
+                cacheKey,
+                "user",
+                RedisCacheService.USER_TTL_MINUTES,
+                new TypeReference<UserResponse>() {},
+                () -> {
+                    User target = userRepository.findById(targetId).orElse(null);
+                    if (target == null) return null;
+                    long fc = followRepository.countByFollowingId(targetId);
+                    long fg = followRepository.countByFollowerId(targetId);
+                    return buildResponse(target, fc, fg, null);
+                }
+        );
+
+        if (response == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.<UserResponse>builder()
                             .status("error")
                             .message("User not found")
                             .build());
         }
-
-        // Increment view count only for visits from other users
-        boolean isSelf = requesterId.equals(targetId);
-        if (!isSelf) {
-            userRepository.incrementProfileViewCount(targetId);
-            // Refresh to get the updated count
-            target = userRepository.findById(targetId).orElse(target);
-        }
-
-        long followersCount = followRepository.countByFollowingId(targetId);
-        long followingCount = followRepository.countByFollowerId(targetId);
-        Boolean isFollowing = isSelf
-                ? null
-                : followRepository.existsByFollowerIdAndFollowingId(requesterId, targetId);
-
-        UserResponse response = buildResponse(target, followersCount, followingCount, isFollowing);
 
         return ResponseEntity.ok(ApiResponse.<UserResponse>builder()
                 .message("Profile retrieved")
@@ -121,6 +148,10 @@ public class UserController {
                 .followingId(targetId)
                 .build());
 
+        // Evict cached profiles for both parties — follow counts changed
+        cacheService.evict(RedisCacheService.userKey(followerId.toString()));
+        cacheService.evict(RedisCacheService.userKey(targetId.toString()));
+
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("Successfully followed user")
                 .build());
@@ -146,6 +177,10 @@ public class UserController {
         }
 
         followRepository.deleteByFollowerIdAndFollowingId(followerId, targetId);
+
+        // Evict cached profiles for both parties — follow counts changed
+        cacheService.evict(RedisCacheService.userKey(followerId.toString()));
+        cacheService.evict(RedisCacheService.userKey(targetId.toString()));
 
         return ResponseEntity.ok(ApiResponse.<Void>builder()
                 .message("Successfully unfollowed user")

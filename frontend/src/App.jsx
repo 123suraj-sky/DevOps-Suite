@@ -23,6 +23,8 @@ const LogsPage = lazy(() => import('./pages/Logs').then((m) => ({ default: m.Log
 const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
 const NotificationsPage = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })));
 const ProfilePage = lazy(() => import('./pages/Profile').then((m) => ({ default: m.ProfilePage })));
+const GrafanaPage = lazy(() => import('./pages/Grafana').then((m) => ({ default: m.GrafanaPage })));
+const KibanaPage = lazy(() => import('./pages/Kibana').then((m) => ({ default: m.KibanaPage })));
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -112,6 +114,8 @@ const AppRoutes = () => {
             <Route path="logs" element={<LogsPage />} />
           </Route>
           <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
+          <Route path="/grafana" element={<AdminRoute><GrafanaPage /></AdminRoute>} />
+          <Route path="/kibana" element={<AdminRoute><KibanaPage /></AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/users/:userId" element={<ProfilePage />} />

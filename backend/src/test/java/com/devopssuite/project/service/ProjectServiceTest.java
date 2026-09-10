@@ -1,5 +1,6 @@
 package com.devopssuite.project.service;
 
+import com.devopssuite.config.RedisCacheService;
 import com.devopssuite.project.dto.ProjectDto.BoardRequest;
 import com.devopssuite.project.dto.ProjectDto.ProjectRequest;
 import com.devopssuite.project.model.Board;
@@ -53,6 +54,9 @@ class ProjectServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private RedisCacheService cacheService;
+
     private ProjectService projectService;
 
     @BeforeEach
@@ -64,7 +68,8 @@ class ProjectServiceTest {
                 columnRepository,
                 taskRepository,
                 userRepository,
-                eventPublisher);
+                eventPublisher,
+                cacheService);
     }
 
     @Test

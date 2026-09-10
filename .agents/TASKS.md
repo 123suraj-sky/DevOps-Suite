@@ -38,8 +38,8 @@
   - Ref: `docs/05-lld-detailed-design.md` §5
 
 - [ ] **Wire Elasticsearch logging pipeline**
-  - Structured log emission works; Elasticsearch write pipeline not connected
-  - Need to implement log indexing in the `logging` module
+  - ~~Structured log emission works; Elasticsearch write pipeline not connected~~
+  - **DONE (2026-09-09)**: `ElasticsearchLogService` fully wired. Every HTTP request is indexed to `devopssuite-logs-yyyy.MM.dd`. Kibana auto-provisioned with data view on startup via `kibana-init` container.
   - Ref: `docs/09-monitoring-observability.md`
 
 - [ ] **WebSocket end-to-end testing**
@@ -73,7 +73,7 @@
 - [x] **Auth module** — Registration, login, refresh tokens, secure logout (Redis-backed blacklist), validation annotations, complex password rules, and custom exception handler fully implemented.
 - [x] **Project module** — Projects, boards, columns, tasks entities + Flyway migrations + CRUD controllers done
 - [x] **Flyway migration** — Single unified migration file for all domain schemas
-- [x] **Docker Compose infrastructure** — PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, Grafana all configured
+- [x] **Docker Compose infrastructure** — PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, Grafana all configured; network isolation (app + observability); nginx admin-proxy with Basic Auth protecting Grafana (8080) and Kibana (8083); all infra services unexposed from host
 - [x] **Frontend routing & layout** — React Router, ProtectedRoute/PublicRoute, Header, Sidebar, MainLayout done
 - [x] **Frontend state/context** — AuthContext, NotificationContext, WebSocketContext implemented
 - [x] **Frontend API clients** — Axios clients for auth, projects, tasks, execution, logs, metrics
@@ -112,7 +112,10 @@
 | Task | Note |
 |---|---|
 | Code Execution Sandbox | Docker Desktop must be running on the host. Test with simple Python `print("hello")` first. |
-| Elasticsearch pipeline | Kibana index pattern `devopssuite-logs-*` should be the target. |
+| Elasticsearch pipeline | DONE. Kibana index pattern `devopssuite-logs-*` is auto-provisioned by `kibana-init` container. |
 | GitHub Actions | Use Java 21 + Maven in CI. Cache `.m2` directory for faster builds. |
 | Notification email | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` in `.env`. Use Mailtrap for dev. Email is opt-in per user (default off) — users must enable it in Profile → Notification Preferences. |
 | Notification preferences | `NotificationPreferenceService.getEffective()` returns an unsaved default entity — never call `.save()` on it directly. |
+| Admin observability access | Set `ADMIN_PASSWORD` in `.env` before `docker-compose up`. Grafana at http://localhost:8080, Kibana at http://localhost:8083. Both require nginx Basic Auth. |
+| Rate limiting | Limits configurable via `RATE_LIMIT_EXECUTION_MAX`, `RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_API_MAX` env vars. Defaults: 10/20/300 per 60 s window. |
+| Backend port | Host-mapped to 8082 (internal still 8081). Update frontend `.env` `VITE_API_URL` to `http://localhost:8082` when running with Docker Compose. |
