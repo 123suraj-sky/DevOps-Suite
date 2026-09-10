@@ -2,6 +2,8 @@ package com.devopssuite.project.controller;
 
 import com.devopssuite.project.dto.ProjectDto.TaskResponse;
 import com.devopssuite.project.service.TaskService;
+import com.devopssuite.metrics.AppMetrics;
+import com.devopssuite.security.RateLimitProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -39,6 +41,12 @@ class TaskControllerTest {
 
     @MockitoBean
     private org.springframework.data.redis.core.StringRedisTemplate redisTemplate;
+
+    @MockitoBean
+    private AppMetrics appMetrics;
+
+    @MockitoBean
+    private RateLimitProperties rateLimitProperties;
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMetamodelMappingContext;
