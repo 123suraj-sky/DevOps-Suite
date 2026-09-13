@@ -1,0 +1,26 @@
+{
+  "attributes": {
+    "title": "Analytics - Usage & Domain Metrics",
+    "description": "Product usage analytics tracking project activity, code sandbox executions, active users, and API utilization.",
+    "hits": 0,
+    "version": 1,
+    "optionsJSON": "{\"useMargins\":true,\"hidePanelTitles\":false}",
+    "panelsJSON": "[{\"version\":\"8.12.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":12,\"i\":\"analytics-executions\"},\"panelIndex\":\"analytics-executions\",\"type\":\"search\",\"id\":\"devopssuite-analytics-executions\",\"panelRefName\":\"panel_analytics_executions\"},{\"version\":\"8.12.0\",\"gridData\":{\"x\":0,\"y\":12,\"w\":24,\"h\":16,\"i\":\"analytics-projects\"},\"panelIndex\":\"analytics-projects\",\"type\":\"search\",\"id\":\"devopssuite-analytics-projects\",\"panelRefName\":\"panel_analytics_projects\"}]",
+    "timeRestore": false,
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+    }
+  },
+  "references": [
+    {
+      "name": "panel_analytics_executions",
+      "type": "search",
+      "id": "devopssuite-analytics-executions"
+    },
+    {
+      "name": "panel_analytics_projects",
+      "type": "search",
+      "id": "devopssuite-analytics-projects"
+    }
+  ]
+}

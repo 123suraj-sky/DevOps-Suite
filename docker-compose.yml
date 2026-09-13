@@ -148,6 +148,7 @@ services:
         condition: service_healthy
     volumes:
       - ./config/kibana/init-kibana.sh:/init-kibana.sh:ro
+      - ./config/kibana:/kibana-config:ro
     entrypoint: ["/bin/sh", "/init-kibana.sh"]
     restart: "no"
     networks:

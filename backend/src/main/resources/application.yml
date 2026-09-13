@@ -81,7 +81,7 @@ app:
 logging:
   level:
     root: INFO
-    com.devopssuite.monolith: DEBUG
+    com.devopssuite: DEBUG
     org.springframework.security: DEBUG
 
 elasticsearch:

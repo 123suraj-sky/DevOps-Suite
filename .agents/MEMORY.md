@@ -142,6 +142,7 @@ Backend is the bridge between both networks (needs ES for log indexing, needs Pr
 | 2026-08-30 | Antigravity | Fixed Add Member functionality in Project module: enabled backend user resolution via `email` (as well as `userId`), added 404 response on un-registered users, and implemented frontend mailto invitation modal flow for inviting unregistered teammates. Added unit tests for email resolution. |
 | 2026-09-08 | Kiro | Full notification system implemented (Options A–G). See notification section in MEMORY.md for details. |
 | 2026-09-09 | Kiro | Full infrastructure integration implemented. Elasticsearch log indexing connected; Kibana auto-provisioned with data view; Grafana auto-provisioned with 2 dashboards (Application Overview + JVM/System); custom Micrometer metrics added (AppMetrics bean); Redis cache-aside for User/Project; Redis rate limiting (RateLimitFilter, 3 tiers); nginx admin-proxy with HTTP Basic Auth in front of Grafana+Kibana; network isolation (app + observability networks); all infra services unexposed from host except backend (8082), frontend (80), Grafana-via-proxy (8080), Kibana-via-proxy (8083). |
+| 2026-09-13 | Antigravity | Added Kibana dashboards for Observability, Security, and Analytics under `config/kibana/dashboards/`. Updated `init-kibana.sh` to provision saved searches and dashboards automatically on startup via Kibana Saved Objects API. |
 
 ---
 

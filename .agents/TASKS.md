@@ -37,9 +37,10 @@
   - **Detailed plan:** [`.agents/tasks/complete-code-execution-sandbox.md`](tasks/complete-code-execution-sandbox.md)
   - Ref: `docs/05-lld-detailed-design.md` §5
 
-- [ ] **Wire Elasticsearch logging pipeline**
+- [x] **Wire Elasticsearch logging pipeline**
   - ~~Structured log emission works; Elasticsearch write pipeline not connected~~
-  - **DONE (2026-09-09)**: `ElasticsearchLogService` fully wired. Every HTTP request is indexed to `devopssuite-logs-yyyy.MM.dd`. Kibana auto-provisioned with data view on startup via `kibana-init` container.
+  - **DONE (2026-09-09)**: `ElasticsearchLogService` fully wired. Every HTTP request is indexed to `devopssuite-logs-yyyy.MM.dd`.
+  - **DONE (2026-09-13)**: Kibana auto-provisions data view (`devopssuite-logs-*`), saved searches, and 3 dedicated dashboards for Observability, Security, and Analytics on startup via `kibana-init`.
   - Ref: `docs/09-monitoring-observability.md`
 
 - [ ] **WebSocket end-to-end testing**

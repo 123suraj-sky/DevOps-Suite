@@ -6,6 +6,6 @@ scrape_configs:
   - job_name: 'devops-suite-monolith'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['host.docker.internal:8081']
+      - targets: ['backend:8081']
         labels:
           service: 'devops-suite-monolith'

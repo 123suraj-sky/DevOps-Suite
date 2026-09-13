@@ -1,0 +1,26 @@
+{
+  "attributes": {
+    "title": "Observability - HTTP Traffic & Performance",
+    "description": "System observability dashboard covering HTTP traffic rate, latency, response status codes, and server errors.",
+    "hits": 0,
+    "version": 1,
+    "optionsJSON": "{\"useMargins\":true,\"hidePanelTitles\":false}",
+    "panelsJSON": "[{\"version\":\"8.12.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":12,\"i\":\"errors-search\"},\"panelIndex\":\"errors-search\",\"type\":\"search\",\"id\":\"devopssuite-observability-errors\",\"panelRefName\":\"panel_errors_search\"},{\"version\":\"8.12.0\",\"gridData\":{\"x\":0,\"y\":12,\"w\":24,\"h\":16,\"i\":\"all-logs-search\"},\"panelIndex\":\"all-logs-search\",\"type\":\"search\",\"id\":\"devopssuite-request-logs\",\"panelRefName\":\"panel_all_logs_search\"}]",
+    "timeRestore": false,
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+    }
+  },
+  "references": [
+    {
+      "name": "panel_errors_search",
+      "type": "search",
+      "id": "devopssuite-observability-errors"
+    },
+    {
+      "name": "panel_all_logs_search",
+      "type": "search",
+      "id": "devopssuite-request-logs"
+    }
+  ]
+}

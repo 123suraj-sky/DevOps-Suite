@@ -8,8 +8,8 @@ newsfeed.enabled: false
 # Logging
 logging.root.level: warn
 
-# Allow embedding in iframes — disables the X-Frame-Options: SAMEORIGIN header
-# that Kibana sets by default. Security is enforced by the nginx Basic Auth proxy.
-server.securityResponseHeaders.xframe: false
+# Note: X-Frame-Options removal and Content-Security-Policy frame-ancestors
+# are already handled upstream by admin-proxy (config/nginx/nginx-admin.conf).
+# (server.securityResponseHeaders.xframe is deprecated/unsupported in Kibana 8.x)
 
 server.publicBaseUrl: "http://localhost:8083"

@@ -59,8 +59,8 @@ public class SecurityConfig {
                     "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout",
                     "/api/auth/forgot-password", "/api/auth/reset-password"
                 ).permitAll()
-                // Liveness probe must remain public; all other actuator endpoints are admin-only
-                .requestMatchers("/actuator/health").permitAll()
+                // Liveness probe and Prometheus scraper endpoint must be accessible
+                .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
                 .requestMatchers("/actuator/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
                 // SockJS HTTP handshake requests (/ws/info, /ws/<transport>) must be
                 // permitted here — the JWT is sent as a STOMP connect header after the
