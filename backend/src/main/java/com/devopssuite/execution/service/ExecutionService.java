@@ -58,6 +58,7 @@ public class ExecutionService {
         final String resolvedSourceCode;
         final String resolvedLanguageName;
         final UUID resolvedFileId;
+        final UUID resolvedProjectId;
 
         if (request.getFileId() != null) {
             // ── IDE mode: load the file from DB ──────────────────────────────────
@@ -69,6 +70,7 @@ public class ExecutionService {
 
             resolvedSourceCode   = targetFile.getContent();
             resolvedFileId       = targetFile.getId();
+            resolvedProjectId    = targetFile.getProjectId();
 
             // Language can be overridden by the request; otherwise use the file's stored lang
             String rawLang = (request.getLanguage() != null && !request.getLanguage().isBlank())
@@ -89,6 +91,7 @@ public class ExecutionService {
 
             resolvedSourceCode   = request.getSourceCode();
             resolvedFileId       = null;
+            resolvedProjectId    = request.getProjectId();
             String rawLang       = request.getLanguage().trim().toLowerCase();
             resolvedLanguageName = LANGUAGE_ALIASES.getOrDefault(rawLang, rawLang);
         }
@@ -133,15 +136,16 @@ public class ExecutionService {
                 .maxTimeMs(maxTime)
                 .maxMemoryMb(maxMem)
                 .fileId(resolvedFileId)
+                .projectId(resolvedProjectId)
                 .status("QUEUED")
                 .build();
 
         ExecutionRequest saved = requestRepository.saveAndFlush(execRequest);
         executionQueue.offer(saved.getId());
 
-        log.info("Queued execution request {} (language={}, mode={}, user={})",
+        log.info("Queued execution request {} (language={}, mode={}, user={}, projectId={})",
                 saved.getId(), resolvedLanguageName,
-                resolvedFileId != null ? "ide" : "classic", userId);
+                resolvedFileId != null ? "ide" : "classic", userId, resolvedProjectId);
 
         return SubmitResponse.builder()
                 .executionId(saved.getId())

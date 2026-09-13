@@ -43,11 +43,15 @@
   - **DONE (2026-09-13)**: Kibana auto-provisions data view (`devopssuite-logs-*`), saved searches, and 3 dedicated dashboards for Observability, Security, and Analytics on startup via `kibana-init`.
   - Ref: `docs/09-monitoring-observability.md`
 
-- [ ] **WebSocket end-to-end testing**
+- [x] **WebSocket end-to-end testing**
   - All WebSocket topics now implemented and wired:
     - `/topic/notifications/{userId}` — in-app notifications (full pipeline)
     - `/topic/tasks/{projectId}` — live Kanban board updates
-    - `/topic/logs/{projectId}` — log streaming (not yet wired server-side)
+    - `/topic/logs/{projectId}` — log streaming **now fully wired** (2026-09-13):
+      - `RequestLoggingFilter` now reads `X-Project-Id` header as fallback for task/execution URLs
+      - `ExecutionRequest` entity now stores `project_id`; `ExecutionQueueWorker` publishes `LogEvent` after sandbox completes
+      - `GET /api/logs/search` implemented in `LogController` + `LogSearchService` (Elasticsearch query)
+      - Frontend: axios client injects `X-Project-Id` from current page URL; IDE execute passes `project_id`
   - Need live integration testing with frontend running against the backend
 
 - [ ] **CI/CD Pipeline — GitHub Actions**

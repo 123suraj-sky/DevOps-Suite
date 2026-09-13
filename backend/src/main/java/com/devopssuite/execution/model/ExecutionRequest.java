@@ -37,6 +37,14 @@ public class ExecutionRequest {
     @Column(name = "file_id")
     private UUID fileId;
 
+    /**
+     * Optional: Project UUID associated with this execution.
+     * Populated from IdeFile.projectId in IDE mode, or from the request header in classic mode.
+     * Used to broadcast execution log events to the correct WebSocket topic.
+     */
+    @Column(name = "project_id")
+    private UUID projectId;
+
     @Column(name = "max_time_ms", nullable = false)
     private int maxTimeMs;
 

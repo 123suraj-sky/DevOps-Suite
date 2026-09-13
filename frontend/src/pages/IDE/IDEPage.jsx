@@ -384,6 +384,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
         stdin,
         maxTimeMs:   10000,
         maxMemoryMb: 256,
+        project_id:  projectId,
       });
       setExecutionId(res.execution_id);
       toast.success('Queued — running in sandbox…');

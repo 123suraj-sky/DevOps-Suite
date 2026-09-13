@@ -64,7 +64,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         } finally {
             long duration = System.currentTimeMillis() - start;
             String userId = extractUserId();
-            UUID projectId = extractProjectId(request.getRequestURI());
+            UUID projectId = extractProjectId(request);
 
             // Track active users in a Redis sorted set (score = epoch millis)
             if (userId != null && !userId.equals("anonymousUser")) {
@@ -109,12 +109,27 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private UUID extractProjectId(String uri) {
-        if (uri == null) return null;
+    /**
+     * Extracts the project UUID from the request.
+     * Strategy (in priority order):
+     *  1. URL pattern: /projects/{uuid}/...
+     *  2. X-Project-Id request header (set by the frontend for task / execution calls)
+     */
+    private UUID extractProjectId(HttpServletRequest request) {
+        if (request == null) return null;
         try {
-            Matcher m = PROJECT_PATTERN.matcher(uri);
-            if (m.find()) {
-                return UUID.fromString(m.group(1));
+            // 1. URL-based extraction
+            String uri = request.getRequestURI();
+            if (uri != null) {
+                Matcher m = PROJECT_PATTERN.matcher(uri);
+                if (m.find()) {
+                    return UUID.fromString(m.group(1));
+                }
+            }
+            // 2. Header-based fallback
+            String headerValue = request.getHeader("X-Project-Id");
+            if (headerValue != null && !headerValue.isBlank()) {
+                return UUID.fromString(headerValue.trim());
             }
         } catch (Exception ignored) {}
         return null;

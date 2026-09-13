@@ -118,22 +118,26 @@ export const TasksPage = () => {
         }
 
         setTasks((prev) => {
+          const getTaskId = (t) => t?.id || t?.taskId || t?.task_id;
           switch (action) {
-            case 'CREATED':
-              // Add only if not already present (guard against own-user echoes)
-              if (!incoming || prev.some((t) => t.id === incoming.id)) return prev;
+            case 'CREATED': {
+              const incomingId = getTaskId(incoming);
+              if (!incomingId || prev.some((t) => getTaskId(t) === incomingId)) return prev;
               return [...prev, incoming];
+            }
 
             case 'UPDATED':
             case 'STATUS_CHANGED':
-            case 'MOVED':
-              if (!incoming) return prev;
-              return prev.map((t) => (t.id === incoming.id ? incoming : t));
+            case 'MOVED': {
+              const incomingId = getTaskId(incoming);
+              if (!incomingId) return prev;
+              return prev.map((t) => (getTaskId(t) === incomingId ? incoming : t));
+            }
 
             case 'DELETED': {
-              const removedId = update.task_id || update.taskId;
+              const removedId = update.task_id || update.taskId || getTaskId(incoming);
               if (!removedId) return prev;
-              return prev.filter((t) => t.id !== removedId);
+              return prev.filter((t) => getTaskId(t) !== removedId);
             }
 
             default:
@@ -251,7 +255,11 @@ export const TasksPage = () => {
   const handleDuplicate = async (task) => {
     try {
       const created = await taskApi.duplicate(task.id);
-      setTasks((prev) => [...prev, created]);
+      const createdId = created?.id || created?.taskId || created?.task_id;
+      setTasks((prev) => {
+        if (createdId && prev.some((t) => (t.id || t.taskId || t.task_id) === createdId)) return prev;
+        return [...prev, created];
+      });
       toast.success('Task duplicated');
     } catch (err) {
       const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to duplicate task';
@@ -279,7 +287,11 @@ export const TasksPage = () => {
         ...(taskData.dueDate && { dueDate: taskData.dueDate }),    // nullable
       };
       const created = await taskApi.create(payload);
-      setTasks((prev) => [...prev, created]);
+      const createdId = created?.id || created?.taskId || created?.task_id;
+      setTasks((prev) => {
+        if (createdId && prev.some((t) => (t.id || t.taskId || t.task_id) === createdId)) return prev;
+        return [...prev, created];
+      });
       setShowAddModal(false);
       setTaskData(EMPTY_TASK);
       toast.success('Task created successfully');
@@ -369,8 +381,15 @@ export const TasksPage = () => {
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
+            const seen = new Set();
             const columnTasks = tasks
-              .filter((t) => t.status === col.id)
+              .filter((t) => {
+                if (t.status !== col.id) return false;
+                const tid = t.id || t.taskId || t.task_id;
+                if (!tid || seen.has(tid)) return false;
+                seen.add(tid);
+                return true;
+              })
               .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
 
             return (

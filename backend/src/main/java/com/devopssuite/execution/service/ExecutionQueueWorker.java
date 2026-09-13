@@ -8,6 +8,7 @@ import com.devopssuite.execution.repository.ExecutionResultRepository;
 import com.devopssuite.execution.sandbox.DockerSandbox;
 import com.devopssuite.ide.model.IdeFile;
 import com.devopssuite.ide.service.IdeFileService;
+import com.devopssuite.logging.event.LogEvent;
 import com.devopssuite.metrics.AppMetrics;
 import com.devopssuite.notification.event.ExecutionFailedEvent;
 import jakarta.annotation.PostConstruct;
@@ -128,6 +129,35 @@ public class ExecutionQueueWorker {
         // Record custom metric
         String languageName = request.getLanguage() != null ? request.getLanguage().getName() : "unknown";
         appMetrics.recordExecution(languageName, terminalStatus);
+
+        // Publish a LogEvent so the Project Stream Logs terminal shows this execution
+        if (request.getProjectId() != null) {
+            try {
+                int pseudoStatus = switch (terminalStatus) {
+                    case "COMPLETED" -> 200;
+                    case "TIMEOUT"   -> 408;
+                    case "OOM_KILLED"-> 507;
+                    default          -> 500;
+                };
+                long execDuration = sandboxResult.executionTimeMs > 0
+                        ? sandboxResult.executionTimeMs
+                        : (request.getCompletedAt() != null && request.getStartedAt() != null
+                            ? request.getCompletedAt().toEpochMilli() - request.getStartedAt().toEpochMilli()
+                            : 0L);
+                LogEvent logEvent = new LogEvent(
+                        "EXEC",
+                        "/code-execution/" + languageName,
+                        pseudoStatus,
+                        execDuration,
+                        request.getUserId() != null ? request.getUserId().toString() : null,
+                        request.getProjectId(),
+                        Instant.now()
+                );
+                eventPublisher.publishEvent(logEvent);
+            } catch (Exception e) {
+                log.warn("Failed to publish execution LogEvent for request {}: {}", requestId, e.getMessage());
+            }
+        }
 
         // Publish failure event so the user gets an in-app + email notification
         if (!"COMPLETED".equals(terminalStatus)) {

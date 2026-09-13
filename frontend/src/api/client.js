@@ -10,13 +10,25 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor - attach JWT token
+// Regex to extract a project UUID from the current page URL path
+// Matches /projects/{uuid}/... routes
+const PROJECT_UUID_RE = /\/projects\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+
+// Request interceptor - attach JWT token and X-Project-Id header
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Attach the current project's UUID as a header so the backend can
+    // associate this request with the correct project in the log stream.
+    const match = PROJECT_UUID_RE.exec(window.location.pathname);
+    if (match && config.headers) {
+      config.headers['X-Project-Id'] = match[1];
+    }
+
     return config;
   },
   (error) => {

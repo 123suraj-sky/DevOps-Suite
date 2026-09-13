@@ -25,6 +25,11 @@ export const codeExecutionApi = {
       body.source_code = data.sourceCode;
     }
 
+    // Attach project context for log streaming (optional)
+    if (data.project_id) {
+      body.project_id = data.project_id;
+    }
+
     const response = await apiClient.post('/code-execution/run', body);
     return response.data.data;
   },

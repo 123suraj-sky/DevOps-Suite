@@ -66,6 +66,15 @@ public class ExecutionDto {
         @JsonProperty("file_id")
         @JsonAlias("fileId")
         private UUID fileId;
+
+        /**
+         * Optional project context. Used in classic mode to associate the execution
+         * with a project for log streaming. In IDE mode, projectId is resolved from
+         * the IdeFile and this field is ignored.
+         */
+        @JsonProperty("project_id")
+        @JsonAlias("projectId")
+        private UUID projectId;
     }
 
     @Data
