@@ -133,4 +133,52 @@ public class LogSearchService {
             return List.of();
         }
     }
+
+    /**
+     * Queries Elasticsearch for all platform logs regardless of project or user (admin view).
+     *
+     * @param query optional free-text query on uri / method
+     * @param size  max records to fetch
+     * @return list of log events
+     */
+    public List<Map<String, Object>> searchAllLogs(String query, int size) {
+        int safeSize = Math.min(Math.max(1, size), 500);
+
+        try {
+            List<Query> mustClauses = new ArrayList<>();
+
+            if (query != null && !query.isBlank()) {
+                String trimmed = query.trim();
+                mustClauses.add(Query.of(q -> q
+                        .multiMatch(m -> m
+                                .query(trimmed)
+                                .fields("uri", "method"))));
+            }
+
+            SearchRequest searchRequest = SearchRequest.of(s -> {
+                s.index(INDEX_PATTERN)
+                 .sort(so -> so.field(f -> f.field("timestamp").order(SortOrder.Desc)))
+                 .size(safeSize);
+                if (!mustClauses.isEmpty()) {
+                    s.query(q -> q.bool(b -> b.must(mustClauses)));
+                }
+                return s;
+            });
+
+            SearchResponse<Map> response = elasticsearchClient.search(searchRequest, Map.class);
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> results = response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(src -> src != null)
+                    .map(src -> (Map<String, Object>) src)
+                    .toList();
+
+            return results;
+
+        } catch (Exception e) {
+            log.warn("Elasticsearch all-logs search failed: {}", e.getMessage());
+            return List.of();
+        }
+    }
 }

@@ -20,7 +20,6 @@ const CodeEditorPage = lazy(() => import('./pages/CodeEditor').then((m) => ({ de
 const IDEPage = lazy(() => import('./pages/IDE').then((m) => ({ default: m.IDEPage })));
 const FullScreenIDEPage = lazy(() => import('./pages/IDE').then((m) => ({ default: m.FullScreenIDEPage })));
 const LogsPage = lazy(() => import('./pages/Logs').then((m) => ({ default: m.LogsPage })));
-const MetricsPage = lazy(() => import('./pages/Metrics').then((m) => ({ default: m.MetricsPage })));
 const NotificationsPage = lazy(() => import('./pages/Notifications').then((m) => ({ default: m.NotificationsPage })));
 const ProfilePage = lazy(() => import('./pages/Profile').then((m) => ({ default: m.ProfilePage })));
 const AdminUsersPage = lazy(() => import('./pages/Admin/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })));
@@ -113,7 +112,7 @@ const AppRoutes = () => {
             <Route path="logs" element={<LogsPage />} />
           </Route>
           <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
-          <Route path="/metrics" element={<AdminRoute><MetricsPage /></AdminRoute>} />
+          <Route path="/metrics" element={<Navigate to="/" replace />} />
           <Route path="/grafana" element={<AdminRoute>{null}</AdminRoute>} />
           <Route path="/kibana" element={<AdminRoute>{null}</AdminRoute>} />
           <Route path="/notifications" element={<NotificationsPage />} />

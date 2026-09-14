@@ -29,6 +29,9 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("select t from Task t where t.assigneeId = :userId order by t.updatedAt desc")
     List<Task> findRecentByAssigneeId(@Param("userId") UUID userId, org.springframework.data.domain.Pageable pageable);
 
+    // Platform-wide last N tasks updated across all projects
+    List<Task> findAllByOrderByUpdatedAtDesc(org.springframework.data.domain.Pageable pageable);
+
     // All tasks created by or assigned to a user with project and board info for admin view
     @Query("select t, b.projectId, p.name, b.name, c.name from Task t " +
            "join Column c on t.columnId = c.id " +

@@ -19,6 +19,9 @@ public interface ExecutionRequestRepository extends JpaRepository<ExecutionReque
     // Last N executions for a user — used for the recent executions panel
     List<ExecutionRequest> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
+    // Platform-wide last N executions — used for admin dashboard overview
+    List<ExecutionRequest> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
     /**
      * Returns daily execution counts for a user over a date range.
      * Each row is Object[]{ java.sql.Date day, Long count }.

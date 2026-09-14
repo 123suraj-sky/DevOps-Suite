@@ -1,8 +1,21 @@
 import apiClient from './client';
 
 export const metricsApi = {
-  getDashboard: async (projectId) => {
-    const response = await apiClient.get('/metrics/dashboard', { params: { projectId } });
+  getDashboard: async (projectId, range = '1h') => {
+    const params = { range };
+    if (projectId) {
+      params.projectId = projectId;
+    }
+    const response = await apiClient.get('/metrics/dashboard', { params });
+    return response.data.data;
+  },
+
+  getRequests: async (query = '', size = 100) => {
+    const params = { size };
+    if (query) {
+      params.query = query;
+    }
+    const response = await apiClient.get('/metrics/requests', { params });
     return response.data.data;
   },
 

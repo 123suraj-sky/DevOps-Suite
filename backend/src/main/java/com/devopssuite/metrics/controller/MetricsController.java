@@ -32,6 +32,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.devopssuite.logging.service.LogSearchService;
+
 @RestController
 @RequestMapping({"/metrics", "/api/metrics"})
 @RequiredArgsConstructor
@@ -43,6 +45,7 @@ public class MetricsController {
     private final ExecutionRequestRepository executionRequestRepository;
     private final ExecutionResultRepository executionResultRepository;
     private final StringRedisTemplate redisTemplate;
+    private final LogSearchService logSearchService;
 
     @Autowired(required = false)
     private ElasticsearchClient elasticsearchClient;
@@ -60,7 +63,9 @@ public class MetricsController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(@RequestParam(name = "projectId", defaultValue = "default") String projectIdStr) {
+    public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
+            @RequestParam(name = "projectId", defaultValue = "default") String projectIdStr,
+            @RequestParam(name = "range", defaultValue = "1h") String range) {
         UUID userId = getCurrentUserId();
 
         long projectCount;
@@ -101,23 +106,90 @@ public class MetricsController {
         serviceHealth.add(checkElasticsearchHealth());
         serviceHealth.add(checkDockerHealth());
 
-        // Generate throughput & latency for UI charts
+        // Generate throughput & latency for UI charts based on range
         List<DashboardResponse.ThroughputMetric> throughput = new ArrayList<>();
         List<DashboardResponse.LatencyMetric> latency = new ArrayList<>();
         Random random = new Random();
-        for (int i = 9; i >= 0; i--) {
+
+        int points;
+        String unit;
+        int step;
+        switch (range) {
+            case "6h":
+                points = 12; // every 30m
+                unit = "m";
+                step = 30;
+                break;
+            case "24h":
+                points = 12; // every 2h
+                unit = "h";
+                step = 2;
+                break;
+            case "7d":
+                points = 7; // every 1d
+                unit = "d";
+                step = 1;
+                break;
+            case "30d":
+                points = 10; // every 3d
+                unit = "d";
+                step = 3;
+                break;
+            case "1h":
+            default:
+                points = 10; // every 6m
+                unit = "m";
+                step = 6;
+                break;
+        }
+
+        for (int i = points - 1; i >= 0; i--) {
+            String timeLabel = (i == 0) ? "Now" : (i * step) + unit + " ago";
             throughput.add(DashboardResponse.ThroughputMetric.builder()
-                    .time(i == 0 ? "Now" : i + "m ago")
+                    .time(timeLabel)
                     .RPM(random.nextInt(60) + 15)
                     .errors(random.nextInt(3))
                     .build());
 
             latency.add(DashboardResponse.LatencyMetric.builder()
-                    .time(i == 0 ? "Now" : i + "m ago")
+                    .time(timeLabel)
                     .p50(random.nextInt(50) + 30)
                     .p99(random.nextInt(150) + 90)
                     .build());
         }
+
+        // Platform-wide recent executions (last 5)
+        List<ExecutionRequest> recentExecRequests = executionRequestRepository
+                .findAllByOrderByCreatedAtDesc(PageRequest.of(0, 5));
+
+        List<DashboardResponse.RecentExecution> recentExecutions = recentExecRequests.stream()
+                .map(req -> {
+                    long execTimeMs = executionResultRepository.findByRequestId(req.getId())
+                            .map(r -> r.getExecutionTimeMs() != null ? r.getExecutionTimeMs().longValue() : 0L)
+                            .orElse(0L);
+
+                    String languageName = req.getLanguage() != null ? req.getLanguage().getName() : "unknown";
+
+                    return DashboardResponse.RecentExecution.builder()
+                            .executionId(req.getId())
+                            .language(languageName)
+                            .status(req.getStatus())
+                            .executionTimeMs(execTimeMs)
+                            .createdAt(req.getCreatedAt())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Platform-wide recent task updates (last 8)
+        List<Task> recentTasks = taskRepository.findAllByOrderByUpdatedAtDesc(PageRequest.of(0, 8));
+
+        List<DashboardResponse.RecentActivity> recentActivity = recentTasks.stream()
+                .map(task -> DashboardResponse.RecentActivity.builder()
+                        .type("TASK_UPDATED")
+                        .description("Task '" + task.getTitle() + "' updated to " + task.getStatus().replace('_', ' ').toLowerCase())
+                        .timestamp(task.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
 
         DashboardResponse response = DashboardResponse.builder()
                 .projectCount(projectCount)
@@ -125,12 +197,30 @@ public class MetricsController {
                 .serviceHealth(serviceHealth)
                 .throughput(throughput)
                 .latency(latency)
+                .recentExecutions(recentExecutions)
+                .recentActivity(recentActivity)
                 .build();
 
         return ResponseEntity.ok(ApiResponse.<DashboardResponse>builder()
                 .status("success")
                 .message("Dashboard metrics loaded successfully")
                 .data(response)
+                .build());
+    }
+
+    /**
+     * Detailed view of actual HTTP requests (status, latency, uri, method, timestamp)
+     * powering the detailed view modal on the RPM and Request Latency graphs.
+     */
+    @GetMapping("/requests")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRequests(
+            @RequestParam(required = false) String query,
+            @RequestParam(defaultValue = "100") int size) {
+        List<Map<String, Object>> requests = logSearchService.searchAllLogs(query, size);
+        return ResponseEntity.ok(ApiResponse.<List<Map<String, Object>>>builder()
+                .status("success")
+                .message("Requests loaded successfully")
+                .data(requests)
                 .build());
     }
 

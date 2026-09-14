@@ -17,6 +17,30 @@ public class DashboardResponse {
     private List<ServiceHealth> serviceHealth;
     private List<ThroughputMetric> throughput;
     private List<LatencyMetric> latency;
+    private List<RecentExecution> recentExecutions;
+    private List<RecentActivity> recentActivity;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecentExecution {
+        private java.util.UUID executionId;
+        private String language;
+        private String status;
+        private long executionTimeMs;
+        private java.time.Instant createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecentActivity {
+        private String type;
+        private String description;
+        private java.time.Instant timestamp;
+    }
 
     @Data
     @Builder

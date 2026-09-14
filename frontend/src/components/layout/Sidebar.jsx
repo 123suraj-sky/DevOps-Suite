@@ -18,7 +18,6 @@ const baseNavLinks = [
 
 const adminNavLinks = [
   { path: '/admin/users', label: 'User Activity', icon: usersIcon, iconAlt: 'User Activity' },
-  { path: '/metrics', label: 'Metrics', icon: metricsIcon, iconAlt: 'Metrics' },
   { path: '/grafana', label: 'Grafana', icon: grafanaIcon, iconAlt: 'Grafana' },
   { path: '/kibana', label: 'Kibana', icon: kibanaIcon, iconAlt: 'Kibana' },
 ];

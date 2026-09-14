@@ -69,8 +69,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 // Avatar images are public static files (URLs are not guessable — UUID names)
                 .requestMatchers("/uploads/avatars/**").permitAll()
-                // System-wide metrics dashboard is admin/owner only; user-summary is any authenticated user
-                .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
+                // System-wide metrics dashboard and requests are admin/owner only; user-summary is any authenticated user
+                .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard", "/metrics/requests", "/api/metrics/requests").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
                 .requestMatchers("/metrics/user-summary", "/api/metrics/user-summary").authenticated()
                 // IDE file CRUD — any authenticated project member
                 .requestMatchers("/api/ide/**").authenticated()
