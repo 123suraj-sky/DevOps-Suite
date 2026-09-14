@@ -26,3 +26,4 @@ Make the entire website fully responsive so it works well on mobile, tablet, and
 
 Check things in Admin Pannel.
 
+Store user's data encrypted format so that even admin can't see it.

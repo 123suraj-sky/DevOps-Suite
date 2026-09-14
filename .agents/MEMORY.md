@@ -46,6 +46,7 @@
 - Frontend API paths pointing to `http://localhost:8082/api` — confirmed (updated from 8081 post docker-compose port change)
 - **Notification system** — fully implemented end-to-end (see details below)
 - **Infrastructure integration** — Elasticsearch log indexing, Grafana/Kibana auto-provisioning, Redis caching + rate limiting all implemented (see below)
+- **Admin User Activity & Log Explorer** — Added `/api/admin/users`, `/tasks`, and `/logs` endpoints alongside the frontend `AdminUsersPage` to inspect all users, real-time activity status, all tasks created/assigned across projects, and user-filtered Elasticsearch logs.
 
 ---
 

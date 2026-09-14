@@ -8,6 +8,7 @@ import metricsIcon from '../../assets/10_metrics.svg';
 import notificationsIcon from '../../assets/09_notification_bell.svg';
 import grafanaIcon from '../../assets/39_grafana.svg';
 import kibanaIcon from '../../assets/40_kibana.svg';
+import usersIcon from '../../assets/41_users.svg';
 
 const baseNavLinks = [
   { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard' },
@@ -16,6 +17,7 @@ const baseNavLinks = [
 ];
 
 const adminNavLinks = [
+  { path: '/admin/users', label: 'User Activity', icon: usersIcon, iconAlt: 'User Activity' },
   { path: '/metrics', label: 'Metrics', icon: metricsIcon, iconAlt: 'Metrics' },
   { path: '/grafana', label: 'Grafana', icon: grafanaIcon, iconAlt: 'Grafana' },
   { path: '/kibana', label: 'Kibana', icon: kibanaIcon, iconAlt: 'Kibana' },

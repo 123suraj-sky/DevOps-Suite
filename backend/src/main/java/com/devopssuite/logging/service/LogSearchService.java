@@ -83,4 +83,54 @@ public class LogSearchService {
             return List.of();
         }
     }
+
+    /**
+     * Queries Elasticsearch for logs triggered by a specific user across all projects.
+     *
+     * @param userId user identifier (email or UUID)
+     * @param query  optional free-text query on uri / method
+     * @param size   max records to fetch
+     * @return list of log events
+     */
+    public List<Map<String, Object>> searchUserLogs(String userId, String query, int size) {
+        int safeSize = Math.min(Math.max(1, size), 500);
+
+        try {
+            List<Query> mustClauses = new ArrayList<>();
+            mustClauses.add(Query.of(q -> q
+                    .term(t -> t.field("userId.keyword").value(userId))));
+
+            if (query != null && !query.isBlank()) {
+                String trimmed = query.trim();
+                mustClauses.add(Query.of(q -> q
+                        .multiMatch(m -> m
+                                .query(trimmed)
+                                .fields("uri", "method"))));
+            }
+
+            BoolQuery boolQuery = BoolQuery.of(b -> b.must(mustClauses));
+
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                    .index(INDEX_PATTERN)
+                    .query(q -> q.bool(boolQuery))
+                    .sort(so -> so.field(f -> f.field("timestamp").order(SortOrder.Desc)))
+                    .size(safeSize)
+            );
+
+            SearchResponse<Map> response = elasticsearchClient.search(searchRequest, Map.class);
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> results = response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(src -> src != null)
+                    .map(src -> (Map<String, Object>) src)
+                    .toList();
+
+            return results;
+
+        } catch (Exception e) {
+            log.warn("Elasticsearch user log search failed for userId={}: {}", userId, e.getMessage());
+            return List.of();
+        }
+    }
 }
