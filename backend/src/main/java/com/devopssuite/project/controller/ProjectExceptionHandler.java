@@ -61,7 +61,11 @@ public class ProjectExceptionHandler {
             String message,
             List<FieldError> details,
             HttpServletRequest request) {
-        String requestId = request.getHeader("X-Request-Id");
+        if (request != null) {
+            request.setAttribute("log_error_message", message);
+            request.setAttribute("log_error_class", code);
+        }
+        String requestId = request != null ? request.getHeader("X-Request-Id") : null;
         ErrorBody body = ErrorBody.builder()
                 .code(code)
                 .message(message)

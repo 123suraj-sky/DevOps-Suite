@@ -90,8 +90,8 @@ public class SecurityConfig {
         // Access-Control-Allow-Origin: * with credentials.
         configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173", "http://localhost:*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "X-Project-Id"));
-        configuration.setExposedHeaders(Collections.singletonList("Authorization"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "X-Project-Id", "X-Trace-Id", "X-Correlation-Id"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "X-Trace-Id"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

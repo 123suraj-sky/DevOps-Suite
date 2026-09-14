@@ -41,6 +41,8 @@
   - ~~Structured log emission works; Elasticsearch write pipeline not connected~~
   - **DONE (2026-09-09)**: `ElasticsearchLogService` fully wired. Every HTTP request is indexed to `devopssuite-logs-yyyy.MM.dd`.
   - **DONE (2026-09-13)**: Kibana auto-provisions data view (`devopssuite-logs-*`), saved searches, and 3 dedicated dashboards for Observability, Security, and Analytics on startup via `kibana-init`.
+  - **DONE (2026-09-14)**: Enriched logging pipeline with industry-standard observability fields: severity levels (`INFO`/`WARN`/`ERROR`), `traceId` correlation (via `X-Trace-Id` / MDC), `clientIp` (`X-Forwarded-For`), `userAgent`, structured exception details (`errorMessage`, `errorClass`), enriched code execution details (`exitCode`, `timedOut`, `oomKilled`, `language`), domain audit events (`AuditLogEventListener`), and updated frontend log terminal.
+  - **DONE (2026-09-14)**: ILM retention policy — Elasticsearch auto-deletes indices older than 180 days (6 months). Policy `devopssuite_logs_retention_policy` + index template `devopssuite_logs_template` provisioned via `config/kibana/init-kibana.sh` at stack startup.
   - Ref: `docs/09-monitoring-observability.md`
 
 - [x] **WebSocket end-to-end testing**

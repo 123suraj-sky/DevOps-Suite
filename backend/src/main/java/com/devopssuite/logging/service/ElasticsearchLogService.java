@@ -42,6 +42,16 @@ public class ElasticsearchLogService {
             doc.put("userId", event.userId());
             doc.put("projectId", event.projectId() != null ? event.projectId().toString() : null);
             doc.put("timestamp", event.timestamp().toString());
+            doc.put("level", event.level() != null ? event.level() : "INFO");
+            doc.put("traceId", event.traceId());
+            doc.put("clientIp", event.clientIp());
+            doc.put("userAgent", event.userAgent());
+            doc.put("errorMessage", event.errorMessage());
+            doc.put("errorClass", event.errorClass());
+            doc.put("eventType", event.eventType() != null ? event.eventType() : "HTTP");
+            if (event.metadata() != null && !event.metadata().isEmpty()) {
+                doc.put("metadata", event.metadata());
+            }
 
             IndexRequest<Map<String, Object>> request = IndexRequest.of(i -> i
                     .index(indexName)

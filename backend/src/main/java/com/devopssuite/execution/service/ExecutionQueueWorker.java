@@ -144,15 +144,41 @@ public class ExecutionQueueWorker {
                         : (request.getCompletedAt() != null && request.getStartedAt() != null
                             ? request.getCompletedAt().toEpochMilli() - request.getStartedAt().toEpochMilli()
                             : 0L);
-                LogEvent logEvent = new LogEvent(
-                        "EXEC",
-                        "/code-execution/" + languageName,
-                        pseudoStatus,
-                        execDuration,
-                        request.getUserId() != null ? request.getUserId().toString() : null,
-                        request.getProjectId(),
-                        Instant.now()
-                );
+                String level = "COMPLETED".equals(terminalStatus) ? "INFO" : "ERROR";
+                String traceId = "exec-" + requestId.toString().substring(0, 8);
+                String errorMessage = null;
+                if (!"COMPLETED".equals(terminalStatus)) {
+                    errorMessage = (sandboxResult.stderr != null && !sandboxResult.stderr.isBlank())
+                            ? (sandboxResult.stderr.length() > 200 ? sandboxResult.stderr.substring(0, 200) + "..." : sandboxResult.stderr.trim())
+                            : "Execution finished with status: " + terminalStatus;
+                }
+
+                java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+                metadata.put("executionId", requestId.toString());
+                metadata.put("language", languageName);
+                metadata.put("terminalStatus", terminalStatus);
+                metadata.put("exitCode", sandboxResult.exitCode);
+                metadata.put("timedOut", sandboxResult.timedOut);
+                metadata.put("oomKilled", sandboxResult.oomKilled);
+
+                LogEvent logEvent = LogEvent.builder()
+                        .method("EXEC")
+                        .uri("/code-execution/" + languageName)
+                        .status(pseudoStatus)
+                        .durationMs(execDuration)
+                        .userId(request.getUserId() != null ? request.getUserId().toString() : null)
+                        .projectId(request.getProjectId())
+                        .timestamp(Instant.now())
+                        .level(level)
+                        .traceId(traceId)
+                        .clientIp(null)
+                        .userAgent("DevOps-Suite-Sandbox-Worker")
+                        .errorMessage(errorMessage)
+                        .errorClass(!"COMPLETED".equals(terminalStatus) ? terminalStatus : null)
+                        .eventType("EXECUTION")
+                        .metadata(metadata)
+                        .build();
+
                 eventPublisher.publishEvent(logEvent);
             } catch (Exception e) {
                 log.warn("Failed to publish execution LogEvent for request {}: {}", requestId, e.getMessage());

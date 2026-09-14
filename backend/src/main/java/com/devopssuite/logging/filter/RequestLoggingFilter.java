@@ -59,8 +59,20 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
         long start = System.currentTimeMillis();
 
+        String traceId = resolveTraceId(request);
+        org.slf4j.MDC.put("traceId", traceId);
+        response.setHeader("X-Trace-Id", traceId);
+
         try {
             filterChain.doFilter(request, response);
+        } catch (Throwable t) {
+            if (request.getAttribute("log_error_message") == null) {
+                request.setAttribute("log_error_message", t.getMessage());
+            }
+            if (request.getAttribute("log_error_class") == null) {
+                request.setAttribute("log_error_class", t.getClass().getSimpleName());
+            }
+            throw t;
         } finally {
             long duration = System.currentTimeMillis() - start;
             String userId = extractUserId();
@@ -77,22 +89,63 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
                 }
             }
 
-            LogEvent event = new LogEvent(
-                    request.getMethod(),
-                    request.getRequestURI(),
-                    response.getStatus(),
-                    duration,
-                    userId,
-                    projectId,
-                    Instant.now()
-            );
+            int status = response.getStatus();
+            String level = status >= 500 ? "ERROR" : status >= 400 ? "WARN" : "INFO";
+            String clientIp = extractClientIp(request);
+            String userAgent = request.getHeader("User-Agent");
+
+            String errorMessage = (String) request.getAttribute("log_error_message");
+            String errorClass = (String) request.getAttribute("log_error_class");
+
+            LogEvent event = LogEvent.builder()
+                    .method(request.getMethod())
+                    .uri(request.getRequestURI())
+                    .status(status)
+                    .durationMs(duration)
+                    .userId(userId)
+                    .projectId(projectId)
+                    .timestamp(Instant.now())
+                    .level(level)
+                    .traceId(traceId)
+                    .clientIp(clientIp)
+                    .userAgent(userAgent)
+                    .errorMessage(errorMessage)
+                    .errorClass(errorClass)
+                    .eventType("HTTP")
+                    .build();
 
             try {
                 eventPublisher.publishEvent(event);
             } catch (Exception e) {
                 log.warn("Failed to publish LogEvent: {}", e.getMessage());
+            } finally {
+                org.slf4j.MDC.remove("traceId");
             }
         }
+    }
+
+    private String resolveTraceId(HttpServletRequest request) {
+        String traceId = request.getHeader("X-Trace-Id");
+        if (traceId == null || traceId.isBlank()) {
+            traceId = request.getHeader("X-Correlation-Id");
+        }
+        if (traceId == null || traceId.isBlank()) {
+            traceId = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        }
+        return traceId.trim();
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isBlank()) {
+            int commaIdx = ip.indexOf(',');
+            return (commaIdx != -1 ? ip.substring(0, commaIdx) : ip).trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private String extractUserId() {

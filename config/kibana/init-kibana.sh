@@ -20,7 +20,58 @@ until curl -sf "${KIBANA_URL}/api/status" | grep -q '"overall":{"level":"availab
   echo "[kibana-init] Still waiting... (${ELAPSED}s)"
 done
 
-echo "[kibana-init] Kibana is ready. Provisioning data view..."
+echo "[kibana-init] Kibana is ready."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Provision Elasticsearch ILM Policy (Index Lifecycle Management)
+# Retains logs for 180 days (~6 months) then deletes them automatically.
+# ─────────────────────────────────────────────────────────────────────────────
+ES_URL="http://elasticsearch:9200"
+echo "[kibana-init] Configuring Elasticsearch ILM policy (180-day retention)..."
+
+ILM_POLICY_JSON='{
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {}
+      },
+      "delete": {
+        "min_age": "180d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}'
+
+curl -s -o /dev/null -w "%{http_code}" \
+  -X PUT "${ES_URL}/_ilm/policy/devopssuite_logs_retention_policy" \
+  -H "Content-Type: application/json" \
+  -d "$ILM_POLICY_JSON"
+
+echo "[kibana-init] ILM policy 'devopssuite_logs_retention_policy' configured."
+
+# Attach ILM policy to all current and future devopssuite-logs-* indices via Index Template
+INDEX_TEMPLATE_JSON='{
+  "index_patterns": ["devopssuite-logs-*"],
+  "template": {
+    "settings": {
+      "index.lifecycle.name": "devopssuite_logs_retention_policy"
+    }
+  },
+  "priority": 100
+}'
+
+curl -s -o /dev/null -w "%{http_code}" \
+  -X PUT "${ES_URL}/_index_template/devopssuite_logs_template" \
+  -H "Content-Type: application/json" \
+  -d "$INDEX_TEMPLATE_JSON"
+
+echo "[kibana-init] Index template 'devopssuite_logs_template' configured."
+
+echo "[kibana-init] Provisioning data view..."
 
 # Create the devopssuite-logs-* data view (index pattern)
 # Uses the Kibana Saved Objects API. Idempotent — if it already exists
@@ -56,7 +107,7 @@ SEARCH_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
       "title": "Application Request Logs",
       "description": "All HTTP request logs from the DevOps Suite backend",
       "hits": 0,
-      "columns": ["timestamp", "method", "uri", "status", "durationMs", "userId", "projectId"],
+      "columns": ["timestamp", "level", "method", "uri", "status", "durationMs", "traceId", "clientIp", "userId", "projectId", "errorMessage"],
       "sort": [["timestamp", "desc"]],
       "version": 1,
       "kibanaSavedObjectMeta": {

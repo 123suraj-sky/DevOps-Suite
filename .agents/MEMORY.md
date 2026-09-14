@@ -145,6 +145,7 @@ Backend is the bridge between both networks (needs ES for log indexing, needs Pr
 | 2026-09-09 | Kiro | Full infrastructure integration implemented. Elasticsearch log indexing connected; Kibana auto-provisioned with data view; Grafana auto-provisioned with 2 dashboards (Application Overview + JVM/System); custom Micrometer metrics added (AppMetrics bean); Redis cache-aside for User/Project; Redis rate limiting (RateLimitFilter, 3 tiers); nginx admin-proxy with HTTP Basic Auth in front of Grafana+Kibana; network isolation (app + observability networks); all infra services unexposed from host except backend (8082), frontend (80), Grafana-via-proxy (8080), Kibana-via-proxy (8083). |
 | 2026-09-13 | Antigravity | Added Kibana dashboards for Observability, Security, and Analytics under `config/kibana/dashboards/`. Updated `init-kibana.sh` to provision saved searches and dashboards automatically on startup via Kibana Saved Objects API. |
 | 2026-09-13 | Antigravity | Wired Project Stream Logs terminal end-to-end: (1) `RequestLoggingFilter.extractProjectId()` now checks `X-Project-Id` header as fallback for URLs without `/projects/{uuid}/`; (2) `ExecutionRequest` entity + Flyway `V16` migration add `project_id` column; `ExecutionService` stores it from IdeFile (IDE mode) or request body (classic mode); `ExecutionQueueWorker` publishes `LogEvent` after sandbox run; (3) `LogController` + `LogSearchService` implement `GET /api/logs/search` querying Elasticsearch `devopssuite-logs-*`; (4) `GET /api/logs/services` stub also added; (5) Axios `client.js` injects `X-Project-Id` header from page URL for all requests; (6) IDEPage and `codeExecutionApi` pass `project_id` in execute payload; (7) `X-Project-Id` added to CORS allowed headers. |
+| 2026-09-14 | Antigravity | Enriched Elasticsearch logging pipeline with industry-standard observability fields: severity levels (`INFO`/`WARN`/`ERROR`), trace ID correlation (`X-Trace-Id` / MDC), client IP (`X-Forwarded-For`), `User-Agent`, exception tracking (`errorMessage`, `errorClass`), enriched code execution details (`exitCode`, `timedOut`, `oomKilled`, `language`), domain audit events (`AuditLogEventListener`), and updated frontend logs terminal (`LogsPage.jsx`) to display levels, trace IDs, IPs, and error messages. |
 
 ---
 
@@ -214,3 +215,14 @@ NotificationEventListener
 - `TaskUpdateDto` is a nested static class inside `ProjectDto.java` â€” import it as `com.devopssuite.project.dto.ProjectDto.TaskUpdateDto`.
 - Frontend `notificationApi.getAll()` returns the raw Spring `Page` object (`{ content, totalElements, last, ... }`). Access items via `.content`, not `.data.content`.
 - **`user.userId` was missing from `normalizeUser()` in `authApi.js`** â€” `AuthDto.UserResponse` serializes the UUID as `user_id` (snake_case via `@JsonProperty("user_id")`), but `normalizeUser` did not map it to camelCase `userId`. As a result `NotificationContext`'s WebSocket subscription guard `user?.userId` was always `undefined`, so the `/topic/notifications/{userId}` subscription was never registered and **no real-time notifications (including role-change) were delivered**. Fixed 2026-09-08 by adding `userId: user.userId ?? user.user_id ?? null` to `normalizeUser`. If you ever add new snake_case fields to `UserResponse`, add matching normalization here too.
+
+---
+
+## u{1F4CB} ILM Log Retention Policy (Added 2026-09-14)
+
+- **ILM policy name:** `devopssuite_logs_retention_policy` — `delete` phase at `min_age: 180d`
+- **Index template:** `devopssuite_logs_template` — pattern `devopssuite-logs-*`, priority 100; automatically attaches the ILM policy to every new daily log index
+- **Provisioned by:** `config/kibana/init-kibana.sh` (the `kibana-init` curl container), which calls `PUT http://elasticsearch:9200/_ilm/policy/...` and `PUT http://elasticsearch:9200/_index_template/...` at startup
+- **Applies to:** All NEW indices created after the template is installed. Existing indices already in Elasticsearch before this change are NOT retroactively affected.
+- **To apply to existing indices (one-time, optional):** `docker exec -it devopssuite-elasticsearch curl -X PUT http://localhost:9200/devopssuite-logs-*/_settings -H 'Content-Type: application/json' -d '{"index.lifecycle.name":"devopssuite_logs_retention_policy"}'`
+- **Do NOT re-implement this as a Spring `@Scheduled` task** — ILM is the correct Elasticsearch-native approach for rolling index deletion.

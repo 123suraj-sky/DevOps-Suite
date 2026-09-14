@@ -49,13 +49,13 @@ public class LogSearchService {
             mustClauses.add(Query.of(q -> q
                     .term(t -> t.field("projectId.keyword").value(projectId.toString()))));
 
-            // Optional text filter on uri + method
+            // Optional text filter on uri, method, traceId, level, eventType, errorMessage
             if (query != null && !query.isBlank()) {
                 String trimmed = query.trim();
                 mustClauses.add(Query.of(q -> q
                         .multiMatch(m -> m
                                 .query(trimmed)
-                                .fields("uri", "method"))));
+                                .fields("uri", "method", "traceId", "level", "eventType", "errorMessage"))));
             }
 
             BoolQuery boolQuery = BoolQuery.of(b -> b.must(mustClauses));
@@ -105,7 +105,7 @@ public class LogSearchService {
                 mustClauses.add(Query.of(q -> q
                         .multiMatch(m -> m
                                 .query(trimmed)
-                                .fields("uri", "method"))));
+                                .fields("uri", "method", "traceId", "level", "eventType", "errorMessage"))));
             }
 
             BoolQuery boolQuery = BoolQuery.of(b -> b.must(mustClauses));
@@ -137,7 +137,7 @@ public class LogSearchService {
     /**
      * Queries Elasticsearch for all platform logs regardless of project or user (admin view).
      *
-     * @param query optional free-text query on uri / method
+     * @param query optional free-text query on uri / method / traceId / level / eventType / errorMessage
      * @param size  max records to fetch
      * @return list of log events
      */
@@ -152,7 +152,7 @@ public class LogSearchService {
                 mustClauses.add(Query.of(q -> q
                         .multiMatch(m -> m
                                 .query(trimmed)
-                                .fields("uri", "method"))));
+                                .fields("uri", "method", "traceId", "level", "eventType", "errorMessage"))));
             }
 
             SearchRequest searchRequest = SearchRequest.of(s -> {

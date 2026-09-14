@@ -14,10 +14,12 @@ import java.util.stream.Collectors;
 public class AuthExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex, jakarta.servlet.http.HttpServletRequest request) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining(", "));
+
+        recordError(request, errorMessage, "VALIDATION_ERROR");
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.<Void>builder()
@@ -27,11 +29,20 @@ public class AuthExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex, jakarta.servlet.http.HttpServletRequest request) {
+        recordError(request, ex.getMessage(), "BAD_REQUEST");
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.<Void>builder()
                         .status("error")
                         .message(ex.getMessage())
                         .build());
+    }
+
+    private void recordError(jakarta.servlet.http.HttpServletRequest request, String message, String errorClass) {
+        if (request != null) {
+            request.setAttribute("log_error_message", message);
+            request.setAttribute("log_error_class", errorClass);
+        }
     }
 }

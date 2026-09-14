@@ -17,7 +17,8 @@ public class ExecutionExceptionHandler {
 
     /** Bad language name, payload too large, disabled language, etc. */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleBadRequest(IllegalArgumentException ex, jakarta.servlet.http.HttpServletRequest request) {
+        recordError(request, ex.getMessage(), "BAD_REQUEST");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.<Void>builder()
                         .status("error")
@@ -27,11 +28,19 @@ public class ExecutionExceptionHandler {
 
     /** Execution ID not found in the database. */
     @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(NoSuchElementException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleNotFound(NoSuchElementException ex, jakarta.servlet.http.HttpServletRequest request) {
+        recordError(request, ex.getMessage(), "NOT_FOUND");
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.<Void>builder()
                         .status("error")
                         .message(ex.getMessage())
                         .build());
+    }
+
+    private void recordError(jakarta.servlet.http.HttpServletRequest request, String message, String errorClass) {
+        if (request != null) {
+            request.setAttribute("log_error_message", message);
+            request.setAttribute("log_error_class", errorClass);
+        }
     }
 }
