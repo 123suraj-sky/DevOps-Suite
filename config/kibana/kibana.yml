@@ -13,3 +13,14 @@ logging.root.level: warn
 # (server.securityResponseHeaders.xframe is deprecated/unsupported in Kibana 8.x)
 
 server.publicBaseUrl: "http://localhost:8083"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Disable premium Elastic apps that produce 400 errors on the free Basic license.
+# Our stack uses the free tier — Elastic Security (SIEM), Maps, and ML
+# require a Platinum/Enterprise license and are not used in this project.
+# ─────────────────────────────────────────────────────────────────────────────
+xpack.securitySolution.enabled: false
+xpack.maps.enabled: false
+xpack.ml.enabled: false
+xpack.fleet.enabled: false
+xpack.infra.enabled: false
