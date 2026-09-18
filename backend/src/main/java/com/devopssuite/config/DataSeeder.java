@@ -6,6 +6,7 @@ import com.devopssuite.auth.repository.RoleRepository;
 import com.devopssuite.auth.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -15,31 +16,37 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Seeds a default admin account on every startup when it does not already exist.
+ * Seeds a default admin account on first startup when the account does not already exist.
  *
- * TODO: Replace this hardcoded seed approach with a proper admin provisioning
- *       mechanism — e.g. environment-variable-driven credentials, a one-time
- *       setup endpoint, or an external identity provider — before any production
- *       deployment. Tracked in .agents/TASKS.md.
+ * Credentials are driven by environment variables (see application.yml → seed.admin.*):
+ *   ADMIN_SEED_EMAIL    — admin account e-mail    (default: admin@admin.com, dev only)
+ *   ADMIN_SEED_PASSWORD — admin account password  (default: admin, dev only)
+ *   ADMIN_SEED_NAME     — admin display name      (default: Administrator)
  *
- * Default credentials (DEV ONLY):
- *   email:    admin
- *   password: admin
+ * Production checklist:
+ *   1. Set all three ADMIN_SEED_* env vars to secure, non-default values.
+ *   2. A blank ADMIN_SEED_PASSWORD intentionally disables seeding entirely.
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class DataSeeder implements CommandLineRunner {
 
-    // TODO: Pull these from environment variables instead of hardcoding.
-    //       See TASKS.md — "Replace hardcoded admin seed credentials".
-    private static final String ADMIN_EMAIL    = "admin@admin.com";
-    private static final String ADMIN_PASSWORD = "admin";
-    private static final String ADMIN_NAME     = "Administrator";
+    /** Dev-only fallback — matches the application.yml default. */
+    private static final String DEV_DEFAULT_PASSWORD = "admin";
 
-    private final UserRepository     userRepository;
-    private final RoleRepository     roleRepository;
-    private final PasswordEncoder    passwordEncoder;
+    @Value("${seed.admin.email:admin@admin.com}")
+    private String adminEmail;
+
+    @Value("${seed.admin.password:admin}")
+    private String adminPassword;
+
+    @Value("${seed.admin.name:Administrator}")
+    private String adminName;
+
+    private final UserRepository  userRepository;
+    private final RoleRepository  roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -48,12 +55,24 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (userRepository.existsByEmail(ADMIN_EMAIL)) {
-            log.debug("DataSeeder: admin user already exists, skipping seed.");
+        // Blank password → operator has explicitly opted out of seeding.
+        if (adminPassword == null || adminPassword.isBlank()) {
+            log.info("DataSeeder: ADMIN_SEED_PASSWORD is blank — skipping admin seed.");
             return;
         }
 
-        // Ensure ROLE_ADMIN exists (create it if a fresh DB has no roles yet)
+        if (userRepository.existsByEmail(adminEmail)) {
+            log.debug("DataSeeder: admin user '{}' already exists, skipping seed.", adminEmail);
+            return;
+        }
+
+        // Warn loudly when the password is still the known dev default.
+        if (DEV_DEFAULT_PASSWORD.equals(adminPassword)) {
+            log.warn("DataSeeder: ADMIN_SEED_PASSWORD is set to the dev default ('admin'). " +
+                     "Set ADMIN_SEED_PASSWORD to a strong, unique value before deploying to production.");
+        }
+
+        // Ensure ROLE_ADMIN exists (creates it on a fresh DB that has no roles yet).
         Role adminRole = roleRepository.findByName("ROLE_ADMIN")
                 .orElseGet(() -> {
                     log.info("DataSeeder: ROLE_ADMIN not found — creating it.");
@@ -67,14 +86,14 @@ public class DataSeeder implements CommandLineRunner {
         roles.add(adminRole);
 
         User admin = User.builder()
-                .email(ADMIN_EMAIL)
-                .passwordHash(passwordEncoder.encode(ADMIN_PASSWORD))
-                .displayName(ADMIN_NAME)
+                .email(adminEmail)
+                .passwordHash(passwordEncoder.encode(adminPassword))
+                .displayName(adminName)
                 .roles(roles)
                 .build();
 
         userRepository.save(admin);
-        log.warn("DataSeeder: default admin user created (email='{}')." +
-                 " This is a DEV-only seed — replace before going to production.", ADMIN_EMAIL);
+        log.warn("DataSeeder: admin user created (email='{}', name='{}'). " +
+                 "Ensure ADMIN_SEED_* env vars are set to production-grade values.", adminEmail, adminName);
     }
 }

@@ -24,6 +24,31 @@ Make the entire website fully responsive so it works well on mobile, tablet, and
 
 ## Admin Pannel
 
-Check things in Admin Pannel.
+Here's a comprehensive status overview based on your planning documents:
 
-Store user's data encrypted format so that even admin can't see it.
+---
+
+## Project Status: ~90% Complete
+
+The project is officially in the **manual testing & bug-fixing phase**. Most core features are done. Here's what's left:
+
+---
+
+## **Backend — Open Items**
+
+|S. No.| Task | Priority | Notes |
+|---|---|---|---|
+|1| CI/CD Pipeline (GitHub Actions) | Medium | No workflow files yet. Needs build, test, Docker image build+push |
+|3| Reset Password flow | Low-Medium | `POST /api/auth/forgot-password` + `/reset-password` with time-limited token. Needs SMTP configured first |
+|4| Migrate PostgreSQL to Neon | Low | Optional — replace self-hosted Postgres with Neon serverless |
+|5| Kubernetes / Helm chart | Low | Not started |
+|6| Multi-stage Docker build for production frontend (Nginx) | Low | Not done |
+|7| End-to-end Cypress tests | Low | `/cypress` directory exists but tests not written |
+
+## **Frontend — Open Items**
+
+|S. No.| Task | Priority | Notes |
+|---|---|---|---|
+|1| Full integration test with live backend | High | Pages are scaffolded; all API calls need verification against running backend |
+|2| WebSocket live integration testing | Medium | Config and topics exist; end-to-end not verified |
+

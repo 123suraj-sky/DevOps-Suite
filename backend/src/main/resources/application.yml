@@ -78,6 +78,16 @@ app:
   avatar:
     upload-dir: ${AVATAR_UPLOAD_DIR:/app/uploads/avatars}
 
+# ── Admin seed account ─────────────────────────────────────────────────────────
+# Credentials for the default admin user created on first startup.
+# Override all three via environment variables before any production deploy.
+# If ADMIN_SEED_PASSWORD is left blank, seeding is skipped entirely.
+seed:
+  admin:
+    email:    ${ADMIN_SEED_EMAIL:admin@admin.com}
+    password: ${ADMIN_SEED_PASSWORD:admin}
+    name:     ${ADMIN_SEED_NAME:Administrator}
+
 logging:
   level:
     root: INFO
