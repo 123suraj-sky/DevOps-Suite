@@ -41,6 +41,18 @@ services:
       RATE_LIMIT_EXECUTION_MAX: ${RATE_LIMIT_EXECUTION_MAX:-10}
       RATE_LIMIT_AUTH_MAX: ${RATE_LIMIT_AUTH_MAX:-20}
       RATE_LIMIT_API_MAX: ${RATE_LIMIT_API_MAX:-300}
+      # SMTP — password reset emails
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@devopssuite.local}
+      # Frontend base URL — used in reset-password email links
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Admin seed account
+      ADMIN_SEED_EMAIL: ${ADMIN_SEED_EMAIL:-admin@admin.com}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
+      ADMIN_SEED_NAME: ${ADMIN_SEED_NAME:-Administrator}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./sandbox-temp:/tmp/devopssuite-sandbox

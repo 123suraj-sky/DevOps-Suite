@@ -99,7 +99,6 @@
 
 ---
 
-- [ ] Kubernetes manifests (Helm chart)
 - [ ] Multi-stage Docker build for production frontend (Nginx)
 - [x] **Add more code execution languages (Java, C++)** — Added and verified full sandboxed execution support for Java 21 and C++ (g++ 15) alongside Python and JavaScript.
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)

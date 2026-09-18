@@ -9,6 +9,7 @@ import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -223,14 +224,33 @@ public class AuthService {
     @Autowired(required = false)
     private org.springframework.mail.javamail.JavaMailSender mailSender;
 
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
+
+    @Value("${spring.mail.from:noreply@devopssuite.local}")
+    private String mailFrom;
+
+    @Value("${spring.mail.host:}")
+    private String mailHost;
+
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
-        if (mailSender == null) {
-            throw new UnsupportedOperationException("Password reset via email is not configured on this server.");
+        // Guard: SMTP is not configured when MAIL_HOST is blank.
+        // We still return a generic 200 to avoid leaking whether the email exists.
+        if (mailHost == null || mailHost.isBlank()) {
+            // Log for operator visibility; caller always gets a success response.
+            org.slf4j.LoggerFactory.getLogger(AuthService.class)
+                    .warn("AuthService.forgotPassword: MAIL_HOST is not configured — reset email not sent for '{}'.", request.getEmail());
+            return;
         }
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("Email address not found"));
+        // Look up user — but do NOT expose whether the address is registered.
+        // We silently succeed if the email is unknown (prevents enumeration).
+        java.util.Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return; // silent success
+        }
+        User user = userOpt.get();
 
         tokenRepository.deleteByUserId(user.getId());
 
@@ -244,14 +264,20 @@ public class AuthService {
 
         try {
             org.springframework.mail.SimpleMailMessage message = new org.springframework.mail.SimpleMailMessage();
+            message.setFrom(mailFrom);
             message.setTo(user.getEmail());
-            message.setSubject("DevOps Suite - Password Reset Request");
-            message.setText("Click the following link to reset your password: \n" +
-                    "http://localhost:5173/reset-password?token=" + token + "\n" +
-                    "This link is valid for 1 hour.");
+            message.setSubject("DevOps Suite — Password Reset Request");
+            message.setText(
+                    "Hi " + user.getDisplayName() + ",\n\n" +
+                    "We received a request to reset your DevOps Suite password.\n\n" +
+                    "Click the link below to choose a new password (valid for 1 hour):\n" +
+                    frontendUrl + "/reset-password?token=" + token + "\n\n" +
+                    "If you did not request a password reset, you can safely ignore this email.\n\n" +
+                    "— The DevOps Suite Team"
+            );
             mailSender.send(message);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send password reset email: " + e.getMessage());
+            throw new RuntimeException("Failed to send password reset email. Please try again later.");
         }
     }
 

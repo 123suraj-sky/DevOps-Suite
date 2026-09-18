@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -9,10 +9,14 @@ import logoIcon from '../../assets/42_logo.svg';
 export const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Shown when the user arrives after a successful password reset
+  const successMessage = location.state?.successMessage ?? null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -51,6 +55,12 @@ export const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {successMessage && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700 text-center">
+              {successMessage}
+            </div>
+          )}
+
           <Input
             label="Email"
             type="email"
@@ -68,6 +78,15 @@ export const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
+
+          <div className="text-right -mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+            >
+              Forgot password?
+            </Link>
+          </div>
 
           <Button type="submit" loading={loading} className="w-full">
             Sign In

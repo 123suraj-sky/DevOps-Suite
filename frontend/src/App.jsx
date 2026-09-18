@@ -12,6 +12,8 @@ import { Spinner } from './components/common/Spinner';
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.ResetPasswordPage })));
 const DashboardPage = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.DashboardPage })));
 const ProjectsPage = lazy(() => import('./pages/Projects').then((m) => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/Projects').then((m) => ({ default: m.ProjectDetailPage })));
@@ -92,6 +94,22 @@ const AppRoutes = () => {
           element={
             <PublicRoute>
               <RegisterPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicRoute>
+              <ForgotPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPasswordPage />
             </PublicRoute>
           }
         />

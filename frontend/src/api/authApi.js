@@ -62,4 +62,14 @@ export const authApi = {
     });
     return normalizeUser(response.data.data);
   },
+
+  forgotPassword: async (email) => {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data.message;
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await apiClient.post('/auth/reset-password', { token, password });
+    return response.data.message;
+  },
 };

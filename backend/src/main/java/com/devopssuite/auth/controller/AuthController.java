@@ -189,22 +189,19 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         try {
             authService.forgotPassword(request);
-            return ResponseEntity.ok(ApiResponse.<Void>builder()
-                    .message("Password reset link sent to your email.")
-                    .build());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.<Void>builder()
-                            .status("error")
-                            .message(e.getMessage())
-                            .build());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            // Mail send failure — log server-side but return 500 with a safe message
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.<Void>builder()
                             .status("error")
-                            .message(e.getMessage())
+                            .message("Failed to send reset email. Please try again later.")
                             .build());
         }
+        // Always return 200 with a generic message regardless of whether the
+        // email exists — prevents account enumeration.
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .message("If that email is registered you will receive a reset link shortly.")
+                .build());
     }
 
     @PostMapping("/reset-password")
@@ -219,6 +216,12 @@ public class AuthController {
                     .body(ApiResponse.<Void>builder()
                             .status("error")
                             .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<Void>builder()
+                            .status("error")
+                            .message("An unexpected error occurred. Please try again.")
                             .build());
         }
     }

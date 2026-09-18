@@ -38,12 +38,8 @@ The project is officially in the **manual testing & bug-fixing phase**. Most cor
 
 |S. No.| Task | Priority | Notes |
 |---|---|---|---|
-|1| CI/CD Pipeline (GitHub Actions) | Medium | No workflow files yet. Needs build, test, Docker image build+push |
-|3| Reset Password flow | Low-Medium | `POST /api/auth/forgot-password` + `/reset-password` with time-limited token. Needs SMTP configured first |
-|4| Migrate PostgreSQL to Neon | Low | Optional — replace self-hosted Postgres with Neon serverless |
-|5| Kubernetes / Helm chart | Low | Not started |
-|6| Multi-stage Docker build for production frontend (Nginx) | Low | Not done |
-|7| End-to-end Cypress tests | Low | `/cypress` directory exists but tests not written |
+|1| Multi-stage Docker build for production frontend (Nginx) | Low | Not done |
+|2| End-to-end Cypress tests | Low | `/cypress` directory exists but tests not written |
 
 ## **Frontend — Open Items**
 
