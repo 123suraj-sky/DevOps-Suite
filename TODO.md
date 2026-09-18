@@ -36,10 +36,7 @@ The project is officially in the **manual testing & bug-fixing phase**. Most cor
 
 ## **Backend — Open Items**
 
-|S. No.| Task | Priority | Notes |
-|---|---|---|---|
-|1| Multi-stage Docker build for production frontend (Nginx) | Low | Not done |
-|2| End-to-end Cypress tests | Low | `/cypress` directory exists but tests not written |
+There are no remaining backend open items.
 
 ## **Frontend — Open Items**
 
