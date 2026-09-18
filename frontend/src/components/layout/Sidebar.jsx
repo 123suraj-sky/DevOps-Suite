@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useProjects } from '../../context/ProjectsContext';
 import { cn } from '../../utils';
+import logoIcon from '../../assets/42_logo.svg';
 import dashboardIcon from '../../assets/07_dashboard.svg';
 import projectsIcon from '../../assets/08_folder.svg';
 import metricsIcon from '../../assets/10_metrics.svg';
@@ -63,6 +64,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
         {/* Logo */}
         <div className="flex items-center justify-center h-16 border-b border-gray-200 shrink-0">
           <Link to="/" className="flex items-center space-x-2">
+            <img src={logoIcon} alt="DevOps Suite Logo" className="w-8 h-8" />
             <span className="text-xl font-bold text-primary-600">DevOps Suite</span>
           </Link>
         </div>

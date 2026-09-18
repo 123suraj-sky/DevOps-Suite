@@ -6,6 +6,7 @@ import { Input } from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
 import checkIcon from '../../assets/11_check.svg';
 import xIcon from '../../assets/26_x.svg';
+import logoIcon from '../../assets/42_logo.svg';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$/;
 
@@ -79,6 +80,7 @@ export const RegisterPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
+          <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900">DevOps Suite</h1>
           <p className="text-sm text-gray-500 mt-2">Create your account</p>
         </div>

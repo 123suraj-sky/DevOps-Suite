@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
+import logoIcon from '../../assets/42_logo.svg';
 
 export const LoginPage = () => {
   const { login } = useAuth();
@@ -44,6 +45,7 @@ export const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
+          <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900">DevOps Suite</h1>
           <p className="text-sm text-gray-500 mt-2">Sign in to your account</p>
         </div>

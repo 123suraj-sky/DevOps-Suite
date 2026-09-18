@@ -14,13 +14,8 @@ logging.root.level: warn
 
 server.publicBaseUrl: "http://localhost:8083"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Disable premium Elastic apps that produce 400 errors on the free Basic license.
-# Our stack uses the free tier — Elastic Security (SIEM), Maps, and ML
-# require a Platinum/Enterprise license and are not used in this project.
-# ─────────────────────────────────────────────────────────────────────────────
-xpack.securitySolution.enabled: false
-xpack.maps.enabled: false
-xpack.ml.enabled: false
-xpack.fleet.enabled: false
-xpack.infra.enabled: false
+# Note: In Kibana 8.x, xpack plugin features (maps, ml, fleet, etc.) cannot be
+# disabled via kibana.yml — those config keys were removed. The free Basic license
+# includes these plugins and they are safe to leave enabled; they simply won't be
+# used. Attempting to set xpack.<plugin>.enabled: false causes a fatal config
+# validation error and prevents Kibana from starting.
