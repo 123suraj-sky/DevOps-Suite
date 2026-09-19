@@ -4,7 +4,6 @@ import { NotificationItem } from '../../components/common/NotificationItem';
 import { Spinner } from '../../components/common';
 import notificationBellIcon from '../../assets/09_notification_bell.svg';
 
-/** Filter tab definitions */
 const TABS = [
   { id: 'all',    label: 'All' },
   { id: 'unread', label: 'Unread' },
@@ -26,7 +25,6 @@ export const NotificationsPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Refresh the list whenever the page mounts
   useEffect(() => {
     setLoading(true);
     refresh().finally(() => setLoading(false));
@@ -42,7 +40,6 @@ export const NotificationsPage = () => {
     }
   }, [loadMore]);
 
-  /** Filtered view — 'unread' tab hides already-read items */
   const displayed = activeTab === 'unread'
     ? notifications.filter((n) => !n.read)
     : notifications;
@@ -52,9 +49,9 @@ export const NotificationsPage = () => {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Notifications</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
             </p>
           )}
@@ -62,7 +59,7 @@ export const NotificationsPage = () => {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
           >
             Mark all as read
           </button>
@@ -70,15 +67,15 @@ export const NotificationsPage = () => {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-fit">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
               activeTab === tab.id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             {tab.label}
@@ -107,13 +104,12 @@ export const NotificationsPage = () => {
             />
           ))}
 
-          {/* Load more — only shown in "All" tab where pagination applies */}
           {activeTab === 'all' && hasMore && (
             <div className="flex justify-center pt-2">
               <button
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-50 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 disabled:opacity-50 transition-colors"
               >
                 {loadingMore ? (
                   <>
@@ -135,16 +131,15 @@ export const NotificationsPage = () => {
   );
 };
 
-/** Shown when the filtered list is empty */
 const EmptyNotifications = ({ activeTab }) => (
   <div className="flex flex-col items-center justify-center py-20 text-center">
-    <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+    <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
       <img src={notificationBellIcon} alt="" className="w-8 h-8 opacity-40" />
     </div>
-    <h3 className="text-base font-semibold text-gray-900">
+    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
       {activeTab === 'unread' ? 'All caught up!' : 'No notifications yet'}
     </h3>
-    <p className="text-sm text-gray-500 mt-1 max-w-xs">
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
       {activeTab === 'unread'
         ? 'You have no unread notifications.'
         : "When you're assigned tasks or added to projects, you'll see them here."}

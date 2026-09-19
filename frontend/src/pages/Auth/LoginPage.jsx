@@ -46,17 +46,17 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">DevOps Suite</h1>
-          <p className="text-sm text-gray-500 mt-2">Sign in to your account</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">DevOps Suite</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {successMessage && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700 text-center">
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md text-sm text-green-700 dark:text-green-300 text-center">
               {successMessage}
             </div>
           )}
@@ -99,10 +99,10 @@ export const LoginPage = () => {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 text-center">{error}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 text-center">{error}</p>
           )}
         </form>
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
           Don't have an account?{' '}
           <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
             Sign up

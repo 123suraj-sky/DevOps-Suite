@@ -267,7 +267,7 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
         {!imageSrc ? (
           /* ── Drop / pick zone ── */
           <div
-            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDropZoneDrop}
@@ -276,20 +276,20 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
             onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
           >
             <img src={uploadIcon} alt="Upload" className="w-10 h-10 mb-3 opacity-50" />
-            <p className="text-sm font-medium text-gray-700">Click or drag an image here</p>
-            <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF · max 10 MB</p>
-            {error && <p className="text-xs text-red-600 mt-2 font-medium">{error}</p>}
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Click or drag an image here</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG, PNG, WEBP, GIF · max 10 MB</p>
+            {error && <p className="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">{error}</p>}
           </div>
         ) : (
           /* ── Crop editor ── */
           <div className="flex flex-col items-center space-y-3">
-            <p className="text-xs text-gray-500 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
               Drag to reposition · scroll or use the slider to zoom into the circle
             </p>
 
             {/* Canvas — rectangular so full image is visible */}
             <div
-              className="relative select-none rounded-lg overflow-hidden border border-gray-200"
+              className="relative select-none rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600"
               style={{
                 width:  CANVAS_W,
                 height: CANVAS_H,
@@ -310,7 +310,7 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
 
             {/* Zoom slider */}
             <div className="w-full space-y-1">
-              <div className="flex justify-between text-xs text-gray-500">
+              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>Zoom</span>
                 <span>{(zoom / fitZoom).toFixed(2)}×</span>
               </div>
@@ -362,7 +362,7 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
         />
 
         {/* Action buttons */}
-        <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+        <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancel
           </Button>

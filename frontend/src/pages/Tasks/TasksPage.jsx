@@ -18,10 +18,10 @@ import toast from 'react-hot-toast';
 
 // ── Column definitions ─────────────────────────────────────────────────────
 const COLUMNS = [
-  { id: 'BACKLOG',     title: 'Backlog',     bg: 'bg-gray-100 text-gray-800'    },
-  { id: 'TODO',        title: 'To Do',       bg: 'bg-blue-100 text-blue-800'    },
-  { id: 'IN_PROGRESS', title: 'In Progress', bg: 'bg-yellow-100 text-yellow-800' },
-  { id: 'DONE',        title: 'Done',        bg: 'bg-green-100 text-green-800'  },
+  { id: 'BACKLOG',     title: 'Backlog',     bg: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'    },
+  { id: 'TODO',        title: 'To Do',       bg: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'    },
+  { id: 'IN_PROGRESS', title: 'In Progress', bg: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' },
+  { id: 'DONE',        title: 'Done',        bg: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'  },
 ];
 
 const normalizeStatusKey = (value) => {
@@ -366,20 +366,21 @@ export const TasksPage = () => {
     <div className="space-y-6 flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Task Board</h2>
         <div className="flex items-center space-x-2">
           {isGlobalAdmin && (
             <>
               <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-sm text-gray-500">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Kanban board */}
+      {/* Kanban board — horizontally scrollable on mobile/tablet, grid on lg+ */}
       <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1 min-h-0 overflow-x-auto pb-4">
+        <div className="overflow-x-auto pb-4 -mx-1 px-1">
+          <div className="flex gap-4 lg:grid lg:grid-cols-4 flex-nowrap lg:flex-wrap min-w-max lg:min-w-0">
           {COLUMNS.map((col) => {
             const seen = new Set();
             const columnTasks = tasks
@@ -393,17 +394,16 @@ export const TasksPage = () => {
               .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
 
             return (
-              <div key={col.id} className="bg-gray-50 p-4 rounded-lg flex flex-col min-w-[250px]">
+              <div key={col.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg flex flex-col min-w-[250px] lg:min-w-0 w-[250px] lg:w-auto">
                 {/* Column header */}
                 <div className="flex items-center justify-between mb-4">
                   <span className={`px-2 py-1 text-xs font-semibold rounded ${col.bg}`}>
                     {col.title} ({columnTasks.length})
                   </span>
-                  {/* Only admins/owners see the + button */}
                   {isAdminOrOwner && (
                     <button
                       onClick={() => openAddModal(col.id)}
-                      className="text-gray-500 hover:text-indigo-600 font-bold text-lg leading-none"
+                      className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold text-lg leading-none"
                       title={`Add task to ${col.title}`}
                     >
                       +
@@ -448,6 +448,7 @@ export const TasksPage = () => {
               </div>
             );
           })}
+          </div>
         </div>
       </DragDropContext>
 

@@ -10,16 +10,16 @@ import trashIcon from '../../assets/18_trash.svg';
 
 /** Maps a notification type string to its icon asset and a background tint. */
 const TYPE_META = {
-  TASK_ASSIGNED:   { icon: taskAssignedIcon,   bg: 'bg-indigo-50',  dot: 'bg-indigo-500' },
-  TASK_REASSIGNED: { icon: taskAssignedIcon,   bg: 'bg-indigo-50',  dot: 'bg-indigo-500' },
-  TASK_COMPLETED:  { icon: taskCompletedIcon,  bg: 'bg-green-50',   dot: 'bg-green-500'  },
-  PROJECT_JOINED:  { icon: projectJoinedIcon,  bg: 'bg-green-50',   dot: 'bg-green-500'  },
-  ROLE_CHANGED:    { icon: roleChangedIcon,    bg: 'bg-amber-50',   dot: 'bg-amber-500'  },
-  PROJECT_REMOVED: { icon: projectRemovedIcon, bg: 'bg-red-50',     dot: 'bg-red-500'    },
-  EXECUTION_FAILED:{ icon: executionFailedIcon,bg: 'bg-red-50',     dot: 'bg-red-500'    },
+  TASK_ASSIGNED:   { icon: taskAssignedIcon,   bg: 'bg-indigo-50 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
+  TASK_REASSIGNED: { icon: taskAssignedIcon,   bg: 'bg-indigo-50 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
+  TASK_COMPLETED:  { icon: taskCompletedIcon,  bg: 'bg-green-50 dark:bg-green-900/30',    dot: 'bg-green-500'  },
+  PROJECT_JOINED:  { icon: projectJoinedIcon,  bg: 'bg-green-50 dark:bg-green-900/30',    dot: 'bg-green-500'  },
+  ROLE_CHANGED:    { icon: roleChangedIcon,    bg: 'bg-amber-50 dark:bg-amber-900/30',    dot: 'bg-amber-500'  },
+  PROJECT_REMOVED: { icon: projectRemovedIcon, bg: 'bg-red-50 dark:bg-red-900/30',        dot: 'bg-red-500'    },
+  EXECUTION_FAILED:{ icon: executionFailedIcon,bg: 'bg-red-50 dark:bg-red-900/30',        dot: 'bg-red-500'    },
 };
 
-const DEFAULT_META = { icon: notificationBellIcon, bg: 'bg-gray-50', dot: 'bg-gray-400' };
+const DEFAULT_META = { icon: notificationBellIcon, bg: 'bg-gray-50 dark:bg-gray-700', dot: 'bg-gray-400' };
 
 /**
  * A single notification row used in both the header dropdown and the full inbox page.
@@ -43,8 +43,10 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
     return (
       <div
         onClick={handleClick}
-        className={`px-4 py-3 border-b border-gray-50 cursor-pointer hover:bg-gray-50 transition-colors ${
-          !notification.read ? 'bg-primary-50' : ''
+        className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700 cursor-pointer transition-colors ${
+          !notification.read
+            ? 'bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30'
+            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
         }`}
       >
         <div className="flex items-start gap-3">
@@ -52,9 +54,9 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
             <img src={meta.icon} alt="" className="w-4 h-4 object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{notification.title}</p>
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{notification.message}</p>
-            <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{notification.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{notification.message}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
           </div>
           {!notification.read && (
             <span className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${meta.dot}`} />
@@ -68,8 +70,8 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
     <div
       className={`group flex items-start gap-4 px-4 py-4 rounded-lg border transition-colors ${
         !notification.read
-          ? 'bg-primary-50 border-primary-100 hover:bg-primary-100'
-          : 'bg-white border-gray-100 hover:bg-gray-50'
+          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30'
+          : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
       }`}
     >
       {/* Type icon */}
@@ -80,15 +82,19 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
       {/* Content */}
       <div className="flex-1 min-w-0 cursor-pointer" onClick={handleClick}>
         <div className="flex items-center gap-2">
-          <p className={`text-sm font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+          <p className={`text-sm font-semibold ${
+            !notification.read
+              ? 'text-gray-900 dark:text-gray-100'
+              : 'text-gray-700 dark:text-gray-300'
+          }`}>
             {notification.title}
           </p>
           {!notification.read && (
             <span className={`flex-shrink-0 w-2 h-2 rounded-full ${meta.dot}`} />
           )}
         </div>
-        <p className="text-sm text-gray-600 mt-0.5">{notification.message}</p>
-        <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{notification.message}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
       </div>
 
       {/* Actions — visible on hover */}
@@ -97,7 +103,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
           <button
             onClick={handleClick}
             title="Mark as read"
-            className="p-1.5 rounded-md text-gray-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+            className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <polyline points="20 6 9 17 4 12" />
@@ -108,7 +114,7 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
           <button
             onClick={() => onDelete(notification.id)}
             title="Delete"
-            className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+            className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <img src={trashIcon} alt="Delete" className="w-4 h-4 object-contain" />
           </button>

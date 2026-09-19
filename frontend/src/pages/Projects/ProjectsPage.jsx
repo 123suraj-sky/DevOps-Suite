@@ -53,14 +53,14 @@ export const ProjectsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Projects</h1>
         <Button onClick={() => setShowCreateModal(true)}>New Project</Button>
       </div>
 
       {projects.length === 0 ? (
         <Card>
           <div className="text-center py-8">
-            <p className="text-gray-500">No projects yet. Create your first project!</p>
+            <p className="text-gray-500 dark:text-gray-400">No projects yet. Create your first project!</p>
           </div>
         </Card>
       ) : (
@@ -68,11 +68,11 @@ export const ProjectsPage = () => {
           {projects.map((project) => (
             <Link key={project.id} to={`/projects/${project.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{project.description}</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{project.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{project.description}</p>
                 <div className="flex items-center justify-between mt-4">
-                  <span className="text-xs text-gray-400">{formatDate(project.createdAt)}</span>
-                  <span className="text-xs text-gray-500">{project.members.length} members</span>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(project.createdAt)}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{project.members.length} members</span>
                 </div>
               </Card>
             </Link>

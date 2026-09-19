@@ -20,7 +20,7 @@ export const Input = ({
   return (
     <div className="w-full">
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
         </label>
       )}
@@ -30,9 +30,10 @@ export const Input = ({
           type={inputType}
           className={cn(
             'block w-full px-3 py-2 border rounded-md shadow-sm',
+            'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100',
             'focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500',
-            error ? 'border-red-300' : 'border-gray-300',
-            'text-sm placeholder-gray-400',
+            error ? 'border-red-300 dark:border-red-500' : 'border-gray-300 dark:border-gray-600',
+            'text-sm placeholder-gray-400 dark:placeholder-gray-500',
             isPassword && showPasswordToggle ? 'pr-10' : '',
             className
           )}
@@ -43,7 +44,7 @@ export const Input = ({
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             {showPassword ? (
@@ -85,8 +86,8 @@ export const Input = ({
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-      {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {helperText && !error && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helperText}</p>}
     </div>
   );
 };

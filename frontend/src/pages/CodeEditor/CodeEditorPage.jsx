@@ -178,14 +178,14 @@ export const CodeEditorPage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
       {/* Control Panel */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-xl font-bold text-gray-900">Sandbox Code Runner</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Sandbox Code Runner</h2>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             disabled={running}
-            className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-1.5 disabled:opacity-50"
           >
             <option value="python">Python 3</option>
             <option value="javascript">Node.js (JavaScript)</option>
@@ -197,7 +197,7 @@ export const CodeEditorPage = () => {
           onClick={handleRun}
           disabled={running}
           className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-            running ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+            running ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
           }`}
         >
           {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : (
@@ -209,11 +209,12 @@ export const CodeEditorPage = () => {
         </button>
       </div>
 
-      <div className="flex flex-1 gap-4 min-h-0">
+      {/* Editor + panels — stack vertically on mobile, side-by-side on lg+ */}
+      <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         {/* Editor */}
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Source Code</span>
+        <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[300px] lg:min-h-0">
+          <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source Code</span>
           </div>
           <div className="flex-1 min-h-0">
             <Editor
@@ -227,24 +228,24 @@ export const CodeEditorPage = () => {
           </div>
         </div>
 
-        {/* Right Panel */}
-        <div className="w-96 flex flex-col space-y-4">
+        {/* Right Panel — full width on mobile, fixed 384px on lg+ */}
+        <div className="w-full lg:w-96 flex flex-col gap-4">
           {/* Stdin */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-40">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-40">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               Standard Input (stdin)
             </label>
             <textarea
               value={stdin}
               onChange={(e) => setStdin(e.target.value)}
-              className="flex-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm resize-none font-mono"
+              className="flex-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm resize-none font-mono p-2"
               placeholder="Provide stdin inputs here…"
             />
           </div>
 
           {/* Output Console */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col flex-1 min-h-0">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col flex-1 min-h-[200px] lg:min-h-0">
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
               Output Console
             </span>
             <div className="flex-1 bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs overflow-y-auto whitespace-pre-wrap">

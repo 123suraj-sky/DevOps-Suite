@@ -22,11 +22,11 @@ function getLevel(count) {
 }
 
 const LEVEL_CLASSES = [
-  'bg-gray-100',           // 0 — no activity
-  'bg-green-200',          // 1 — light
-  'bg-green-400',          // 2 — medium
-  'bg-green-600',          // 3 — strong
-  'bg-green-800',          // 4 — max
+  'bg-gray-100 dark:bg-gray-700',  // 0 — no activity
+  'bg-green-200',                   // 1 — light
+  'bg-green-400',                   // 2 — medium
+  'bg-green-600',                   // 3 — strong
+  'bg-green-800',                   // 4 — max
 ];
 
 const LEVEL_LABELS = ['No runs', '1 run', '2–3 runs', '4–6 runs', '7+ runs'];
@@ -116,8 +116,8 @@ export function ActivityHeatmap({ data = [], loading = false, totalDays = 365 })
   if (loading) {
     return (
       <div className="animate-pulse">
-        <div className="h-4 w-40 bg-gray-200 rounded mb-3" />
-        <div className="h-24 bg-gray-100 rounded-lg" />
+        <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+        <div className="h-24 bg-gray-100 dark:bg-gray-700 rounded-lg" />
       </div>
     );
   }
@@ -129,10 +129,10 @@ export function ActivityHeatmap({ data = [], loading = false, totalDays = 365 })
     <div className="select-none">
       {/* ── Header ── */}
       <div className="flex items-baseline justify-between mb-3">
-        <p className="text-sm font-semibold text-gray-700">
+        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
           Code Run Activity
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           {totalRuns.toLocaleString()} run{totalRuns !== 1 ? 's' : ''} in the past year
         </p>
       </div>
@@ -207,7 +207,7 @@ export function ActivityHeatmap({ data = [], loading = false, totalDays = 365 })
         {LEVEL_CLASSES.map((cls, i) => (
           <div
             key={i}
-            className={`w-3 h-3 rounded-sm ${cls} border border-gray-200`}
+            className={`w-3 h-3 rounded-sm ${cls} border border-gray-200 dark:border-gray-600`}
             title={LEVEL_LABELS[i]}
           />
         ))}

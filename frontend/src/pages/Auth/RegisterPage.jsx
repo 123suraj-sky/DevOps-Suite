@@ -71,23 +71,23 @@ export const RegisterPage = () => {
 
   // Password hint: grey (untouched) → red (blurred & invalid) → green (valid)
   const passwordHintClass = passwordValid
-    ? 'text-green-600'
+    ? 'text-green-600 dark:text-green-400'
     : passwordBlurred
-    ? 'text-red-500'
-    : 'text-gray-400';
+    ? 'text-red-500 dark:text-red-400'
+    : 'text-gray-400 dark:text-gray-500';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">DevOps Suite</h1>
-          <p className="text-sm text-gray-500 mt-2">Create your account</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">DevOps Suite</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">
               {error}
             </div>
           )}
@@ -164,7 +164,7 @@ export const RegisterPage = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
           Already have an account?{' '}
           <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
             Sign in

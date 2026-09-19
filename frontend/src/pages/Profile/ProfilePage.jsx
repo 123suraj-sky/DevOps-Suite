@@ -43,7 +43,7 @@ const ToggleSwitch = ({ checked, onChange, disabled, label }) => (
     className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent
       transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1
       disabled:opacity-50 disabled:cursor-not-allowed
-      ${checked ? 'bg-primary-600' : 'bg-gray-200'}`}
+      ${checked ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'}`}
   >
     <span
       className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0
@@ -355,10 +355,10 @@ export const ProfilePage = () => {
       {/* ── Page header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {isSelf ? 'User Profile' : (displayUser?.displayName || 'User Profile')}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {isSelf
               ? 'Manage your personal settings, avatar, and view your activity stats.'
               : `Viewing ${displayUser?.displayName ?? 'this user'}'s public profile.`}
@@ -418,7 +418,7 @@ export const ProfilePage = () => {
                   className="w-28 h-28 rounded-full object-cover border-4 border-primary-50 shadow-md bg-white"
                 />
               ) : (
-                <div className="w-28 h-28 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-4xl font-bold border-4 border-primary-50 shadow-md">
+                <div className="w-28 h-28 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center text-4xl font-bold border-4 border-primary-50 dark:border-primary-900/20 shadow-md">
                   {(displayUser?.displayName || displayUser?.email || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
@@ -456,11 +456,11 @@ export const ProfilePage = () => {
                   required
                 />
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
                   <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
                     <option value="MALE">Male</option>
@@ -468,10 +468,10 @@ export const ProfilePage = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
                   <input type="text" disabled value={currentUser?.email || ''}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm cursor-not-allowed" />
-                  <p className="text-xs text-gray-400 mt-1">Email address is managed by your account credentials.</p>
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm cursor-not-allowed" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Email address is managed by your account credentials.</p>
                 </div>
               </form>
             ) : (
@@ -479,13 +479,13 @@ export const ProfilePage = () => {
               <div className="space-y-3 text-center md:text-left">
                 {/* Name + roles */}
                 <div className="flex flex-col md:flex-row md:items-center gap-2">
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {displayUser?.displayName || 'Unnamed User'}
                   </h2>
                   <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
                     {displayUser?.roles?.filter((r) => r !== 'ROLE_MEMBER').map((role) => (
                       <span key={role}
-                        className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-100 text-primary-800 uppercase tracking-wide">
+                        className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 uppercase tracking-wide">
                         {role.replace('ROLE_', '')}
                       </span>
                     ))}
@@ -494,8 +494,8 @@ export const ProfilePage = () => {
 
                 {/* Email — hidden for public profiles */}
                 {isSelf && (
-                  <p className="text-gray-600 text-sm flex items-center justify-center md:justify-start gap-1.5">
-                    <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm flex items-center justify-center md:justify-start gap-1.5">
+                    <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                         d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -504,25 +504,25 @@ export const ProfilePage = () => {
                 )}
 
                 {/* Metadata grid */}
-                <div className="pt-2 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-500">
+                <div className="pt-2 border-t border-gray-100 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-500 dark:text-gray-400">
                   {isSelf && (
                     <div>
-                      <span className="font-medium text-gray-700">Account ID:</span>{' '}
-                      <span className="font-mono text-xs text-gray-600">{currentUser?.id || currentUser?.userId}</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Account ID:</span>{' '}
+                      <span className="font-mono text-xs text-gray-600 dark:text-gray-400">{currentUser?.id || currentUser?.userId}</span>
                     </div>
                   )}
                   <div>
-                    <span className="font-medium text-gray-700">Member Since:</span>{' '}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Member Since:</span>{' '}
                     <span>{displayUser?.createdAt ? formatDate(displayUser.createdAt) : '—'}</span>
                   </div>
                   {isSelf && displayUser?.lastLoginAt && (
                     <div>
-                      <span className="font-medium text-gray-700">Last Active:</span>{' '}
+                      <span className="font-medium text-gray-700 dark:text-gray-300">Last Active:</span>{' '}
                       <span>{formatDate(displayUser.lastLoginAt)}</span>
                     </div>
                   )}
                   <div>
-                    <span className="font-medium text-gray-700">Gender:</span>{' '}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Gender:</span>{' '}
                     <span>
                       {displayGender === 'MALE' && 'Male'}
                       {displayGender === 'FEMALE' && 'Female'}
@@ -532,32 +532,24 @@ export const ProfilePage = () => {
                 </div>
 
                 {/* Followers / Following / Profile Views */}
-                <div className="flex flex-wrap gap-6 pt-3 border-t border-gray-100">
-                  <button
-                    type="button"
-                    onClick={() => openFollowModal('followers')}
-                    className="text-center group"
-                  >
-                    <p className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                <div className="flex flex-wrap gap-6 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <button type="button" onClick={() => openFollowModal('followers')} className="text-center group">
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {loadingProfile ? '—' : followersCount.toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 group-hover:text-primary-500 transition-colors">Followers</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors">Followers</p>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => openFollowModal('following')}
-                    className="text-center group"
-                  >
-                    <p className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
+                  <button type="button" onClick={() => openFollowModal('following')} className="text-center group">
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {loadingProfile ? '—' : (profileData?.followingCount ?? 0).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5 group-hover:text-primary-500 transition-colors">Following</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 group-hover:text-primary-500 dark:group-hover:text-primary-400 transition-colors">Following</p>
                   </button>
                   <div className="text-center">
-                    <p className="text-xl font-bold text-gray-900">
+                    <p className="text-xl font-bold text-gray-900 dark:text-gray-100">
                       {loadingProfile ? '—' : (profileData?.profileViewCount ?? 0).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Profile Views</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Profile Views</p>
                   </div>
                 </div>
               </div>
@@ -568,7 +560,7 @@ export const ProfilePage = () => {
 
       {/* ── Activity & Statistics (self only: stat cards; both: heatmap) ── */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
           {isSelf ? 'Activity & Statistics' : 'Code Run Activity'}
         </h2>
 
@@ -580,24 +572,24 @@ export const ProfilePage = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="p-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Open Tasks</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{taskStats?.open ?? 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Tasks in backlog &amp; todo</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Open Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{taskStats?.open ?? 0}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tasks in backlog &amp; todo</p>
                 </Card>
                 <Card className="p-4">
-                  <p className="text-xs font-medium text-yellow-600 uppercase tracking-wider">In Progress</p>
-                  <p className="text-2xl font-bold text-yellow-600 mt-1">{taskStats?.inProgress ?? 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Tasks actively working on</p>
+                  <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400 uppercase tracking-wider">In Progress</p>
+                  <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{taskStats?.inProgress ?? 0}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tasks actively working on</p>
                 </Card>
                 <Card className="p-4">
-                  <p className="text-xs font-medium text-green-600 uppercase tracking-wider">Completed</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">{taskStats?.completed ?? 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Finished tasks</p>
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400 uppercase tracking-wider">Completed</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{taskStats?.completed ?? 0}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Finished tasks</p>
                 </Card>
                 <Card className="p-4">
-                  <p className="text-xs font-medium text-primary-600 uppercase tracking-wider">Code Runs (7d)</p>
-                  <p className="text-2xl font-bold text-primary-600 mt-1">{executionsThisWeek ?? 0}</p>
-                  <p className="text-xs text-gray-400 mt-1">Sandboxed executions</p>
+                  <p className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Code Runs (7d)</p>
+                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{executionsThisWeek ?? 0}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Sandboxed executions</p>
                 </Card>
               </div>
             )
@@ -617,7 +609,7 @@ export const ProfilePage = () => {
       {/* ── Notification Preferences (self only) ── */}
       {isSelf && (
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Notification Preferences</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Notification Preferences</h2>
           <Card className="p-6">
             {prefLoading ? (
               <Spinner size="sm" />
@@ -625,19 +617,19 @@ export const ProfilePage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="text-left pb-3 text-gray-600 font-medium">Notification type</th>
-                      <th className="text-center pb-3 text-gray-600 font-medium w-28">In-app</th>
-                      <th className="text-center pb-3 text-gray-600 font-medium w-28">Email</th>
+                    <tr className="border-b border-gray-100 dark:border-gray-700">
+                      <th className="text-left pb-3 text-gray-600 dark:text-gray-300 font-medium">Notification type</th>
+                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-28">In-app</th>
+                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-28">Email</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                     {preferences.map((pref) => {
                       const inAppKey = `${pref.type}:in_app`;
                       const emailKey = `${pref.type}:email`;
                       return (
                         <tr key={pref.type}>
-                          <td className="py-3 text-gray-700">{PREF_TYPE_LABELS[pref.type] ?? pref.type}</td>
+                          <td className="py-3 text-gray-700 dark:text-gray-300">{PREF_TYPE_LABELS[pref.type] ?? pref.type}</td>
                           <td className="py-3 text-center">
                             <ToggleSwitch
                               checked={pref.inApp ?? true}
@@ -659,7 +651,7 @@ export const ProfilePage = () => {
                     })}
                   </tbody>
                 </table>
-                <p className="text-xs text-gray-400 mt-4">
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
                   Email notifications are sent to <strong>{currentUser?.email}</strong>.
                   SMTP must be configured on the server for email delivery to work.
                 </p>
@@ -673,13 +665,13 @@ export const ProfilePage = () => {
       {isSelf && (
         <>
           <Modal isOpen={showAvatarModal} onClose={closeAvatarModal} title="Choose Profile Picture">
-            <div className="flex border-b border-gray-200 mb-4 -mx-1">
+            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4 -mx-1">
               {[{ id: TAB_AVATAR, label: 'Avatar' }, { id: TAB_UPLOAD, label: 'Upload Photo' }].map(({ id, label }) => (
                 <button key={id} type="button" onClick={() => setAvatarTab(id)}
                   className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     avatarTab === id
-                      ? 'border-primary-600 text-primary-700'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                      ? 'border-primary-600 text-primary-700 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}>
                   {label}
                 </button>
@@ -688,15 +680,15 @@ export const ProfilePage = () => {
 
             {avatarTab === TAB_AVATAR && (
               <div className="space-y-4">
-                <p className="text-xs text-gray-500">Click an avatar to select it, then press <strong>Apply</strong>.</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Click an avatar to select it, then press <strong>Apply</strong>.</p>
                 <div className="grid grid-cols-4 gap-3">
                   {presetBots.map(({ seed, dataUri }) => (
                     <button key={seed} type="button" title={`Bot ${seed}`}
                       onClick={() => setPendingAvatar(dataUri)}
                       className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-300 ${
                         pendingAvatar === dataUri
-                          ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                          ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50 dark:bg-primary-900/20'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
                       }`}>
                       <img src={dataUri} alt={`Bot ${seed}`} className="w-full aspect-square rounded-lg object-cover bg-gray-50" />
                     </button>
@@ -705,34 +697,34 @@ export const ProfilePage = () => {
                   <button type="button" title="Generate random avatar" onClick={handleGenerateRandom}
                     className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-300 ${
                       pendingAvatar === randomBot.dataUri
-                        ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                        ? 'border-primary-500 shadow-[0_0_0_3px_rgba(99,102,241,0.25)] bg-primary-50 dark:bg-primary-900/20'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700'
                     }`}>
                     <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-50">
                       <img src={randomBot.dataUri} alt="Random avatar" className="w-full h-full object-cover" />
-                      <span className="absolute bottom-0.5 right-0.5 w-5 h-5 bg-white rounded-full shadow flex items-center justify-center border border-gray-200">
-                        <svg className="w-3 h-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <span className="absolute bottom-0.5 right-0.5 w-5 h-5 bg-white dark:bg-gray-600 rounded-full shadow flex items-center justify-center border border-gray-200 dark:border-gray-500">
+                        <svg className="w-3 h-3 text-gray-600 dark:text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M17 7l4 4m0 0l-4 4m4-4H3M7 17l-4-4m0 0l4-4m-4 4h18" />
                         </svg>
                       </span>
                     </div>
-                    <p className="text-center text-xs text-gray-400 mt-1 leading-tight">Random</p>
+                    <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-1 leading-tight">Random</p>
                   </button>
 
                   <button type="button" title="Remove profile photo" onClick={() => setPendingAvatar('')}
                     className={`relative p-1.5 rounded-xl border-2 transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-300 ${
                       pendingAvatar === ''
-                        ? 'border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.2)] bg-red-50'
-                        : 'border-gray-200 hover:border-red-300 bg-white'
+                        ? 'border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.2)] bg-red-50 dark:bg-red-900/20'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-red-300 bg-white dark:bg-gray-700'
                     }`}>
-                    <div className="w-full aspect-square rounded-lg bg-gray-100 flex flex-col items-center justify-center gap-1">
+                    <div className="w-full aspect-square rounded-lg bg-gray-100 dark:bg-gray-600 flex flex-col items-center justify-center gap-1">
                       <img src={removePhotoIcon} alt="" className="w-7 h-7 opacity-40" />
                     </div>
-                    <p className="text-center text-xs text-gray-400 mt-1 leading-tight">Remove</p>
+                    <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-1 leading-tight">Remove</p>
                   </button>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                   <Button variant="ghost" type="button" onClick={closeAvatarModal}>Cancel</Button>
                   <Button
                     variant={pendingAvatar === '' ? 'danger' : 'primary'}
@@ -748,23 +740,23 @@ export const ProfilePage = () => {
 
             {avatarTab === TAB_UPLOAD && (
               <div className="space-y-4">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Upload a photo from your device. You can zoom and drag to position it within the circle.
                   The photo uploads automatically once you confirm the crop.
                 </p>
                 {avatarUrl && !avatarUrl.startsWith('data:') && (
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
                     <img src={avatarUrl} alt="Current avatar"
                       className="w-12 h-12 rounded-full object-cover border-2 border-primary-100" />
-                    <p className="text-xs text-gray-600 flex-1">Current uploaded photo. You can replace it below.</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 flex-1">Current uploaded photo. You can replace it below.</p>
                   </div>
                 )}
                 <button type="button" onClick={() => setShowCropModal(true)}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-primary-400 hover:text-primary-700 hover:bg-primary-50 transition-colors">
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-600 dark:text-gray-300 hover:border-primary-400 hover:text-primary-700 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/10 transition-colors">
                   <img src={uploadIcon} alt="" className="w-5 h-5 opacity-70" />
                   Choose &amp; Crop Photo
                 </button>
-                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-end gap-2 pt-3 border-t border-gray-100 dark:border-gray-700">
                   <Button variant="ghost" type="button" onClick={closeAvatarModal}>Close</Button>
                 </div>
               </div>
@@ -790,43 +782,35 @@ export const ProfilePage = () => {
             <Spinner size="md" />
           </div>
         ) : followModalList.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-8">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
             {followModal === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
           </p>
         ) : (
-          <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+          <ul className="divide-y divide-gray-100 dark:divide-gray-700 max-h-96 overflow-y-auto">
             {followModalList.map((u) => (
               <li key={u.userId ?? u.id}>
                 <Link
                   to={`/users/${u.userId ?? u.id}`}
                   onClick={() => setFollowModal(null)}
-                  className="flex items-center gap-3 py-3 px-1 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="flex items-center gap-3 py-3 px-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  {/* Avatar */}
                   {u.avatarUrl ? (
-                    <img
-                      src={u.avatarUrl}
-                      alt={u.displayName || 'User'}
-                      className="w-9 h-9 rounded-full object-cover border border-gray-200 bg-white shrink-0"
-                      onError={(e) => { e.target.onerror = null; e.target.src = generateBotAvatar('User'); }}
-                    />
+                    <img src={u.avatarUrl} alt={u.displayName || 'User'}
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shrink-0"
+                      onError={(e) => { e.target.onerror = null; e.target.src = generateBotAvatar('User'); }} />
                   ) : getDefaultAvatar(u.gender) ? (
-                    <img
-                      src={getDefaultAvatar(u.gender)}
-                      alt={u.displayName || 'User'}
-                      className="w-9 h-9 rounded-full object-cover border border-gray-200 bg-white shrink-0"
-                    />
+                    <img src={getDefaultAvatar(u.gender)} alt={u.displayName || 'User'}
+                      className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shrink-0" />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold border border-gray-200 shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center text-sm font-bold border border-gray-200 dark:border-gray-600 shrink-0">
                       {(u.displayName || u.email || 'U').charAt(0).toUpperCase()}
                     </div>
                   )}
-                  {/* Name + email */}
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {u.displayName || 'Unnamed User'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
                   </div>
                 </Link>
               </li>

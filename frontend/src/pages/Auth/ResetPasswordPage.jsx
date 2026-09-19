@@ -35,16 +35,16 @@ export const ResetPasswordPage = () => {
   // No token in URL — show an error state immediately
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
         <Card className="w-full max-w-md">
           <div className="text-center mb-6">
             <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900">Invalid reset link</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Invalid reset link</h1>
           </div>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 text-center mb-4">
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300 text-center mb-4">
             This password reset link is invalid or has already been used.
           </div>
-          <div className="text-center text-sm text-gray-500">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
             <Link to="/forgot-password" className="text-primary-600 hover:text-primary-700 font-medium">
               Request a new reset link
             </Link>
@@ -73,23 +73,23 @@ export const ResetPasswordPage = () => {
   };
 
   const passwordHintClass = passwordValid
-    ? 'text-green-600'
+    ? 'text-green-600 dark:text-green-400'
     : passwordBlurred
-    ? 'text-red-500'
-    : 'text-gray-400';
+    ? 'text-red-500 dark:text-red-400'
+    : 'text-gray-400 dark:text-gray-500';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <Card className="w-full max-w-md">
         <div className="text-center mb-8">
           <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">Choose a new password</h1>
-          <p className="text-sm text-gray-500 mt-2">Must be at least 8 characters.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Choose a new password</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Must be at least 8 characters.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">
               {error}
             </div>
           )}
@@ -141,7 +141,7 @@ export const ResetPasswordPage = () => {
             Reset password
           </Button>
 
-          <div className="text-center text-sm text-gray-500">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
             <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
               Back to sign in
             </Link>

@@ -5,6 +5,7 @@ import { WebSocketProvider } from './context/WebSocketContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { EditorProvider } from './context/EditorContext';
 import { ProjectsProvider } from './context/ProjectsContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProjectLayout } from './components/layout/ProjectLayout';
 import { Spinner } from './components/common/Spinner';
@@ -156,19 +157,21 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
-    <Router>
-      <AuthProvider>
-        <WebSocketProvider>
-          <NotificationProvider>
-            <EditorProvider>
-              <ProjectsProvider>
-                <AppRoutes />
-              </ProjectsProvider>
-            </EditorProvider>
-          </NotificationProvider>
-        </WebSocketProvider>
-      </AuthProvider>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AuthProvider>
+          <WebSocketProvider>
+            <NotificationProvider>
+              <EditorProvider>
+                <ProjectsProvider>
+                  <AppRoutes />
+                </ProjectsProvider>
+              </EditorProvider>
+            </NotificationProvider>
+          </WebSocketProvider>
+        </AuthProvider>
+      </Router>
+    </ThemeProvider>
   );
 };
 

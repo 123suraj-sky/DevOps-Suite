@@ -71,11 +71,13 @@ export const LogsPage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
       {/* Control bar */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
-          <h2 className="text-xl font-bold text-gray-900">Project Stream Logs</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Project Stream Logs</h2>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-            connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            connected
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
           }`}>
             {connected ? 'Live Streaming' : 'Offline'}
           </span>
@@ -87,12 +89,12 @@ export const LogsPage = () => {
             placeholder="Search logs (e.g. GET, 500)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="w-full sm:w-64 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-2"
           />
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center px-3.5 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
+            className="inline-flex items-center px-3.5 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none disabled:opacity-50 transition-colors"
           >
             {loading ? 'Searching...' : 'Search'}
           </button>

@@ -99,9 +99,9 @@ export const ProjectDetailPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Members panel */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
-          <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">Project Members</h2>
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Project Members</h2>
             {isOwnerOrAdmin && (
               <Button onClick={() => setShowAddMemberModal(true)} size="sm">
                 Add Member
@@ -109,7 +109,7 @@ export const ProjectDetailPage = () => {
             )}
           </div>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {project?.members?.map((member) => {
               const isSelf = member.userId === currentUser?.id || member.email === currentUser?.email;
               const isTargetOwner = member.role === 'OWNER';
@@ -127,16 +127,16 @@ export const ProjectDetailPage = () => {
                 <div key={member.userId} className="flex justify-between items-center py-3">
                   <div>
                     {isSelf ? (
-                      <p className="text-sm font-medium text-gray-900">{member.displayName || member.email}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{member.displayName || member.email}</p>
                     ) : (
                       <Link
                         to={`/users/${member.userId}`}
-                        className="text-sm font-medium text-gray-900 hover:text-primary-600 hover:underline"
+                        className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
                       >
                         {member.displayName || member.email}
                       </Link>
                     )}
-                    <p className="text-xs text-gray-500">{member.email}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{member.email}</p>
                   </div>
                   <div className="flex items-center space-x-3">
                     {canChangeRole ? (
@@ -144,15 +144,16 @@ export const ProjectDetailPage = () => {
                         value={member.role}
                         disabled={changingRoleFor === member.userId}
                         onChange={(e) => handleChangeRole(member.userId, e.target.value)}
-                        className="text-xs border border-gray-300 rounded-md px-2 py-0.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
+                        className="text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-0.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 cursor-pointer"
                       >
                         <option value="MEMBER">MEMBER</option>
                         <option value="ADMIN">ADMIN</option>
                       </select>
                     ) : (
                       <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                        member.role === 'OWNER' ? 'bg-purple-100 text-purple-800' :
-                        member.role === 'ADMIN' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'
+                        member.role === 'OWNER' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' :
+                        member.role === 'ADMIN' ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300' :
+                                                   'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                       }`}>
                         {member.role}
                       </span>
@@ -160,7 +161,7 @@ export const ProjectDetailPage = () => {
                     {canRemove && (
                       <button
                         onClick={() => handleRemoveMember(member.userId)}
-                        className="text-xs text-red-500 hover:text-red-700 font-semibold"
+                        className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-semibold"
                       >
                         Remove
                       </button>
@@ -173,16 +174,16 @@ export const ProjectDetailPage = () => {
         </div>
 
         {/* Status card */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b border-gray-100 pb-2">Project Info</h2>
-          <div className="space-y-3 text-sm text-gray-600">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-700 pb-2">Project Info</h2>
+          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
             <div>
               <span className="font-semibold block">Owner ID</span>
               <span>{project?.ownerId}</span>
             </div>
             <div>
               <span className="font-semibold block">Status</span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                 {project?.status || 'ACTIVE'}
               </span>
             </div>

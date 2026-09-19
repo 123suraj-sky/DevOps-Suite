@@ -29,10 +29,10 @@ export const TaskCard = ({
   // ── Priority badge styling ─────────────────────────────────────────────────
   const priorityStyle =
     task.priority === 'HIGH' || task.priority === 'CRITICAL'
-      ? 'bg-red-100 text-red-800'
+      ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
       : task.priority === 'MEDIUM'
-      ? 'bg-yellow-100 text-yellow-800'
-      : 'bg-blue-100 text-blue-800';
+      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
 
   // ── Relative-time helper ───────────────────────────────────────────────────
   const relativeTime = (isoString) => {
@@ -53,7 +53,7 @@ export const TaskCard = ({
 
   return (
     <Card
-      className="hover:shadow cursor-grab active:cursor-grabbing p-3 space-y-2 bg-white select-none"
+      className="hover:shadow cursor-grab active:cursor-grabbing p-3 space-y-2 bg-white dark:bg-gray-800 select-none"
       padding="none"
       onContextMenu={(e) => {
         e.preventDefault();
@@ -62,7 +62,7 @@ export const TaskCard = ({
     >
       {/* ── Row 1: title + priority + edit/delete ─────────────────────────── */}
       <div className="flex justify-between items-start">
-        <h4 className="font-semibold text-gray-900 text-sm line-clamp-1 flex-1 min-w-0 mr-2">
+        <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm line-clamp-1 flex-1 min-w-0 mr-2">
           <button
             type="button"
             onMouseDown={(e) => e.stopPropagation()}
@@ -130,13 +130,13 @@ export const TaskCard = ({
 
       {/* ── Row 2: description ─────────────────────────────────────────────── */}
       {task.description && (
-        <p className="text-xs text-gray-500 line-clamp-2">{task.description}</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{task.description}</p>
       )}
 
       {/* ── Row 3: due date (if set) ────────────────────────────────────── */}
       {task.due_date && (
         <div className="flex items-center pt-0.5">
-          <span className="text-[10px] text-gray-400 whitespace-nowrap flex items-center gap-1">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap flex items-center gap-1">
             <img src={calendarIcon} alt="" className="w-3 h-3 inline-block opacity-35" aria-hidden="true" />
             {new Date(task.due_date).toLocaleDateString()}
           </span>
@@ -155,11 +155,11 @@ export const TaskCard = ({
                 .filter(Boolean)
                 .join('\n') || undefined
             }
-            className="text-[10px] text-gray-400 cursor-default"
+            className="text-[10px] text-gray-400 dark:text-gray-500 cursor-default"
           >
             Created {createdRel}
             {task.created_by_name && (
-              <span className="text-gray-300"> · {task.created_by_name}</span>
+              <span className="text-gray-300 dark:text-gray-600"> · {task.created_by_name}</span>
             )}
           </span>
         </div>

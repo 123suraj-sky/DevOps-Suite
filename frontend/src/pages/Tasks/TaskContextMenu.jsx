@@ -71,8 +71,8 @@ export const TaskContextMenu = ({
       className={[
         'w-full text-left px-3 py-2 text-xs rounded transition-colors flex items-center gap-2',
         opts.danger
-          ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-          : 'text-gray-700 hover:bg-gray-100',
+          ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300'
+          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700',
       ].join(' ')}
     >
       {opts.icon && (
@@ -91,20 +91,20 @@ export const TaskContextMenu = ({
       role="menu"
       aria-label="Task actions"
       style={{ top: clampedY, left: clampedX, position: 'fixed', zIndex: 9999 }}
-      className="bg-white border border-gray-200 rounded-lg shadow-2xl py-1.5 min-w-[192px] select-none"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl py-1.5 min-w-[192px] select-none"
     >
       {/* ── Admin/Owner-only actions ─────────────────────────────────────── */}
       {isAdminOrOwner && (
         <>
           {item('Edit Task', () => onEdit(task), { icon: editIcon })}
-          <div className="my-1 mx-2 border-t border-gray-100" />
+          <div className="my-1 mx-2 border-t border-gray-100 dark:border-gray-700" />
         </>
       )}
 
       {/* ── Move to ─────────────────────────────────────────────────────── */}
       {moveTargets.length > 0 && (
         <>
-          <p className="px-3 pt-1 pb-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+          <p className="px-3 pt-1 pb-0.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
             Move to
           </p>
           {moveTargets.map((col) =>
@@ -116,9 +116,9 @@ export const TaskContextMenu = ({
       {/* ── Admin/Owner-only actions ─────────────────────────────────────── */}
       {isAdminOrOwner && (
         <>
-          <div className="my-1 mx-2 border-t border-gray-100" />
+          <div className="my-1 mx-2 border-t border-gray-100 dark:border-gray-700" />
           {item('Duplicate', () => onDuplicate(task), { icon: duplicateIcon })}
-          <div className="my-1 mx-2 border-t border-gray-100" />
+          <div className="my-1 mx-2 border-t border-gray-100 dark:border-gray-700" />
           {item('Delete', () => onDelete(task.id), { icon: trashIcon, danger: true })}
         </>
       )}

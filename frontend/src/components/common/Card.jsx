@@ -11,7 +11,7 @@ export const Card = ({ children, className, padding = 'md', ...rest }) => {
   return (
     <div
       className={cn(
-        'bg-white rounded-lg border border-gray-200 shadow-sm',
+        'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm',
         paddings[padding],
         className
       )}
