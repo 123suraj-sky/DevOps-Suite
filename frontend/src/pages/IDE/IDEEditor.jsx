@@ -175,6 +175,93 @@ const JS_SNIPPETS = [
   { label: 'spread',     insert: 'const ${1:copy} = { ...${2:obj} };',                                                  detail: 'Spread object' },
 ];
 
+const HTML_SNIPPETS = [
+  { label: 'doc',       insert: '<!DOCTYPE html>\n<html lang="${1:en}">\n<head>\n\t<meta charset="UTF-8" />\n\t<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n\t<title>${2:Document}</title>\n</head>\n<body>\n\t${3}\n</body>\n</html>', detail: 'HTML5 document skeleton' },
+  { label: 'meta',      insert: '<meta name="${1:name}" content="${2:content}" />',                                    detail: '<meta>' },
+  { label: 'link',      insert: '<link rel="stylesheet" href="${1:style.css}" />',                                    detail: '<link> stylesheet' },
+  { label: 'script',    insert: '<script src="${1:script.js}"></script>',                                             detail: '<script src>' },
+  { label: 'scripti',   insert: '<script>\n\t${1}\n</script>',                                                        detail: '<script> inline' },
+  { label: 'style',     insert: '<style>\n\t${1}\n</style>',                                                          detail: '<style> inline' },
+  { label: 'div',       insert: '<div class="${1:container}">\n\t${2}\n</div>',                                       detail: '<div>' },
+  { label: 'span',      insert: '<span class="${1}">${2}</span>',                                                     detail: '<span>' },
+  { label: 'p',         insert: '<p>${1}</p>',                                                                        detail: '<p>' },
+  { label: 'a',         insert: '<a href="${1:#}">${2:link text}</a>',                                                 detail: '<a>' },
+  { label: 'img',       insert: '<img src="${1:image.png}" alt="${2:description}" />',                                 detail: '<img>' },
+  { label: 'ul',        insert: '<ul>\n\t<li>${1}</li>\n</ul>',                                                       detail: '<ul>' },
+  { label: 'ol',        insert: '<ol>\n\t<li>${1}</li>\n</ol>',                                                       detail: '<ol>' },
+  { label: 'li',        insert: '<li>${1}</li>',                                                                      detail: '<li>' },
+  { label: 'table',     insert: '<table>\n\t<thead>\n\t\t<tr>\n\t\t\t<th>${1:Header}</th>\n\t\t</tr>\n\t</thead>\n\t<tbody>\n\t\t<tr>\n\t\t\t<td>${2:Data}</td>\n\t\t</tr>\n\t</tbody>\n</table>', detail: '<table>' },
+  { label: 'form',      insert: '<form action="${1:#}" method="${2:post}">\n\t${3}\n\t<button type="submit">${4:Submit}</button>\n</form>', detail: '<form>' },
+  { label: 'input',     insert: '<input type="${1:text}" name="${2:name}" id="${2:name}" placeholder="${3}" />',       detail: '<input>' },
+  { label: 'label',     insert: '<label for="${1:id}">${2:Label}</label>',                                            detail: '<label>' },
+  { label: 'button',    insert: '<button type="${1:button}">${2:Click me}</button>',                                  detail: '<button>' },
+  { label: 'select',    insert: '<select name="${1:name}" id="${1:name}">\n\t<option value="${2:value}">${3:Label}</option>\n</select>', detail: '<select>' },
+  { label: 'textarea',  insert: '<textarea name="${1:name}" id="${1:name}" rows="${2:4}" cols="${3:50}">${4}</textarea>', detail: '<textarea>' },
+  { label: 'header',    insert: '<header>\n\t${1}\n</header>',                                                        detail: '<header>' },
+  { label: 'footer',    insert: '<footer>\n\t${1}\n</footer>',                                                        detail: '<footer>' },
+  { label: 'nav',       insert: '<nav>\n\t${1}\n</nav>',                                                              detail: '<nav>' },
+  { label: 'main',      insert: '<main>\n\t${1}\n</main>',                                                            detail: '<main>' },
+  { label: 'section',   insert: '<section>\n\t${1}\n</section>',                                                      detail: '<section>' },
+  { label: 'article',   insert: '<article>\n\t${1}\n</article>',                                                      detail: '<article>' },
+  { label: 'aside',     insert: '<aside>\n\t${1}\n</aside>',                                                          detail: '<aside>' },
+  { label: 'h1',        insert: '<h1>${1}</h1>',                                                                      detail: '<h1>' },
+  { label: 'h2',        insert: '<h2>${1}</h2>',                                                                      detail: '<h2>' },
+  { label: 'h3',        insert: '<h3>${1}</h3>',                                                                      detail: '<h3>' },
+  { label: 'figure',    insert: '<figure>\n\t<img src="${1:image.png}" alt="${2}" />\n\t<figcaption>${3}</figcaption>\n</figure>', detail: '<figure>' },
+];
+
+const CSS_SNIPPETS = [
+  { label: 'rule',      insert: '${1:selector} {\n\t${2:property}: ${3:value};\n}',                                  detail: 'CSS rule' },
+  { label: 'media',     insert: '@media (${1:max-width: 768px}) {\n\t${2}\n}',                                        detail: '@media query' },
+  { label: 'var',       insert: '--${1:name}: ${2:value};',                                                           detail: 'CSS custom property' },
+  { label: 'usevar',    insert: 'var(--${1:name})',                                                                   detail: 'var()' },
+  { label: 'flex',      insert: 'display: flex;\njustify-content: ${1:center};\nalign-items: ${2:center};',           detail: 'Flexbox' },
+  { label: 'grid',      insert: 'display: grid;\ngrid-template-columns: ${1:repeat(3, 1fr)};\ngap: ${2:1rem};',      detail: 'CSS Grid' },
+  { label: 'center',    insert: 'display: flex;\njustify-content: center;\nalign-items: center;',                    detail: 'Flex center' },
+  { label: 'abs',       insert: 'position: absolute;\ntop: ${1:0};\nleft: ${2:0};',                                  detail: 'position: absolute' },
+  { label: 'rel',       insert: 'position: relative;',                                                               detail: 'position: relative' },
+  { label: 'fixed',     insert: 'position: fixed;\ntop: ${1:0};\nleft: ${2:0};',                                     detail: 'position: fixed' },
+  { label: 'sticky',    insert: 'position: sticky;\ntop: ${1:0};',                                                   detail: 'position: sticky' },
+  { label: 'box',       insert: 'box-sizing: border-box;',                                                           detail: 'box-sizing' },
+  { label: 'shadow',    insert: 'box-shadow: ${1:0} ${2:2px} ${3:4px} ${4:rgba(0, 0, 0, 0.1)};',                    detail: 'box-shadow' },
+  { label: 'txtshadow', insert: 'text-shadow: ${1:1px} ${2:1px} ${3:2px} ${4:rgba(0, 0, 0, 0.3)};',                 detail: 'text-shadow' },
+  { label: 'transition',insert: 'transition: ${1:all} ${2:0.3s} ${3:ease};',                                         detail: 'transition' },
+  { label: 'animation', insert: 'animation: ${1:name} ${2:1s} ${3:ease-in-out} ${4:infinite};',                      detail: 'animation' },
+  { label: 'keyframes', insert: '@keyframes ${1:name} {\n\tfrom {\n\t\t${2}\n\t}\n\tto {\n\t\t${3}\n\t}\n}',        detail: '@keyframes' },
+  { label: 'transform', insert: 'transform: ${1:translateX(0)};',                                                    detail: 'transform' },
+  { label: 'radius',    insert: 'border-radius: ${1:4px};',                                                          detail: 'border-radius' },
+  { label: 'truncate',  insert: 'overflow: hidden;\nwhite-space: nowrap;\ntext-overflow: ellipsis;',                 detail: 'Text truncate' },
+  { label: 'scrollbar', insert: '::-webkit-scrollbar {\n\twidth: ${1:8px};\n}\n::-webkit-scrollbar-thumb {\n\tbackground: ${2:#888};\n\tborder-radius: ${3:4px};\n}', detail: 'Custom scrollbar' },
+  { label: 'root',      insert: ':root {\n\t--${1:color-primary}: ${2:#4f46e5};\n}',                                  detail: ':root variables' },
+  { label: 'hover',     insert: '&:hover {\n\t${1}\n}',                                                              detail: ':hover' },
+  { label: 'focus',     insert: '&:focus {\n\toutline: ${1:2px solid #4f46e5};\n}',                                  detail: ':focus' },
+  { label: 'import',    insert: "@import url('${1:style.css}');",                                                     detail: '@import' },
+  { label: 'font',      insert: "@font-face {\n\tfont-family: '${1:Name}';\n\tsrc: url('${2:font.woff2}') format('woff2');\n}", detail: '@font-face' },
+];
+
+const MD_SNIPPETS = [
+  { label: 'h1',        insert: '# ${1:Heading 1}',                                                                  detail: 'Heading 1' },
+  { label: 'h2',        insert: '## ${1:Heading 2}',                                                                  detail: 'Heading 2' },
+  { label: 'h3',        insert: '### ${1:Heading 3}',                                                                 detail: 'Heading 3' },
+  { label: 'bold',      insert: '**${1:bold text}**',                                                                 detail: 'Bold' },
+  { label: 'italic',    insert: '_${1:italic text}_',                                                                 detail: 'Italic' },
+  { label: 'strike',    insert: '~~${1:strikethrough}~~',                                                             detail: 'Strikethrough' },
+  { label: 'code',      insert: '`${1:code}`',                                                                        detail: 'Inline code' },
+  { label: 'codeblock', insert: '```${1:language}\n${2:code}\n```',                                                   detail: 'Fenced code block' },
+  { label: 'link',      insert: '[${1:link text}](${2:url})',                                                         detail: 'Link' },
+  { label: 'img',       insert: '![${1:alt text}](${2:image.png})',                                                   detail: 'Image' },
+  { label: 'ul',        insert: '- ${1:Item one}\n- ${2:Item two}\n- ${3:Item three}',                                detail: 'Unordered list' },
+  { label: 'ol',        insert: '1. ${1:First}\n2. ${2:Second}\n3. ${3:Third}',                                       detail: 'Ordered list' },
+  { label: 'task',      insert: '- [ ] ${1:Task item}',                                                               detail: 'Task list item' },
+  { label: 'table',     insert: '| ${1:Column 1} | ${2:Column 2} | ${3:Column 3} |\n|---|---|---|\n| ${4:A} | ${5:B} | ${6:C} |', detail: 'Table' },
+  { label: 'blockquote',insert: '> ${1:Quoted text}',                                                                 detail: 'Blockquote' },
+  { label: 'hr',        insert: '---',                                                                                detail: 'Horizontal rule' },
+  { label: 'details',   insert: '<details>\n<summary>${1:Summary}</summary>\n\n${2:Details content}\n</details>',    detail: '<details> block' },
+  { label: 'badge',     insert: '![${1:label}](https://img.shields.io/badge/${1:label}-${2:message}-${3:blue})',      detail: 'Shields.io badge' },
+  { label: 'toc',       insert: '## Table of Contents\n\n- [${1:Section}](#${2:section})',                           detail: 'Table of contents' },
+  { label: 'frontmatter',insert: '---\ntitle: "${1:Title}"\ndate: "${2:2024-01-01}"\ndescription: "${3}"\n---',       detail: 'YAML front matter' },
+];
+
 // ── Helper: build the word-replacement range ──────────────────────────────────
 
 /**
@@ -316,6 +403,37 @@ export const IDEEditor = forwardRef(function IDEEditor(
           };
         },
       });
+    });
+
+    // HTML — snippets on top of Monaco's native HTML language service
+    monaco.languages.registerCompletionItemProvider('html', {
+      provideCompletionItems(model, position) {
+        const range = getWordRange(model, position);
+        return {
+          suggestions: HTML_SNIPPETS.map(s => makeSnippet(s, range, monaco)),
+        };
+      },
+    });
+
+    // CSS — snippets on top of Monaco's native CSS language service
+    monaco.languages.registerCompletionItemProvider('css', {
+      provideCompletionItems(model, position) {
+        const range = getWordRange(model, position);
+        return {
+          suggestions: CSS_SNIPPETS.map(s => makeSnippet(s, range, monaco)),
+        };
+      },
+    });
+
+    // Markdown — snippets (Monaco has minimal native MD support)
+    monaco.languages.registerCompletionItemProvider('markdown', {
+      triggerCharacters: ['#', '-', '`', '[', '!'],
+      provideCompletionItems(model, position) {
+        const range = getWordRange(model, position);
+        return {
+          suggestions: MD_SNIPPETS.map(s => makeSnippet(s, range, monaco)),
+        };
+      },
     });
   }, []);
 

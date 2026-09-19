@@ -9,6 +9,7 @@ import { FileExplorer }      from './FileExplorer';
 import { EditorTabs }        from './EditorTabs';
 import { IDEEditor, disposeEditorModel } from './IDEEditor';
 import { IDEOutputPanel }    from './IDEOutputPanel';
+import { PreviewPanel }      from './PreviewPanel';
 import circleDotIcon   from '../../assets/27_circle_dot.svg';
 import playIcon        from '../../assets/28_play.svg';
 import fullscreenIcon  from '../../assets/37_fullscreen.svg';
@@ -19,6 +20,9 @@ const TERMINAL_STATUSES = new Set(['COMPLETED', 'FAILED', 'TIMEOUT', 'OOM_KILLED
 
 // Languages that can be run in the sandbox (matched against file.language)
 const RUNNABLE_LANGUAGES = new Set(['python', 'javascript', 'java', 'cpp']);
+
+// Languages with a live preview panel (replaces the output panel)
+const PREVIEW_LANGUAGES = new Set(['html', 'markdown']);
 
 // Debounce delay for auto-save (ms)
 const AUTOSAVE_DELAY = 1500;
@@ -441,7 +445,8 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  const canRun = activeTab && RUNNABLE_LANGUAGES.has(activeTab.language) && !running;
+  const canRun   = activeTab && RUNNABLE_LANGUAGES.has(activeTab.language) && !running;
+  const isPreview = activeTab && PREVIEW_LANGUAGES.has(activeTab.language);
 
   return (
     <>
@@ -598,15 +603,26 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
           aria-orientation="vertical"
         />
 
-        {/* Output panel */}
+        {/* Output panel — execution console, or live preview for html/markdown */}
         <div style={{ width: outputWidth }} className="flex flex-col shrink-0 overflow-hidden">
-          <IDEOutputPanel
-            running={running}
-            pollStatus={pollStatus}
-            result={result}
-            stdin={stdin}
-            onStdinChange={setStdin}
-          />
+          {isPreview ? (
+            <PreviewPanel
+              language={activeTab.language}
+              content={activeTab.content}
+              dark={true}
+              files={files}
+              tabs={tabs}
+              htmlFilePath={activeTab.path}
+            />
+          ) : (
+            <IDEOutputPanel
+              running={running}
+              pollStatus={pollStatus}
+              result={result}
+              stdin={stdin}
+              onStdinChange={setStdin}
+            />
+          )}
         </div>
       </div>
     </div>
