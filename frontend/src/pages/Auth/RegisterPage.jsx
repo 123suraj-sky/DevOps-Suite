@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -11,7 +12,7 @@ import logoIcon from '../../assets/42_logo.svg';
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$/;
 
 export const RegisterPage = () => {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -25,6 +26,17 @@ export const RegisterPage = () => {
   const [passwordBlurred, setPasswordBlurred] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    try {
+      await loginWithGoogle(credentialResponse.credential);
+      navigate('/');
+    } catch (err) {
+      const serverMessage = err.response?.data?.message;
+      setError(serverMessage || 'Google sign-up failed. Please try again.');
+    }
+  };
 
   // Derived validation
   const passwordValid = useMemo(() => PASSWORD_REGEX.test(formData.password), [formData.password]);
@@ -162,6 +174,26 @@ export const RegisterPage = () => {
           >
             Create Account
           </Button>
+
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white dark:bg-gray-800 px-2 text-gray-400">or</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-in was cancelled or failed.')}
+              width="368"
+              text="signup_with"
+              shape="rectangular"
+              theme="outline"
+            />
+          </div>
         </form>
 
         <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">

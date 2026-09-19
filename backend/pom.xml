@@ -90,6 +90,13 @@
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
         </dependency>
 
+        <!-- Google API client — used to verify Google ID tokens in the OAuth2 flow -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
         <!-- Lombok & Mapstruct -->
         <dependency>
             <groupId>org.projectlombok</groupId>

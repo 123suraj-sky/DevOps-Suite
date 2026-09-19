@@ -63,6 +63,12 @@ export const authApi = {
     return normalizeUser(response.data.data);
   },
 
+  loginWithGoogle: async (idToken) => {
+    const response = await apiClient.post('/auth/google', { id_token: idToken });
+    const payload = response.data.data;
+    return { ...payload, user: normalizeUser(payload?.user) };
+  },
+
   forgotPassword: async (email) => {
     const response = await apiClient.post('/auth/forgot-password', { email });
     return response.data.message;

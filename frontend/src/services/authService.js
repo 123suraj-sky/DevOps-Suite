@@ -15,6 +15,13 @@ export class AuthService {
     return { user: response.user, token: response.accessToken };
   }
 
+  static async loginWithGoogle(idToken) {
+    const response = await authApi.loginWithGoogle(idToken);
+    localStorage.setItem('accessToken', response.accessToken);
+    localStorage.setItem('refreshToken', response.refreshToken);
+    return { user: response.user, token: response.accessToken };
+  }
+
   static async logout() {
     try {
       await authApi.logout();

@@ -21,6 +21,7 @@
     "@dicebear/core": "9.4.3",
     "@hello-pangea/dnd": "^16.6.0",
     "@monaco-editor/react": "^4.6.0",
+    "@react-oauth/google": "^0.12.1",
     "@reduxjs/toolkit": "^2.0.0",
     "@stomp/stompjs": "^7.0.0",
     "axios": "^1.6.0",

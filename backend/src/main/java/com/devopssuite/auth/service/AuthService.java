@@ -7,6 +7,10 @@ import com.devopssuite.auth.repository.RoleRepository;
 import com.devopssuite.auth.repository.UserFollowRepository;
 import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.security.JwtUtils;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +23,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -33,6 +38,9 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final StringRedisTemplate redisTemplate;
     private final UserFollowRepository followRepository;
+
+    @Value("${spring.security.oauth2.client.registration.google.client-id}")
+    private String googleClientId;
 
     private static final String PASSWORD_PATTERN =
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@#$%^&+=!]).{8,}$";
@@ -115,6 +123,102 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        String accessToken  = jwtUtils.generateAccessToken(user);
+        String refreshToken = jwtUtils.generateRefreshToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .accessTokenSnake(accessToken)
+                .refreshToken(refreshToken)
+                .refreshTokenSnake(refreshToken)
+                .expiresIn(86400)
+                .user(toSelfResponse(user))
+                .build();
+    }
+
+    // ── Google OAuth2 login / register ────────────────────────────────────────
+
+    /**
+     * Verifies a Google ID token issued by the frontend (Google Identity Services),
+     * then finds or creates the corresponding local user and returns an app JWT pair.
+     *
+     * Flow:
+     *  1. Verify the id_token signature and audience against GOOGLE_CLIENT_ID.
+     *  2. Look up by (oauth_provider=google, oauth_id=sub). If found → returning Google user.
+     *  3. If not found by oauthId, look up by email (existing email/password account).
+     *     If found → link the Google identity to that account.
+     *  4. If not found at all → create a new user (password_hash=null, provider=google).
+     *  5. Issue app JWT pair and return LoginResponse.
+     */
+    @Transactional
+    public LoginResponse loginWithGoogle(GoogleAuthRequest request) {
+        // 1. Verify the Google id_token
+        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                .setAudience(List.of(googleClientId))
+                .build();
+
+        GoogleIdToken idToken;
+        try {
+            idToken = verifier.verify(request.getIdToken());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to verify Google ID token: " + e.getMessage());
+        }
+
+        if (idToken == null) {
+            throw new IllegalArgumentException("Invalid or expired Google ID token");
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String googleSub   = payload.getSubject();          // stable Google user ID
+        String email       = payload.getEmail();
+        String name        = (String) payload.get("name");
+        String pictureUrl  = (String) payload.get("picture");
+
+        // 2. Look up by google sub first (fastest path for returning users)
+        User user = userRepository.findByOauthProviderAndOauthId("google", googleSub)
+                .orElseGet(() -> {
+                    // 3. Fall back to email lookup — link existing email/password account
+                    return userRepository.findByEmail(email)
+                            .map(existing -> {
+                                existing.setOauthProvider("google");
+                                existing.setOauthId(googleSub);
+                                // Only set avatar if the user has none
+                                if (existing.getAvatarUrl() == null && pictureUrl != null) {
+                                    existing.setAvatarUrl(pictureUrl);
+                                }
+                                return userRepository.save(existing);
+                            })
+                            // 4. Create a brand-new Google-only user
+                            .orElseGet(() -> {
+                                Role memberRole = roleRepository.findByName("ROLE_MEMBER")
+                                        .orElseGet(() -> roleRepository.save(
+                                                Role.builder()
+                                                        .name("ROLE_MEMBER")
+                                                        .description("Default member role")
+                                                        .build()
+                                        ));
+
+                                String displayName = (name != null && !name.isBlank())
+                                        ? name : email.split("@")[0];
+
+                                User newUser = User.builder()
+                                        .email(email)
+                                        .passwordHash(null)   // no password for OAuth users
+                                        .displayName(displayName)
+                                        .avatarUrl(pictureUrl)
+                                        .oauthProvider("google")
+                                        .oauthId(googleSub)
+                                        .roles(new HashSet<>(Collections.singletonList(memberRole)))
+                                        .build();
+                                return userRepository.save(newUser);
+                            });
+                });
+
+        // 5. Update last login timestamp and issue app JWT pair
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 

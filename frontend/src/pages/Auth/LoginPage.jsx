@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
@@ -7,7 +8,7 @@ import { Card } from '../../components/common/Card';
 import logoIcon from '../../assets/42_logo.svg';
 
 export const LoginPage = () => {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -17,6 +18,18 @@ export const LoginPage = () => {
 
   // Shown when the user arrives after a successful password reset
   const successMessage = location.state?.successMessage ?? null;
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    try {
+      // credentialResponse.credential is the Google id_token — sent to backend for verification
+      await loginWithGoogle(credentialResponse.credential);
+      navigate('/');
+    } catch (err) {
+      const serverMessage = err.response?.data?.message;
+      setError(serverMessage || 'Google sign-in failed. Please try again.');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,10 +105,24 @@ export const LoginPage = () => {
             Sign In
           </Button>
 
-          <div className="mt-2">
-            <Button variant="secondary" className="w-full">
-              Sign in with Google
-            </Button>
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white dark:bg-gray-800 px-2 text-gray-400">or</span>
+            </div>
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-in was cancelled or failed.')}
+              width="368"
+              text="signin_with"
+              shape="rectangular"
+              theme="outline"
+            />
           </div>
 
           {error && (

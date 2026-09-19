@@ -54,9 +54,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/auth/login", "/auth/register", "/auth/refresh", "/auth/logout",
+                    "/auth/login", "/auth/register", "/auth/google", "/auth/refresh", "/auth/logout",
                     "/auth/forgot-password", "/auth/reset-password",
-                    "/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout",
+                    "/api/auth/login", "/api/auth/register", "/api/auth/google", "/api/auth/refresh", "/api/auth/logout",
                     "/api/auth/forgot-password", "/api/auth/reset-password"
                 ).permitAll()
                 // Liveness probe and Prometheus scraper endpoint must be accessible

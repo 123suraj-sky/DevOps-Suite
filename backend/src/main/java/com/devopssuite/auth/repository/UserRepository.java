@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
 
+    Optional<User> findByOauthProviderAndOauthId(String oauthProvider, String oauthId);
+
     /**
      * Atomically increments the profile_view_count for a user.
      * Called whenever another user fetches a public profile.

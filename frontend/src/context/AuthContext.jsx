@@ -50,6 +50,11 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
   }, []);
 
+  const loginWithGoogle = useCallback(async (idToken) => {
+    const { user, token } = await AuthService.loginWithGoogle(idToken);
+    dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
+  }, []);
+
   const register = useCallback(async (data) => {
     const { user, token } = await AuthService.register(data);
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
@@ -89,7 +94,7 @@ export const AuthProvider = ({ children }) => {
     state.user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_OWNER');
 
   return (
-    <AuthContext.Provider value={{ ...state, isAdmin, login, register, logout, updateUser, dispatch }}>
+    <AuthContext.Provider value={{ ...state, isAdmin, login, loginWithGoogle, register, logout, updateUser, dispatch }}>
       {children}
     </AuthContext.Provider>
   );
