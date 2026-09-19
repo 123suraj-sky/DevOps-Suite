@@ -69,7 +69,7 @@ export const LogsPage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
+    <div className="flex flex-col min-h-[calc(100dvh-8rem)] space-y-4">
       {/* Control bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">

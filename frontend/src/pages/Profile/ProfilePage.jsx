@@ -619,8 +619,8 @@ export const ProfilePage = () => {
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-700">
                       <th className="text-left pb-3 text-gray-600 dark:text-gray-300 font-medium">Notification type</th>
-                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-28">In-app</th>
-                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-28">Email</th>
+                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-20 sm:w-28">In-app</th>
+                      <th className="text-center pb-3 text-gray-600 dark:text-gray-300 font-medium w-20 sm:w-28">Email</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 dark:divide-gray-700">

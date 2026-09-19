@@ -54,7 +54,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
 
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform lg:transform-none flex flex-col',
+          'fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-[transform,background-color,border-color] duration-200 lg:transform-none flex flex-col',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >

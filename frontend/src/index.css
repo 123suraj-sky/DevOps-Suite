@@ -15,3 +15,38 @@ code {
   font-family: 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/*
+ * Global dark-mode color transitions
+ * Only animates color properties — transform, opacity, width, height etc. are
+ * intentionally excluded so the Sidebar slide-in and other non-color animations
+ * are unaffected.
+ * The `.no-theme-transition` class (applied by ThemeContext during toggle) is
+ * used to suppress the transition on the theme icon swap itself.
+ */
+*,
+*::before,
+*::after {
+  transition-property: color, background-color, border-color,
+                       text-decoration-color, fill, stroke, box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Let explicitly-set transition utilities win (e.g. transition-transform on Sidebar) */
+.transition-none,
+.transition-transform,
+.transition-opacity,
+.transition-shadow,
+.transition-all {
+  transition-property: revert;
+}
+
+/* Suppress color transitions on elements that should never animate colors */
+canvas,
+video,
+iframe,
+.monaco-editor,
+.monaco-editor * {
+  transition: none !important;
+}

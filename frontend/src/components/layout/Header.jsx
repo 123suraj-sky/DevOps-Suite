@@ -50,15 +50,23 @@ export const Header = ({ onMenuToggle }) => {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-[transform,background-color,color] duration-150 active:scale-90"
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           title={isDark ? 'Light mode' : 'Dark mode'}
         >
-          <img
-            src={isDark ? sunIcon : moonIcon}
-            alt={isDark ? 'Light mode' : 'Dark mode'}
-            className="w-5 h-5 object-contain"
-          />
+          {/* Crossfade between sun and moon icons */}
+          <span className="relative w-5 h-5 block">
+            <img
+              src={sunIcon}
+              alt="Light mode"
+              className={`absolute inset-0 w-5 h-5 object-contain transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-0'}`}
+            />
+            <img
+              src={moonIcon}
+              alt="Dark mode"
+              className={`absolute inset-0 w-5 h-5 object-contain transition-opacity duration-300 ${isDark ? 'opacity-0' : 'opacity-100'}`}
+            />
+          </span>
         </button>
 
         {/* Notification bell */}
@@ -77,7 +85,7 @@ export const Header = ({ onMenuToggle }) => {
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
+            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
               <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
                 <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Notifications</h3>
                 <div className="flex items-center gap-2">

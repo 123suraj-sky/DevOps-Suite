@@ -92,7 +92,7 @@ export const RegisterPage = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} required />
             <Input label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} required />
           </div>

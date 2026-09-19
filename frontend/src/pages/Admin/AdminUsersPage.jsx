@@ -276,7 +276,7 @@ export const AdminUsersPage = () => {
                 No users found matching "{searchTerm}".
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[600px] overflow-y-auto">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[60vh] overflow-y-auto">
                 {filteredUsers.map((user) => {
                   const isSelected = selectedUser?.id === user.id;
                   return (
@@ -331,7 +331,7 @@ export const AdminUsersPage = () => {
         {/* Selected User Activity & Tasks Panel */}
         {selectedUser && (
           <div className="lg:col-span-7">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col max-h-[750px]">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col max-h-[75vh]">
               {/* Header */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-700/50">
                 <div className="flex items-center gap-3 min-w-0">

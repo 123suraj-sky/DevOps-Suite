@@ -569,7 +569,7 @@ export const TasksPage = () => {
             value={editTaskData.description}
             onChange={(e) => setEditTaskData((p) => ({ ...p, description: e.target.value }))}
           />
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="Status"
               value={editTaskData.status}
