@@ -23,19 +23,19 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailNotificationService {
 
-    /** Injected as optional — may be null when SMTP is not configured. */
-    private final JavaMailSender mailSender;
+    /**
+     * Injected as optional — may be null when SMTP is not configured (blank MAIL_HOST).
+     * Using field injection with required=false avoids the Spring constructor-injection
+     * warning that fires when the only constructor is marked optional.
+     */
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Value("${spring.mail.from:noreply@devopssuite.local}")
     private String fromAddress;
 
-    /**
-     * {@code required = false} so the service still loads (and no-ops) when
-     * {@code spring.mail.host} is empty and Spring Boot skips mail auto-config.
-     */
-    @Autowired(required = false)
-    public EmailNotificationService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailNotificationService() {
+        // default constructor — mailSender injected via field above
     }
 
     /**
