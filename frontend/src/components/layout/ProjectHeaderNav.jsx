@@ -29,23 +29,23 @@ export const ProjectHeaderNav = ({ projectId, projectName, projectDescription })
         </div>
         <div className="flex items-center flex-wrap gap-2">
           <Link to={`/projects/${projectId}`} className="inline-flex">
-            <Button variant={isOverview ? 'primary' : 'ghost'} size="sm">
+            <Button variant={isOverview ? 'secondary' : 'ghost'} size="sm">
               Overview
             </Button>
           </Link>
           <Link to={`/projects/${projectId}/tasks`} className="inline-flex">
-            <Button variant={isTasks ? 'primary' : 'ghost'} size="sm">
+            <Button variant={isTasks ? 'secondary' : 'ghost'} size="sm">
               Task Board
             </Button>
           </Link>
           <Link to={`/projects/${projectId}/code`} className="inline-flex">
-            <Button variant={isCode ? 'primary' : 'ghost'} size="sm">
+            <Button variant={isCode ? 'secondary' : 'ghost'} size="sm">
               Code Editor
             </Button>
           </Link>
           {isAdmin && (
             <Link to={`/projects/${projectId}/logs`} className="inline-flex">
-              <Button variant={isLogs ? 'primary' : 'ghost'} size="sm">
+              <Button variant={isLogs ? 'secondary' : 'ghost'} size="sm">
                 Logs
               </Button>
             </Link>

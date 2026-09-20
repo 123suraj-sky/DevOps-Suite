@@ -368,7 +368,7 @@ export const ProfilePage = () => {
         {/* Self: Edit / Save buttons | Other: Follow / Unfollow button */}
         {isSelf ? (
           !isEditing ? (
-            <Button variant="primary" onClick={() => setIsEditing(true)}>
+            <Button variant="secondary" onClick={() => setIsEditing(true)}>
               Edit Profile
             </Button>
           ) : (
@@ -381,14 +381,14 @@ export const ProfilePage = () => {
               }}>
                 Cancel
               </Button>
-              <Button variant="primary" loading={saving} onClick={handleSaveProfile}>
+              <Button variant="secondary" loading={saving} onClick={handleSaveProfile}>
                 Save Changes
               </Button>
             </div>
           )
         ) : (
           <Button
-            variant={isFollowing ? 'ghost' : 'primary'}
+            variant={isFollowing ? 'ghost' : 'secondary'}
             loading={followLoading}
             onClick={handleFollowToggle}
           >
@@ -418,7 +418,7 @@ export const ProfilePage = () => {
                   className="w-28 h-28 rounded-full object-cover border-4 border-primary-50 shadow-md bg-white"
                 />
               ) : (
-                <div className="w-28 h-28 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 flex items-center justify-center text-4xl font-bold border-4 border-primary-50 dark:border-primary-900/20 shadow-md">
+                <div className="w-28 h-28 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 flex items-center justify-center text-4xl font-bold border-4 border-gray-100 dark:border-gray-600 shadow-md">
                   {(displayUser?.displayName || displayUser?.email || 'U').charAt(0).toUpperCase()}
                 </div>
               )}

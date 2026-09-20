@@ -184,7 +184,7 @@ export const ProjectDetailPage = () => {
           <div className="flex justify-between items-center pb-2 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Project Members</h2>
             {isOwnerOrAdmin && (
-              <Button onClick={() => setShowAddMemberModal(true)} size="sm">
+              <Button variant="secondary" onClick={() => setShowAddMemberModal(true)} size="sm">
                 Add Member
               </Button>
             )}

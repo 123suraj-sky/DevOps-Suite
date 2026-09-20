@@ -6,8 +6,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { getDefaultAvatar } from '../../utils';
 import { NotificationItem } from '../common/NotificationItem';
 import notificationBellIcon from '../../assets/09_notification_bell.svg';
-import sunIcon from '../../assets/43_sun.svg';
-import moonIcon from '../../assets/44_moon.svg';
 
 export const Header = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
@@ -54,18 +52,41 @@ export const Header = ({ onMenuToggle }) => {
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           title={isDark ? 'Light mode' : 'Dark mode'}
         >
-          {/* Crossfade between sun and moon icons */}
           <span className="relative w-5 h-5 block">
-            <img
-              src={sunIcon}
-              alt="Light mode"
-              className={`absolute inset-0 w-5 h-5 object-contain transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-0'}`}
-            />
-            <img
-              src={moonIcon}
-              alt="Dark mode"
-              className={`absolute inset-0 w-5 h-5 object-contain transition-opacity duration-300 ${isDark ? 'opacity-0' : 'opacity-100'}`}
-            />
+            {/* Sun — shown in dark mode */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`absolute inset-0 w-5 h-5 transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-0'}`}
+            >
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="4"/>
+              <line x1="12" y1="20" x2="12" y2="22"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="2" y1="12" x2="4" y2="12"/>
+              <line x1="20" y1="12" x2="22" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            {/* Moon — shown in light mode */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`absolute inset-0 w-5 h-5 transition-opacity duration-300 ${isDark ? 'opacity-0' : 'opacity-100'}`}
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
           </span>
         </button>
 
@@ -76,7 +97,7 @@ export const Header = ({ onMenuToggle }) => {
             className="relative p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Notifications"
           >
-            <img src={notificationBellIcon} alt="Notifications" className="w-5 h-5 object-contain" />
+            <img src={notificationBellIcon} alt="Notifications" className="w-5 h-5 object-contain dark:brightness-0 dark:invert" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
                 {unreadCount > 9 ? '9+' : unreadCount}
@@ -143,8 +164,8 @@ export const Header = ({ onMenuToggle }) => {
                 className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
               />
             ) : (
-              <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>

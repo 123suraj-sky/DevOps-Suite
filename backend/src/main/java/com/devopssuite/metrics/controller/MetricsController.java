@@ -105,6 +105,9 @@ public class MetricsController {
         serviceHealth.add(checkRedisHealth());
         serviceHealth.add(checkElasticsearchHealth());
         serviceHealth.add(checkDockerHealth());
+        serviceHealth.add(checkPrometheusHealth());
+        serviceHealth.add(checkGrafanaHealth());
+        serviceHealth.add(checkKibanaHealth());
 
         // Generate throughput & latency for UI charts based on range
         List<DashboardResponse.ThroughputMetric> throughput = new ArrayList<>();
@@ -364,5 +367,42 @@ public class MetricsController {
                 .status(status)
                 .responseTimeMs(System.currentTimeMillis() - start)
                 .build();
+    }
+
+    private DashboardResponse.ServiceHealth checkHttpService(String serviceName, String url) {
+        long start = System.currentTimeMillis();
+        String status = "UP";
+        try {
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                    new java.net.URL(url).openConnection();
+            conn.setConnectTimeout(2000);
+            conn.setReadTimeout(2000);
+            conn.setRequestMethod("GET");
+            int code = conn.getResponseCode();
+            if (code < 200 || code >= 500) {
+                status = "DOWN";
+            }
+            conn.disconnect();
+        } catch (Exception e) {
+            log.warn("{} health check failed: {}", serviceName, e.getMessage());
+            status = "DOWN";
+        }
+        return DashboardResponse.ServiceHealth.builder()
+                .serviceName(serviceName)
+                .status(status)
+                .responseTimeMs(System.currentTimeMillis() - start)
+                .build();
+    }
+
+    private DashboardResponse.ServiceHealth checkPrometheusHealth() {
+        return checkHttpService("Prometheus", "http://prometheus:9090/-/healthy");
+    }
+
+    private DashboardResponse.ServiceHealth checkGrafanaHealth() {
+        return checkHttpService("Grafana", "http://grafana:3000/api/health");
+    }
+
+    private DashboardResponse.ServiceHealth checkKibanaHealth() {
+        return checkHttpService("Kibana", "http://kibana:5601/api/status");
     }
 }

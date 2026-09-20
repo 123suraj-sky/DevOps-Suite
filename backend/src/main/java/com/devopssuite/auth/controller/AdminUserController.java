@@ -45,6 +45,7 @@ public class AdminUserController {
         private String displayName;
         private String avatarUrl;
         private String gender;
+        private String oauthProvider;
         private List<String> roles;
         private Instant createdAt;
         private Instant lastLoginAt;
@@ -98,6 +99,7 @@ public class AdminUserController {
                     .displayName(u.getDisplayName())
                     .avatarUrl(u.getAvatarUrl())
                     .gender(u.getGender() != null ? u.getGender().name() : null)
+                    .oauthProvider(u.getOauthProvider())
                     .roles(u.getRoles().stream().map(Role::getName).collect(Collectors.toList()))
                     .createdAt(u.getCreatedAt())
                     .lastLoginAt(u.getLastLoginAt())

@@ -11,7 +11,7 @@ import kibanaIcon from '../../assets/40_kibana.svg';
 import usersIcon from '../../assets/41_users.svg';
 
 const baseNavLinks = [
-  { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard' },
+  { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard', noInvert: true },
   { path: '/projects', label: 'Projects', icon: projectsIcon, iconAlt: 'Projects' },
   { path: '/notifications', label: 'Notifications', icon: notificationsIcon, iconAlt: 'Notifications' },
 ];
@@ -38,7 +38,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
       )}
       onClick={onClose}
     >
-      <img src={link.icon} alt={link.iconAlt} className="w-5 h-5 object-contain" />
+      <img src={link.icon} alt={link.iconAlt} className={`w-5 h-5 object-contain ${link.noInvert ? '' : 'dark:brightness-0 dark:invert'}`} />
       <span>{link.label}</span>
     </Link>
   );
@@ -125,7 +125,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
                         alt=""
                         aria-hidden="true"
                         className={cn(
-                          'w-3.5 h-3.5 shrink-0 object-contain',
+                          'w-3.5 h-3.5 shrink-0 object-contain dark:brightness-0 dark:invert',
                           isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-70'
                         )}
                       />

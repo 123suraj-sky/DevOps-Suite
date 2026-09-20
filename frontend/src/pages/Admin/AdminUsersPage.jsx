@@ -9,14 +9,16 @@ import usersIcon from '../../assets/41_users.svg';
 import maleUserIcon from '../../assets/01_male_user.svg';
 import femaleUserIcon from '../../assets/02_female_user.svg';
 import checkIcon from '../../assets/11_check.svg';
-import clockIcon from '../../assets/14_clock.svg';
 import xIcon from '../../assets/26_x.svg';
 import arrowRightIcon from '../../assets/24_arrow_right.svg';
+import googleIcon from '../../assets/45_google.svg';
+import githubIcon from '../../assets/46_github.svg';
 
 export const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [providerFilter, setProviderFilter] = useState(null); // null | 'email' | 'google' | 'github'
   const [totalUsers, setTotalUsers] = useState(0);
   const [activeUsersCount, setActiveUsersCount] = useState(0);
 
@@ -114,8 +116,25 @@ export const AdminUsersPage = () => {
     const q = searchTerm.toLowerCase();
     const emailMatch = u.email?.toLowerCase().includes(q);
     const nameMatch = u.displayName?.toLowerCase().includes(q);
-    return emailMatch || nameMatch;
+    const textMatch = emailMatch || nameMatch;
+
+    if (!textMatch) return false;
+    if (!providerFilter) return true;
+    const p = u.oauthProvider?.toLowerCase() ?? null;
+    if (providerFilter === 'email') return p === null || p === undefined;
+    return p === providerFilter;
   });
+
+  const providerCounts = users.reduce(
+    (acc, u) => {
+      const p = u.oauthProvider?.toLowerCase();
+      if (p === 'google') acc.google += 1;
+      else if (p === 'github') acc.github += 1;
+      else acc.email += 1;
+      return acc;
+    },
+    { email: 0, google: 0, github: 0 }
+  );
 
   const getStatusBadgeClass = (status) => {
     switch (status?.toUpperCase()) {
@@ -158,22 +177,42 @@ export const AdminUsersPage = () => {
     const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase();
     const genderAvatar = getDefaultAvatar(user?.gender);
 
+    const fallbackDiv = (
+      <div
+        className={`${sizeClass} rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold border border-gray-300 dark:border-gray-600 flex items-center justify-center shrink-0 select-none`}
+      >
+        {initial}
+      </div>
+    );
+
+    const handleImgError = (e) => {
+      e.target.onerror = null;
+      if (genderAvatar) {
+        e.target.src = genderAvatar;
+      } else {
+        // Hide the broken image and show the sibling fallback div
+        e.target.style.display = 'none';
+        const sibling = e.target.nextElementSibling;
+        if (sibling) sibling.style.display = 'flex';
+      }
+    };
+
     if (user?.avatarUrl) {
       return (
-        <img
-          src={user.avatarUrl}
-          alt={user.displayName || 'User Avatar'}
-          className={`${sizeClass} rounded-full object-cover border border-gray-200 bg-white shrink-0`}
-          onError={(e) => {
-            e.target.onerror = null;
-            if (genderAvatar) {
-              e.target.src = genderAvatar;
-            } else {
-              e.target.style.display = 'none';
-              e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
-            }
-          }}
-        />
+        <span className="shrink-0 inline-flex">
+          <img
+            src={user.avatarUrl}
+            alt={user.displayName || 'User Avatar'}
+            className={`${sizeClass} rounded-full object-cover border border-gray-200 bg-white shrink-0`}
+            onError={handleImgError}
+          />
+          <div
+            style={{ display: 'none' }}
+            className={`${sizeClass} rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold border border-gray-300 dark:border-gray-600 items-center justify-center shrink-0 select-none`}
+          >
+            {initial}
+          </div>
+        </span>
       );
     }
 
@@ -183,17 +222,12 @@ export const AdminUsersPage = () => {
           src={genderAvatar}
           alt={user?.gender === 'FEMALE' ? 'Female User' : 'Male User'}
           className={`${sizeClass} rounded-full object-cover border border-gray-200 bg-white shrink-0`}
+          onError={handleImgError}
         />
       );
     }
 
-    return (
-      <div
-        className={`${sizeClass} rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold border border-gray-300 dark:border-gray-600 flex items-center justify-center shrink-0`}
-      >
-        {initial}
-      </div>
-    );
+    return fallbackDiv;
   };
 
   return (
@@ -201,8 +235,8 @@ export const AdminUsersPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <img src={usersIcon} alt="" className="w-6 h-6 text-primary-600" />
+          <div className="flex items-center gap-3">
+            <img src={usersIcon} alt="" className="w-7 h-7 dark:brightness-0 dark:invert" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">User Activity & Task Explorer</h1>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -213,40 +247,74 @@ export const AdminUsersPage = () => {
 
       {/* Overview Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Registered Users</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totalUsers}</p>
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Total Registered Users</p>
+            <p className="text-4xl font-bold text-gray-900 dark:text-gray-100 mt-2">{totalUsers}</p>
           </div>
-          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <img src={usersIcon} alt="" className="w-6 h-6" />
+          <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-xl">
+            <img src={usersIcon} alt="" className="w-8 h-8 dark:brightness-0 dark:invert" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Active In Last 5 Min</p>
-            <div className="flex items-center gap-2 mt-1">
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Active In Last 5 Min</p>
+            <div className="flex items-center gap-2.5 mt-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
               </span>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{activeUsersCount}</p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{activeUsersCount}</p>
             </div>
           </div>
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-            <img src={checkIcon} alt="" className="w-6 h-6" />
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+            <img src={checkIcon} alt="" className="w-8 h-8" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Elasticsearch Audit</p>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">Rolling Logs Active</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">devopssuite-logs-*</p>
+        {/* Auth Provider Breakdown — clickable filter */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Sign-up Method</p>
+            {providerFilter && (
+              <button
+                onClick={() => setProviderFilter(null)}
+                className="text-[10px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 underline underline-offset-2 transition-colors"
+              >
+                Clear filter
+              </button>
+            )}
           </div>
-          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
-            <img src={clockIcon} alt="" className="w-6 h-6" />
+          <div className="space-y-1">
+            {[
+              { key: 'email', label: 'Email / Password', icon: <span className="w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-[9px] font-bold text-gray-500 dark:text-gray-400 shrink-0">@</span>, count: providerCounts.email },
+              { key: 'google', label: 'Google', icon: <img src={googleIcon} alt="" className="w-4 h-4 shrink-0" />, count: providerCounts.google },
+              { key: 'github', label: 'GitHub', icon: <img src={githubIcon} alt="" className="w-4 h-4 shrink-0 dark:invert" />, count: providerCounts.github },
+            ].map(({ key, label, icon, count }) => {
+              const isActive = providerFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setProviderFilter(isActive ? null : key)}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-colors text-left ${
+                    isActive
+                      ? 'bg-gray-200 dark:bg-gray-600 ring-1 ring-gray-300 dark:ring-gray-500'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {icon}
+                    <span className={`text-xs ${isActive ? 'font-semibold text-gray-900 dark:text-gray-100' : 'text-gray-600 dark:text-gray-300'}`}>
+                      {label}
+                    </span>
+                  </div>
+                  <span className={`text-sm font-bold ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -257,7 +325,11 @@ export const AdminUsersPage = () => {
         <div className={`${selectedUser ? 'lg:col-span-5' : 'lg:col-span-12'} transition-all`}>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Registered Users ({filteredUsers.length})</h2>
+              <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {providerFilter
+                  ? `${providerFilter === 'email' ? 'Email / Password' : providerFilter.charAt(0).toUpperCase() + providerFilter.slice(1)} Users (${filteredUsers.length})`
+                  : `Registered Users (${filteredUsers.length})`}
+              </h2>
               <input
                 type="text"
                 placeholder="Search user name or email..."
@@ -290,12 +362,12 @@ export const AdminUsersPage = () => {
                       <div className="flex items-center gap-3 min-w-0">
                         {renderUserAvatar(user, 'w-10 h-10 text-sm')}
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate min-w-0">
                               {user.displayName || 'No Name'}
                             </span>
                             {user.activeRecently && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+                              <span className="inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
                                 Active
                               </span>
                             )}
@@ -314,6 +386,22 @@ export const AdminUsersPage = () => {
                                 {role.replace('ROLE_', '')}
                               </span>
                             ))}
+                            {/* Auth provider badge */}
+                            {user.oauthProvider === 'google' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 font-medium shrink-0">
+                                <img src={googleIcon} alt="" className="w-3 h-3" />
+                                Google
+                              </span>
+                            ) : user.oauthProvider === 'github' ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 font-medium shrink-0">
+                                <img src={githubIcon} alt="" className="w-3 h-3 dark:invert" />
+                                GitHub
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-600 font-medium shrink-0">
+                                @ Email
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
