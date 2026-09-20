@@ -33,7 +33,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
       className={cn(
         'flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
         location.pathname === link.path
-          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
       )}
       onClick={onClose}
@@ -62,7 +62,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
         <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 shrink-0">
           <Link to="/" className="flex items-center space-x-2">
             <img src={logoIcon} alt="DevOps Suite Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold text-primary-600 dark:text-primary-400">DevOps Suite</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">DevOps Suite</span>
           </Link>
         </div>
 
@@ -116,7 +116,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
                       className={cn(
                         'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors group',
                         isActive
-                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
                           : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )}
                     >
@@ -138,7 +138,7 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
                   <Link
                     to="/projects"
                     onClick={onClose}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors font-medium"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
                   >
                     All projects →
                   </Link>

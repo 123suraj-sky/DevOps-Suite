@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.Lo
 const RegisterPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.RegisterPage })));
 const ForgotPasswordPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.ResetPasswordPage })));
+const GitHubCallbackPage = lazy(() => import('./pages/Auth').then((m) => ({ default: m.GitHubCallbackPage })));
 const DashboardPage = lazy(() => import('./pages/Dashboard').then((m) => ({ default: m.DashboardPage })));
 const ProjectsPage = lazy(() => import('./pages/Projects').then((m) => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/Projects').then((m) => ({ default: m.ProjectDetailPage })));
@@ -111,6 +112,14 @@ const AppRoutes = () => {
           element={
             <PublicRoute>
               <ResetPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/auth/github/callback"
+          element={
+            <PublicRoute>
+              <GitHubCallbackPage />
             </PublicRoute>
           }
         />

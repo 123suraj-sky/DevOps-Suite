@@ -155,28 +155,69 @@ public class AuthService {
      */
     @Transactional
     public LoginResponse loginWithGoogle(GoogleAuthRequest request) {
-        // 1. Verify the Google id_token
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .setAudience(List.of(googleClientId))
-                .build();
+        String googleSub;
+        String email;
+        String name;
+        String pictureUrl;
 
-        GoogleIdToken idToken;
-        try {
-            idToken = verifier.verify(request.getIdToken());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to verify Google ID token: " + e.getMessage());
+        if (request.getIdToken() != null && !request.getIdToken().isBlank()) {
+            // 1a. Verify the Google id_token
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+                    new NetHttpTransport(), GsonFactory.getDefaultInstance())
+                    .setAudience(List.of(googleClientId))
+                    .build();
+
+            GoogleIdToken idToken;
+            try {
+                idToken = verifier.verify(request.getIdToken());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to verify Google ID token: " + e.getMessage());
+            }
+
+            if (idToken == null) {
+                throw new IllegalArgumentException("Invalid or expired Google ID token");
+            }
+
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            googleSub  = payload.getSubject();
+            email      = payload.getEmail();
+            name       = (String) payload.get("name");
+            pictureUrl = (String) payload.get("picture");
+        } else if (request.getAccessToken() != null && !request.getAccessToken().isBlank()) {
+            // 1b. Fetch Google user info using the access_token
+            org.springframework.web.client.RestTemplate rest = new org.springframework.web.client.RestTemplate();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.set("Authorization", "Bearer " + request.getAccessToken());
+            headers.set("Accept", "application/json");
+            org.springframework.http.HttpEntity<Void> entity = new org.springframework.http.HttpEntity<>(headers);
+
+            try {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> userInfo = rest.exchange(
+                        "https://www.googleapis.com/oauth2/v3/userinfo",
+                        org.springframework.http.HttpMethod.GET,
+                        entity,
+                        new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {}
+                ).getBody();
+
+                if (userInfo == null || !userInfo.containsKey("sub")) {
+                    throw new IllegalArgumentException("Failed to fetch user info from Google");
+                }
+
+                googleSub  = (String) userInfo.get("sub");
+                email      = (String) userInfo.get("email");
+                name       = (String) userInfo.get("name");
+                pictureUrl = (String) userInfo.get("picture");
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to authenticate with Google: " + e.getMessage());
+            }
+        } else {
+            throw new IllegalArgumentException("Google token is required");
         }
 
-        if (idToken == null) {
-            throw new IllegalArgumentException("Invalid or expired Google ID token");
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("No email address associated with this Google account");
         }
-
-        GoogleIdToken.Payload payload = idToken.getPayload();
-        String googleSub   = payload.getSubject();          // stable Google user ID
-        String email       = payload.getEmail();
-        String name        = (String) payload.get("name");
-        String pictureUrl  = (String) payload.get("picture");
 
         // 2. Look up by google sub first (fastest path for returning users)
         User user = userRepository.findByOauthProviderAndOauthId("google", googleSub)
@@ -230,6 +271,162 @@ public class AuthService {
                 .accessTokenSnake(accessToken)
                 .refreshToken(refreshToken)
                 .refreshTokenSnake(refreshToken)
+                .expiresIn(86400)
+                .user(toSelfResponse(user))
+                .build();
+    }
+
+    // ── GitHub OAuth2 login / register ────────────────────────────────────────
+
+    @Value("${app.github.client-id}")
+    private String githubClientId;
+
+    @Value("${app.github.client-secret}")
+    private String githubClientSecret;
+
+    /**
+     * Exchanges a GitHub authorization code for an access token, fetches the
+     * GitHub user profile (and primary email if private), then finds or creates
+     * the local user and returns an app JWT pair.
+     *
+     * Flow:
+     *  1. POST code + client credentials to GitHub to get access_token.
+     *  2. GET https://api.github.com/user with the access_token.
+     *  3. If email is null/private, GET https://api.github.com/user/emails.
+     *  4. Look up by (oauth_provider=github, oauth_id=githubId). Returning user?
+     *  5. Fall back to email lookup — link existing email/password account.
+     *  6. Create brand-new GitHub-only user if still not found.
+     *  7. Issue app JWT pair and return LoginResponse.
+     */
+    @Transactional
+    public LoginResponse loginWithGithub(GithubAuthRequest request) {
+        org.springframework.web.client.RestTemplate rest = new org.springframework.web.client.RestTemplate();
+
+        // 1. Exchange code for access_token
+        String tokenUrl = "https://github.com/login/oauth/access_token"
+                + "?client_id=" + githubClientId
+                + "&client_secret=" + githubClientSecret
+                + "&code=" + request.getCode();
+
+        org.springframework.http.HttpHeaders tokenHeaders = new org.springframework.http.HttpHeaders();
+        tokenHeaders.set("Accept", "application/json");
+        org.springframework.http.HttpEntity<Void> tokenEntity = new org.springframework.http.HttpEntity<>(tokenHeaders);
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> tokenResponse = rest.exchange(
+                tokenUrl,
+                org.springframework.http.HttpMethod.POST,
+                tokenEntity,
+                new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {}
+        ).getBody();
+
+        if (tokenResponse == null || !tokenResponse.containsKey("access_token")) {
+            throw new IllegalArgumentException("Failed to exchange GitHub code for access token");
+        }
+        String accessToken = (String) tokenResponse.get("access_token");
+
+        // 2. Fetch GitHub user profile
+        org.springframework.http.HttpHeaders apiHeaders = new org.springframework.http.HttpHeaders();
+        apiHeaders.set("Authorization", "Bearer " + accessToken);
+        apiHeaders.set("Accept", "application/vnd.github+json");
+        org.springframework.http.HttpEntity<Void> apiEntity = new org.springframework.http.HttpEntity<>(apiHeaders);
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> githubUser = rest.exchange(
+                "https://api.github.com/user",
+                org.springframework.http.HttpMethod.GET,
+                apiEntity,
+                new org.springframework.core.ParameterizedTypeReference<java.util.Map<String, Object>>() {}
+        ).getBody();
+
+        if (githubUser == null) {
+            throw new IllegalArgumentException("Failed to fetch GitHub user profile");
+        }
+
+        String githubId  = String.valueOf(githubUser.get("id"));
+        String login     = (String) githubUser.get("login");
+        String name      = (String) githubUser.get("name");
+        String avatarUrl = (String) githubUser.get("avatar_url");
+        String email     = (String) githubUser.get("email");
+
+        // 3. If email is null/private, fetch from /user/emails
+        if (email == null || email.isBlank()) {
+            try {
+                @SuppressWarnings("unchecked")
+                java.util.List<java.util.Map<String, Object>> emails = rest.exchange(
+                        "https://api.github.com/user/emails",
+                        org.springframework.http.HttpMethod.GET,
+                        apiEntity,
+                        new org.springframework.core.ParameterizedTypeReference<java.util.List<java.util.Map<String, Object>>>() {}
+                ).getBody();
+                if (emails != null) {
+                    email = emails.stream()
+                            .filter(e -> Boolean.TRUE.equals(e.get("primary")) && Boolean.TRUE.equals(e.get("verified")))
+                            .map(e -> (String) e.get("email"))
+                            .findFirst()
+                            .orElse(null);
+                }
+            } catch (Exception ignored) {
+                // best-effort
+            }
+        }
+
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException(
+                    "No verified email found on your GitHub account. " +
+                    "Please make your primary email public or add a verified email and try again.");
+        }
+
+        final String resolvedEmail = email;
+
+        // 4-6. Find or create user (same pattern as Google)
+        User user = userRepository.findByOauthProviderAndOauthId("github", githubId)
+                .orElseGet(() -> userRepository.findByEmail(resolvedEmail)
+                        .map(existing -> {
+                            existing.setOauthProvider("github");
+                            existing.setOauthId(githubId);
+                            if (existing.getAvatarUrl() == null && avatarUrl != null) {
+                                existing.setAvatarUrl(avatarUrl);
+                            }
+                            return userRepository.save(existing);
+                        })
+                        .orElseGet(() -> {
+                            Role memberRole = roleRepository.findByName("ROLE_MEMBER")
+                                    .orElseGet(() -> roleRepository.save(
+                                            Role.builder()
+                                                    .name("ROLE_MEMBER")
+                                                    .description("Default member role")
+                                                    .build()
+                                    ));
+
+                            String displayName = (name != null && !name.isBlank()) ? name
+                                    : (login != null && !login.isBlank()) ? login
+                                    : resolvedEmail.split("@")[0];
+
+                            User newUser = User.builder()
+                                    .email(resolvedEmail)
+                                    .passwordHash(null)
+                                    .displayName(displayName)
+                                    .avatarUrl(avatarUrl)
+                                    .oauthProvider("github")
+                                    .oauthId(githubId)
+                                    .roles(new HashSet<>(Collections.singletonList(memberRole)))
+                                    .build();
+                            return userRepository.save(newUser);
+                        }));
+
+        // 7. Update last login and issue JWT pair
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        String appAccessToken  = jwtUtils.generateAccessToken(user);
+        String appRefreshToken = jwtUtils.generateRefreshToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(appAccessToken)
+                .accessTokenSnake(appAccessToken)
+                .refreshToken(appRefreshToken)
+                .refreshTokenSnake(appRefreshToken)
                 .expiresIn(86400)
                 .user(toSelfResponse(user))
                 .build();

@@ -63,8 +63,17 @@ export const authApi = {
     return normalizeUser(response.data.data);
   },
 
-  loginWithGoogle: async (idToken) => {
-    const response = await apiClient.post('/auth/google', { id_token: idToken });
+  loginWithGoogle: async (tokenOrPayload) => {
+    const body = typeof tokenOrPayload === 'string'
+      ? { id_token: tokenOrPayload }
+      : tokenOrPayload;
+    const response = await apiClient.post('/auth/google', body);
+    const payload = response.data.data;
+    return { ...payload, user: normalizeUser(payload?.user) };
+  },
+
+  loginWithGithub: async (code) => {
+    const response = await apiClient.post('/auth/github', { code });
     const payload = response.data.data;
     return { ...payload, user: normalizeUser(payload?.user) };
   },

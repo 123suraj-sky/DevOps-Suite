@@ -32,7 +32,7 @@ export const TaskCard = ({
       ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
       : task.priority === 'MEDIUM'
       ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
+      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
 
   // ── Relative-time helper ───────────────────────────────────────────────────
   const relativeTime = (isoString) => {

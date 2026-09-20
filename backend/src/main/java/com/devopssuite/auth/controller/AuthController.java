@@ -47,6 +47,29 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/github")
+    public ResponseEntity<ApiResponse<LoginResponse>> githubLogin(@Valid @RequestBody GithubAuthRequest request) {
+        try {
+            LoginResponse response = authService.loginWithGithub(request);
+            return ResponseEntity.ok(ApiResponse.<LoginResponse>builder()
+                    .message("GitHub login successful")
+                    .data(response)
+                    .build());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.<LoginResponse>builder()
+                            .status("error")
+                            .message(e.getMessage())
+                            .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.<LoginResponse>builder()
+                            .status("error")
+                            .message("GitHub authentication failed. Please try again.")
+                            .build());
+        }
+    }
+
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<LoginResponse>> register(@Valid @RequestBody SignupRequest request) {
         try {

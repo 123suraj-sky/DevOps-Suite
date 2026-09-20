@@ -78,6 +78,9 @@ app:
   avatar:
     upload-dir: ${AVATAR_UPLOAD_DIR:/app/uploads/avatars}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  github:
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
 
 # ── Admin seed account ─────────────────────────────────────────────────────────
 # Credentials for the default admin user created on first startup.

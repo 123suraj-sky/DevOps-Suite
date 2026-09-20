@@ -124,7 +124,7 @@ export const AdminUsersPage = () => {
         return 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700';
       case 'IN_PROGRESS':
       case 'IN PROGRESS':
-        return 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700';
+        return 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700';
       case 'IN_REVIEW':
         return 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700';
       default:
@@ -140,7 +140,7 @@ export const AdminUsersPage = () => {
       case 'MEDIUM':
         return 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700';
       case 'LOW':
-        return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700';
+        return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600';
       default:
         return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600';
     }
@@ -149,7 +149,7 @@ export const AdminUsersPage = () => {
   const getHttpStatusBadge = (status) => {
     const code = Number(status);
     if (code >= 200 && code < 300) return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700';
-    if (code >= 300 && code < 400) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-700';
+    if (code >= 300 && code < 400) return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-600';
     if (code >= 400 && code < 500) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-700';
     return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700';
   };
@@ -189,7 +189,7 @@ export const AdminUsersPage = () => {
 
     return (
       <div
-        className={`${sizeClass} rounded-full bg-primary-100 text-primary-700 font-bold border border-primary-200 flex items-center justify-center shrink-0`}
+        className={`${sizeClass} rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold border border-gray-300 dark:border-gray-600 flex items-center justify-center shrink-0`}
       >
         {initial}
       </div>
@@ -218,7 +218,7 @@ export const AdminUsersPage = () => {
             <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Registered Users</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totalUsers}</p>
           </div>
-          <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
+          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <img src={usersIcon} alt="" className="w-6 h-6" />
           </div>
         </div>
@@ -245,7 +245,7 @@ export const AdminUsersPage = () => {
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-1">Rolling Logs Active</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">devopssuite-logs-*</p>
           </div>
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+          <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <img src={clockIcon} alt="" className="w-6 h-6" />
           </div>
         </div>
@@ -263,7 +263,7 @@ export const AdminUsersPage = () => {
                 placeholder="Search user name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm px-3 py-1.5 focus:ring-primary-500 focus:border-primary-500 w-full sm:w-64"
+                className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm px-3 py-1.5 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-gray-400 w-full sm:w-64"
               />
             </div>
 
@@ -284,7 +284,7 @@ export const AdminUsersPage = () => {
                       key={user.id}
                       onClick={() => handleSelectUser(user)}
                       className={`p-4 flex items-center justify-between cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
-                        isSelected ? 'bg-primary-50/50 dark:bg-primary-900/20 border-l-4 border-primary-600' : ''
+                        isSelected ? 'bg-gray-50 dark:bg-gray-700/60 border-l-4 border-gray-400 dark:border-gray-400' : ''
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -346,7 +346,7 @@ export const AdminUsersPage = () => {
                     to={`/users/${selectedUser.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-primary-300 dark:border-primary-700 text-xs font-semibold text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors shadow-xs"
                     title="View public profile in new tab"
                   >
                     <span>View Profile</span>
@@ -367,7 +367,7 @@ export const AdminUsersPage = () => {
                   onClick={() => handleTabChange('tasks')}
                   className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === 'tasks'
-                      ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                      ? 'border-gray-700 dark:border-gray-200 text-gray-900 dark:text-white'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
@@ -381,12 +381,12 @@ export const AdminUsersPage = () => {
                   onClick={() => handleTabChange('logs')}
                   className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
                     activeTab === 'logs'
-                      ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                      ? 'border-gray-700 dark:border-gray-200 text-gray-900 dark:text-white'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                 >
                   <span>Activity / Audit Logs</span>
-                  <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full font-semibold">
+                  <span className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs px-2 py-0.5 rounded-full font-semibold">
                     ES Logs
                   </span>
                 </button>
@@ -419,7 +419,7 @@ export const AdminUsersPage = () => {
                           <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight">{task.title}</h4>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {task.isCreator && (
-                              <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-700">
+                              <span className="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-medium px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-600">
                                 Creator
                               </span>
                             )}
@@ -472,12 +472,12 @@ export const AdminUsersPage = () => {
                       placeholder="Filter by URI or method (e.g. /tasks, POST, 200)..."
                       value={logQuery}
                       onChange={(e) => setLogQuery(e.target.value)}
-                      className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-xs px-3 py-1.5 focus:ring-primary-500 focus:border-primary-500"
+                      className="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-xs px-3 py-1.5 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-gray-400"
                     />
                     <button
                       type="submit"
                       disabled={logsLoading}
-                      className="px-3 py-1.5 bg-primary-600 text-white rounded-lg text-xs font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
+                      className="px-3 py-1.5 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-lg text-xs font-medium hover:bg-gray-700 dark:hover:bg-gray-300 transition-colors disabled:opacity-50"
                     >
                       Search
                     </button>
@@ -498,7 +498,7 @@ export const AdminUsersPage = () => {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className={`px-1.5 py-0.5 rounded font-bold text-[10px] uppercase ${
-                              log.method === 'GET'    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' :
+                              log.method === 'GET'    ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' :
                               log.method === 'POST'   ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300' :
                               log.method === 'PUT'    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' :
                               log.method === 'DELETE' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :

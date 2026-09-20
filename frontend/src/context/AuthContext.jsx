@@ -50,8 +50,13 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
   }, []);
 
-  const loginWithGoogle = useCallback(async (idToken) => {
-    const { user, token } = await AuthService.loginWithGoogle(idToken);
+  const loginWithGoogle = useCallback(async (tokenOrPayload) => {
+    const { user, token } = await AuthService.loginWithGoogle(tokenOrPayload);
+    dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
+  }, []);
+
+  const loginWithGithub = useCallback(async (code) => {
+    const { user, token } = await AuthService.loginWithGithub(code);
     dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
   }, []);
 
@@ -94,7 +99,7 @@ export const AuthProvider = ({ children }) => {
     state.user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_OWNER');
 
   return (
-    <AuthContext.Provider value={{ ...state, isAdmin, login, loginWithGoogle, register, logout, updateUser, dispatch }}>
+    <AuthContext.Provider value={{ ...state, isAdmin, login, loginWithGoogle, loginWithGithub, register, logout, updateUser, dispatch }}>
       {children}
     </AuthContext.Provider>
   );

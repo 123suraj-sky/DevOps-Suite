@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Card } from '../../components/common/Card';
 import logoIcon from '../../assets/42_logo.svg';
+import githubIcon from '../../assets/46_github.svg';
+import googleIcon from '../../assets/45_google.svg';
 
 export const LoginPage = () => {
   const { login, loginWithGoogle } = useAuth();
@@ -19,16 +21,27 @@ export const LoginPage = () => {
   // Shown when the user arrives after a successful password reset
   const successMessage = location.state?.successMessage ?? null;
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    setError('');
-    try {
-      // credentialResponse.credential is the Google id_token — sent to backend for verification
-      await loginWithGoogle(credentialResponse.credential);
-      navigate('/');
-    } catch (err) {
-      const serverMessage = err.response?.data?.message;
-      setError(serverMessage || 'Google sign-in failed. Please try again.');
-    }
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setError('');
+      try {
+        await loginWithGoogle({ access_token: tokenResponse.access_token });
+        navigate('/');
+      } catch (err) {
+        const serverMessage = err.response?.data?.message;
+        setError(serverMessage || 'Google sign-in failed. Please try again.');
+      }
+    },
+    onError: () => {
+      setError('Google sign-in was cancelled or failed.');
+    },
+  });
+
+  const handleGithubLogin = () => {
+    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+    const redirectUri = `${window.location.origin}/auth/github/callback`;
+    const scope = 'read:user user:email';
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
   };
 
   const handleSubmit = async (e) => {
@@ -95,17 +108,27 @@ export const LoginPage = () => {
           <div className="text-right -mt-2">
             <Link
               to="/forgot-password"
-              className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+              className="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 font-medium"
             >
               Forgot password?
             </Link>
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
-            Sign In
-          </Button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-primary-500 rounded-md shadow-sm bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading && (
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            )}
+            <span>Sign In</span>
+          </button>
 
-          <div className="relative my-1">
+          <div className="relative my-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200 dark:border-gray-700" />
             </div>
@@ -114,15 +137,23 @@ export const LoginPage = () => {
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError('Google sign-in was cancelled or failed.')}
-              width="368"
-              text="signin_with"
-              shape="rectangular"
-              theme="outline"
-            />
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => handleGoogleLogin()}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <img src={googleIcon} alt="Google" className="w-5 h-5" />
+              <span>Sign in with Google</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleGithubLogin}
+              className="w-full flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <img src={githubIcon} alt="GitHub" className="w-5 h-5 dark:invert" />
+              <span>Sign in with GitHub</span>
+            </button>
           </div>
 
           {error && (

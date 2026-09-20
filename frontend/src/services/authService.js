@@ -15,8 +15,15 @@ export class AuthService {
     return { user: response.user, token: response.accessToken };
   }
 
-  static async loginWithGoogle(idToken) {
-    const response = await authApi.loginWithGoogle(idToken);
+  static async loginWithGoogle(tokenOrPayload) {
+    const response = await authApi.loginWithGoogle(tokenOrPayload);
+    localStorage.setItem('accessToken', response.accessToken);
+    localStorage.setItem('refreshToken', response.refreshToken);
+    return { user: response.user, token: response.accessToken };
+  }
+
+  static async loginWithGithub(code) {
+    const response = await authApi.loginWithGithub(code);
     localStorage.setItem('accessToken', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);
     return { user: response.user, token: response.accessToken };

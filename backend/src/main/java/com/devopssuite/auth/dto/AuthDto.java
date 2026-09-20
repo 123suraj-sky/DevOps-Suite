@@ -205,9 +205,19 @@ public class AuthDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GoogleAuthRequest {
-        @NotBlank(message = "Google ID token is required")
         @JsonProperty("id_token")
         private String idToken;
+
+        @JsonProperty("access_token")
+        private String accessToken;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GithubAuthRequest {
+        @NotBlank(message = "GitHub authorization code is required")
+        private String code;
     }
 
     @Data

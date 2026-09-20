@@ -12,7 +12,7 @@ const STATUS_STYLES = {
   FAILED:    'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
   TIMEOUT:   'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
   OOM_KILLED:'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300',
-  RUNNING:   'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+  RUNNING:   'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
   QUEUED:    'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
 };
 
@@ -76,7 +76,7 @@ export const UserDashboard = () => {
         </Card>
         <Card>
           <p className="text-sm text-gray-500 dark:text-gray-400">Executions This Week</p>
-          <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{executionsThisWeek ?? 0}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{executionsThisWeek ?? 0}</p>
         </Card>
       </div>
 
@@ -89,7 +89,7 @@ export const UserDashboard = () => {
               {recentExecutions.map((exec) => (
                 <li key={exec.executionId} className="flex items-center justify-between py-2">
                   <div className="flex items-center space-x-3">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 capitalize">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 capitalize">
                       {exec.language}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -143,7 +143,7 @@ export const UserDashboard = () => {
       <div className="flex flex-wrap gap-4">
         <Link
           to="/projects"
-          className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 text-sm font-medium"
+          className="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-100 text-white dark:text-gray-900 rounded-md hover:bg-gray-700 dark:hover:bg-gray-200 text-sm font-medium transition-colors"
         >
           View My Projects
         </Link>
