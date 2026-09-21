@@ -147,7 +147,7 @@ export const Header = ({ onMenuToggle }) => {
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center justify-center p-1 rounded-full hover:ring-2 hover:ring-primary-300 dark:hover:ring-primary-600 transition-all focus:outline-none"
+            className="flex items-center justify-center p-1 rounded-full hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-500 transition-all focus:outline-none"
             title={user?.displayName || user?.email || 'User Menu'}
           >
             {user?.avatarUrl || user?.avatar_url ? (

@@ -248,6 +248,7 @@ public class MetricsController {
         // --- Executions this week ---
         Instant weekAgo = Instant.now().minus(7, ChronoUnit.DAYS);
         long executionsThisWeek = executionRequestRepository.countByUserIdAndCreatedAtAfter(userId, weekAgo);
+        long totalExecutions    = executionRequestRepository.countByUserId(userId);
 
         // --- Last 5 executions with result details ---
         List<ExecutionRequest> recentRequests = executionRequestRepository
@@ -286,6 +287,7 @@ public class MetricsController {
         UserSummaryResponse response = UserSummaryResponse.builder()
                 .taskStats(taskStats)
                 .executionsThisWeek(executionsThisWeek)
+                .totalExecutions(totalExecutions)
                 .recentExecutions(recentExecutions)
                 .recentActivity(recentActivity)
                 .build();

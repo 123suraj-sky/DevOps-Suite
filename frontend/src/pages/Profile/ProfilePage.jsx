@@ -337,7 +337,7 @@ export const ProfilePage = () => {
   const displayAvatar = isSelf ? avatarUrl : (displayUser?.avatarUrl ?? '');
   const displayGender = isSelf ? (isEditing ? gender : currentUser?.gender) : displayUser?.gender;
 
-  const { taskStats, executionsThisWeek } = summary ?? {};
+  const { taskStats, executionsThisWeek, totalExecutions } = summary ?? {};
 
   // ── Loading state for public profile ─────────────────────────────────
   if (!isSelf && loadingProfile && !profileData) {
@@ -570,7 +570,7 @@ export const ProfilePage = () => {
             loadingStats ? (
               <div className="p-8 flex justify-center"><Spinner size="md" /></div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <Card className="p-4">
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Open Tasks</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{taskStats?.open ?? 0}</p>
@@ -587,9 +587,14 @@ export const ProfilePage = () => {
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Finished tasks</p>
                 </Card>
                 <Card className="p-4">
-                  <p className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wider">Code Runs (7d)</p>
-                  <p className="text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{executionsThisWeek ?? 0}</p>
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Code Runs (Last 7 Days)</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{executionsThisWeek ?? 0}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Sandboxed executions</p>
+                </Card>
+                <Card className="p-4">
+                  <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider">Total Code Runs</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{totalExecutions ?? 0}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">All-time executions</p>
                 </Card>
               </div>
             )

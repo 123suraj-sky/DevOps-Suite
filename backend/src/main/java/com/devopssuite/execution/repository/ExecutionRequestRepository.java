@@ -16,6 +16,9 @@ public interface ExecutionRequestRepository extends JpaRepository<ExecutionReque
     // Count a user's executions submitted after a given point in time (used for "this week" stat)
     long countByUserIdAndCreatedAtAfter(UUID userId, Instant after);
 
+    // Count all executions ever submitted by a user (used for "total runs" stat)
+    long countByUserId(UUID userId);
+
     // Last N executions for a user — used for the recent executions panel
     List<ExecutionRequest> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 

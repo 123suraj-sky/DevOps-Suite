@@ -17,6 +17,7 @@ public class UserSummaryResponse {
 
     private TaskStats taskStats;
     private long executionsThisWeek;
+    private long totalExecutions;
     private List<RecentExecution> recentExecutions;
     private List<ActivityEvent> recentActivity;
 
