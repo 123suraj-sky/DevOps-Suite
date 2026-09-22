@@ -67,17 +67,17 @@ const SnapshotDiff = ({ snap, action, columns = [] }) => {
     const fromStatus = snap.previous_status ? formatStatusName(snap.previous_status, columns) : null;
     const toStatus = formatStatusName(snap.status, columns);
     return (
-      <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-700 text-xs text-amber-900 dark:text-amber-200">
+      <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 text-xs text-amber-900 dark:text-amber-200">
         {fromStatus ? (
           <>
-            <span className="font-semibold text-gray-700 dark:text-gray-300">{fromStatus}</span>
-            <span className="text-gray-400 dark:text-gray-500 font-bold">→</span>
-            <span className="font-bold text-amber-800 dark:text-amber-300">{toStatus}</span>
+            <span className="font-semibold text-[var(--text-secondary)]">{fromStatus}</span>
+            <span className="text-[var(--text-muted)] font-bold">→</span>
+            <span className="font-bold text-amber-700 dark:text-amber-300">{toStatus}</span>
           </>
         ) : (
           <>
-            <span className="text-gray-500 dark:text-gray-400">New status:</span>
-            <span className="font-bold text-amber-800 dark:text-amber-300">{toStatus}</span>
+            <span className="text-[var(--text-muted)]">New status:</span>
+            <span className="font-bold text-amber-700 dark:text-amber-300">{toStatus}</span>
           </>
         )}
       </div>
@@ -99,10 +99,10 @@ const SnapshotDiff = ({ snap, action, columns = [] }) => {
         if (val === null || val === undefined || val === '') return null;
         const displayVal = format ? format(val) : String(val);
         return [
-          <dt key={`l-${key}`} className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wide self-start pt-0.5">
+          <dt key={`l-${key}`} className="text-2xs text-[var(--text-muted)] font-semibold uppercase tracking-wide self-start pt-0.5">
             {label}
           </dt>,
-          <dd key={`v-${key}`} className="text-[11px] text-gray-700 dark:text-gray-200 break-words">
+          <dd key={`v-${key}`} className="text-xs text-[var(--text-primary)] break-words">
             {displayVal}
           </dd>,
         ];
@@ -130,39 +130,39 @@ const HistoryEntry = ({ entry, isLast, columns = [] }) => {
     <div className="flex gap-3">
       {/* Timeline spine */}
       <div className="flex flex-col items-center">
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 ${meta.color}`}>
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-2xs font-bold flex-shrink-0 ${meta.color}`}>
           {meta.icon
             ? <img src={meta.icon} alt="" className="w-3.5 h-3.5 invert" aria-hidden="true" />
             : null}
         </div>
-        {!isLast && <div className="w-px flex-1 bg-gray-200 dark:bg-gray-600 mt-1" />}
+        {!isLast && <div className="w-px flex-1 bg-[var(--border-subtle)] mt-1" />}
       </div>
 
       {/* Entry body */}
       <div className="pb-4 min-w-0 flex-1">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-xs font-semibold text-gray-800 dark:text-gray-100">
+          <span className="text-xs font-semibold text-[var(--text-primary)]">
             {entry.action === 'STATUS_CHANGED' ? (
               <span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">{actorName}</span>{' '}
-                <span className="font-normal text-gray-600 dark:text-gray-400">changed status</span>
+                <span className="font-semibold text-[var(--text-primary)]">{actorName}</span>{' '}
+                <span className="font-normal text-[var(--text-secondary)]">changed status</span>
                 {entry.snapshot?.previous_status && (
-                  <> from <span className="font-medium text-gray-800 dark:text-gray-200">{formatStatusName(entry.snapshot.previous_status, columns)}</span></>
+                  <> from <span className="font-medium text-[var(--text-secondary)]">{formatStatusName(entry.snapshot.previous_status, columns)}</span></>
                 )}
                 {entry.snapshot?.status && (
-                  <> to <span className="font-medium text-gray-800 dark:text-gray-200">{formatStatusName(entry.snapshot.status, columns)}</span></>
+                  <> to <span className="font-medium text-[var(--text-primary)]">{formatStatusName(entry.snapshot.status, columns)}</span></>
                 )}
               </span>
             ) : (
               <>
                 {meta.label}
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">
-                  by <span className="font-medium text-gray-700 dark:text-gray-300">{actorName}</span>
+                <span className="text-xs text-[var(--text-muted)] font-normal ml-1">
+                  by <span className="font-medium text-[var(--text-secondary)]">{actorName}</span>
                 </span>
               </>
             )}
           </span>
-          <span className="text-[11px] text-gray-500 dark:text-gray-400 font-mono ml-auto whitespace-nowrap">
+          <span className="text-xs text-[var(--text-muted)] font-mono ml-auto whitespace-nowrap">
             {fmt(timestamp)}
           </span>
         </div>
@@ -176,6 +176,7 @@ const HistoryEntry = ({ entry, isLast, columns = [] }) => {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
+// Re-export with token-aligned styles applied via the updated Modal component
 export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
   const [history, setHistory]     = useState([]);
   const [histLoading, setHistLoading] = useState(true);
@@ -239,7 +240,7 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
                 onClose();
                 onEdit(task);
               }}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 rounded-md transition-colors flex-shrink-0"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[var(--accent-text)] bg-[var(--accent-subtle)] hover:bg-[var(--accent)] hover:text-[var(--surface-base)] dark:hover:text-gray-950 rounded-md transition-colors flex-shrink-0"
               title="Edit this task"
             >
               <img src={editIcon} alt="" className="w-3.5 h-3.5" aria-hidden="true" />
@@ -249,40 +250,40 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
         </div>
 
         {/* ── Creator & Timestamp Banner ────────────────────────────────── */}
-        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-lg p-2.5">
-          <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-300">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] bg-[var(--surface-sunken)] border border-[var(--border-subtle)] rounded-lg p-2.5">
+          <div className="w-5 h-5 rounded-full bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center flex-shrink-0">
+            <span className="text-2xs font-bold text-[var(--accent-text)]">
               {(creatorName || 'U').charAt(0).toUpperCase()}
             </span>
           </div>
           <div>
-            <span>Created by <strong className="text-gray-800 dark:text-gray-100">{creatorName}</strong></span>
+            <span>Created by <strong className="text-[var(--text-primary)]">{creatorName}</strong></span>
             {createdAt && (
-              <span className="text-gray-500 dark:text-gray-400"> on <strong className="text-gray-700 dark:text-gray-200">{fmt(createdAt)}</strong></span>
+              <span className="text-[var(--text-muted)]"> on <strong className="text-[var(--text-secondary)]">{fmt(createdAt)}</strong></span>
             )}
           </div>
         </div>
 
         {/* ── Assigned To ───────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-lg p-2.5">
-          <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-300">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)] bg-[var(--surface-sunken)] border border-[var(--border-subtle)] rounded-lg p-2.5">
+          <div className="w-5 h-5 rounded-full bg-[var(--surface-raised)] border border-[var(--border-subtle)] flex items-center justify-center flex-shrink-0">
+            <span className="text-2xs font-bold text-[var(--text-secondary)]">
               {assigneeName ? assigneeName.charAt(0).toUpperCase() : '?'}
             </span>
           </div>
           <div>
             <span>Assigned to{' '}</span>
             {assigneeName ? (
-              <strong className="text-gray-800 dark:text-gray-100">{assigneeName}</strong>
+              <strong className="text-[var(--text-primary)]">{assigneeName}</strong>
             ) : (
-              <span className="text-gray-400 dark:text-gray-500 italic">Unassigned</span>
+              <span className="text-[var(--text-muted)] italic">Unassigned</span>
             )}
           </div>
         </div>
 
         {/* ── Badges ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap gap-2">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentCol?.bg ?? 'bg-gray-100 text-gray-700'}`}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${currentCol?.badge ?? 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]'}`}>
             {currentCol?.title ?? task.status}
           </span>
           <Badge variant={priorityVariant(task.priority)}>{task.priority ?? 'MEDIUM'}</Badge>
@@ -297,8 +298,8 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
         {/* ── Description ────────────────────────────────────────────────── */}
         {task.description && (
           <div>
-            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Description</p>
-            <p className="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap leading-relaxed">{task.description}</p>
+        <p className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-1">Description</p>
+            <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{task.description}</p>
           </div>
         )}
 
@@ -306,7 +307,7 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
 
         {/* ── Audit history timeline ──────────────────────────────────────── */}
         <div>
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+        <p className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">
             Change History
           </p>
 
@@ -317,7 +318,7 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
           )}
 
           {!histLoading && !histError && history.length === 0 && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 py-2">No history recorded yet.</p>
+            <p className="text-xs text-[var(--text-muted)] py-2">No history recorded yet.</p>
           )}
 
           {!histLoading && !histError && history.length > 0 && (
@@ -335,7 +336,7 @@ export const TaskDetailModal = ({ task, columns, onClose, onEdit }) => {
         </div>
 
         {/* ── Task ID ────────────────────────────────────────────────────── */}
-        <p className="text-[10px] text-gray-300 dark:text-gray-600 font-mono break-all">ID: {task.id}</p>
+        <p className="text-2xs text-[var(--text-muted)] font-mono break-all">ID: {task.id}</p>
       </div>
     </Modal>
   );

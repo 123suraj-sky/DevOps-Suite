@@ -6,6 +6,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { getDefaultAvatar } from '../../utils';
 import { NotificationItem } from '../common/NotificationItem';
 import notificationBellIcon from '../../assets/09_notification_bell.svg';
+import sunIcon from '../../assets/43_sun.svg';
+import moonIcon from '../../assets/44_moon.svg';
 
 export const Header = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
@@ -29,64 +31,45 @@ export const Header = ({ onMenuToggle }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const iconBtn = `p-1.5 rounded-md text-[var(--text-secondary)] hover:text-[var(--text-primary)]
+    hover:bg-[var(--surface-sunken)] transition-colors
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]`;
+
   return (
-    <header className="sticky top-0 z-10 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 lg:px-6">
+    <header className="sticky top-0 z-10 h-14 bg-[var(--surface-raised)] border-b border-[var(--border-subtle)] flex items-center justify-between px-4">
       {/* Hamburger — mobile only */}
       <button
         onClick={onMenuToggle}
-        className="lg:hidden p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-        aria-label="Open menu"
+        className={`lg:hidden ${iconBtn}`}
+        aria-label="Open navigation menu"
       >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
         </svg>
       </button>
 
       <div className="flex-1" />
 
-      <div className="flex items-center space-x-2 sm:space-x-4">
+      <div className="flex items-center gap-1">
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-[transform,background-color,color] duration-150 active:scale-90"
+          className={iconBtn}
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-          title={isDark ? 'Light mode' : 'Dark mode'}
         >
-          <span className="relative w-5 h-5 block">
-            {/* Sun — shown in dark mode */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`absolute inset-0 w-5 h-5 transition-opacity duration-300 ${isDark ? 'opacity-100' : 'opacity-0'}`}
-            >
-              <circle cx="12" cy="12" r="4"/>
-              <line x1="12" y1="2" x2="12" y2="4"/>
-              <line x1="12" y1="20" x2="12" y2="22"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="2" y1="12" x2="4" y2="12"/>
-              <line x1="20" y1="12" x2="22" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-            {/* Moon — shown in light mode */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`absolute inset-0 w-5 h-5 transition-opacity duration-300 ${isDark ? 'opacity-0' : 'opacity-100'}`}
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
+          <span className="relative w-4 h-4 block">
+            <img
+              src={sunIcon}
+              alt=""
+              className={`absolute inset-0 w-4 h-4 transition-opacity duration-200 dark:brightness-0 dark:invert ${isDark ? 'opacity-100' : 'opacity-0'}`}
+              aria-hidden="true"
+            />
+            <img
+              src={moonIcon}
+              alt=""
+              className={`absolute inset-0 w-4 h-4 transition-opacity duration-200 dark:brightness-0 dark:invert ${isDark ? 'opacity-0' : 'opacity-100'}`}
+              aria-hidden="true"
+            />
           </span>
         </button>
 
@@ -94,26 +77,40 @@ export const Header = ({ onMenuToggle }) => {
         <div className="relative" ref={notificationsRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-            aria-label="Notifications"
+            className={`relative ${iconBtn}`}
+            aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+            aria-haspopup="true"
+            aria-expanded={showNotifications}
           >
-            <img src={notificationBellIcon} alt="Notifications" className="w-5 h-5 object-contain dark:brightness-0 dark:invert" />
+            <img
+              src={notificationBellIcon}
+              alt=""
+              className="w-4 h-4 dark:brightness-0 dark:invert"
+              aria-hidden="true"
+            />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+              <span
+                className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 text-2xs font-bold text-white bg-red-500 rounded-full leading-none"
+                aria-hidden="true"
+              >
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1rem)] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto z-50">
-              <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Notifications</h3>
-                <div className="flex items-center gap-2">
+            <div
+              className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-1rem)] bg-[var(--surface-overlay)] rounded-lg border border-[var(--border-subtle)] shadow-dark-md max-h-96 overflow-y-auto z-50"
+              role="region"
+              aria-label="Notifications panel"
+            >
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border-subtle)] sticky top-0 bg-[var(--surface-overlay)]">
+                <h3 className="text-xs font-semibold text-[var(--text-primary)]">Notifications</h3>
+                <div className="flex items-center gap-3">
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
-                      className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                      className="text-xs text-[var(--accent-text)] hover:underline transition-colors"
                     >
                       Mark all read
                     </button>
@@ -121,14 +118,14 @@ export const Header = ({ onMenuToggle }) => {
                   <Link
                     to="/notifications"
                     onClick={() => setShowNotifications(false)}
-                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                   >
                     See all
                   </Link>
                 </div>
               </div>
               {notifications.length === 0 ? (
-                <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">No notifications</div>
+                <div className="p-6 text-center text-sm text-[var(--text-muted)]">No notifications</div>
               ) : (
                 notifications.slice(0, 10).map((n) => (
                   <NotificationItem
@@ -144,28 +141,30 @@ export const Header = ({ onMenuToggle }) => {
         </div>
 
         {/* User menu */}
-        <div className="relative" ref={userMenuRef}>
+        <div className="relative ml-1" ref={userMenuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center justify-center p-1 rounded-full hover:ring-2 hover:ring-gray-300 dark:hover:ring-gray-500 transition-all focus:outline-none"
-            title={user?.displayName || user?.email || 'User Menu'}
+            className="flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-1"
+            aria-label="User menu"
+            aria-haspopup="true"
+            aria-expanded={showUserMenu}
           >
             {user?.avatarUrl || user?.avatar_url ? (
               <img
                 src={user.avatarUrl || user.avatar_url}
-                alt={user.displayName || user.email || 'User Avatar'}
-                className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                alt={user.displayName || user.email || 'User'}
+                className="w-7 h-7 rounded-full object-cover border border-[var(--border-subtle)]"
                 onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
               />
             ) : getDefaultAvatar(user?.gender) ? (
               <img
                 src={getDefaultAvatar(user?.gender)}
-                alt={user?.gender === 'FEMALE' ? 'Female User' : 'Male User'}
-                className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                alt={user?.gender === 'FEMALE' ? 'User avatar' : 'User avatar'}
+                className="w-7 h-7 rounded-full object-cover border border-[var(--border-subtle)]"
               />
             ) : (
-              <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <div className="w-7 h-7 bg-[var(--accent-subtle)] border border-[var(--accent-border)] rounded-full flex items-center justify-center">
+                <span className="text-xs font-semibold text-[var(--accent-text)]">
                   {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -173,26 +172,28 @@ export const Header = ({ onMenuToggle }) => {
           </button>
 
           {showUserMenu && (
-            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <div
+              className="absolute right-0 mt-2 w-52 bg-[var(--surface-overlay)] rounded-lg border border-[var(--border-subtle)] shadow-dark-md py-1 z-20"
+              role="menu"
+            >
+              <div className="px-3 py-2 border-b border-[var(--border-subtle)]">
+                <p className="text-sm font-medium text-[var(--text-primary)] truncate">
                   {user?.displayName || 'User'}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
+                <p className="text-xs text-[var(--text-muted)] truncate mt-0.5">{user?.email}</p>
               </div>
               <Link
                 to="/profile"
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                role="menuitem"
+                className="block px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)] transition-colors"
                 onClick={() => setShowUserMenu(false)}
               >
                 Profile
               </Link>
               <button
-                onClick={() => {
-                  setShowUserMenu(false);
-                  logout();
-                }}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                role="menuitem"
+                onClick={() => { setShowUserMenu(false); logout(); }}
+                className="block w-full text-left px-3 py-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)] transition-colors"
               >
                 Sign out
               </button>

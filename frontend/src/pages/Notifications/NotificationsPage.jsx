@@ -11,19 +11,13 @@ const TABS = [
 
 export const NotificationsPage = () => {
   const {
-    notifications,
-    unreadCount,
-    hasMore,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    loadMore,
-    refresh,
+    notifications, unreadCount, hasMore,
+    markAsRead, markAllAsRead, deleteNotification, loadMore, refresh,
   } = useNotifications();
 
-  const [activeTab, setActiveTab] = useState('all');
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [activeTab,    setActiveTab]    = useState('all');
+  const [loading,      setLoading]      = useState(false);
+  const [loadingMore,  setLoadingMore]  = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -33,11 +27,7 @@ export const NotificationsPage = () => {
 
   const handleLoadMore = useCallback(async () => {
     setLoadingMore(true);
-    try {
-      await loadMore();
-    } finally {
-      setLoadingMore(false);
-    }
+    try { await loadMore(); } finally { setLoadingMore(false); }
   }, [loadMore]);
 
   const displayed = activeTab === 'unread'
@@ -45,42 +35,44 @@ export const NotificationsPage = () => {
     : notifications;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      {/* Page header */}
+    <div className="max-w-2xl mx-auto space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Notifications</h1>
+          <h1 className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Notifications</h1>
           {unreadCount > 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+              {unreadCount} unread
             </p>
           )}
         </div>
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
+            className="text-sm text-[var(--accent-text)] hover:underline font-medium transition-colors"
           >
-            Mark all as read
+            Mark all read
           </button>
         )}
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-fit">
+      <div className="flex gap-0.5 bg-[var(--surface-sunken)] border border-[var(--border-subtle)] p-0.5 rounded-md w-fit" role="tablist">
         {TABS.map((tab) => (
           <button
             key={tab.id}
+            role="tab"
+            aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            className={`flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium rounded transition-colors ${
               activeTab === tab.id
-                ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-subtle)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
             }`}
           >
             {tab.label}
             {tab.id === 'unread' && unreadCount > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-red-500 rounded-full">
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-2xs font-bold text-white bg-red-500 rounded-full leading-none" aria-hidden="true">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -88,13 +80,25 @@ export const NotificationsPage = () => {
         ))}
       </div>
 
-      {/* List */}
+      {/* Notification list */}
       {loading ? (
         <Spinner className="py-16" />
       ) : displayed.length === 0 ? (
-        <EmptyNotifications activeTab={activeTab} />
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-14 h-14 rounded-full bg-[var(--surface-sunken)] border border-[var(--border-subtle)] flex items-center justify-center mb-4">
+            <img src={notificationBellIcon} alt="" className="w-7 h-7 opacity-30 dark:brightness-0 dark:invert" aria-hidden="true" />
+          </div>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+            {activeTab === 'unread' ? 'All caught up' : 'No notifications yet'}
+          </h3>
+          <p className="text-sm text-[var(--text-secondary)] mt-1 max-w-xs">
+            {activeTab === 'unread'
+              ? 'You have no unread notifications.'
+              : "When you're assigned tasks or added to projects, you'll see them here."}
+          </p>
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2" role="list">
           {displayed.map((n) => (
             <NotificationItem
               key={n.id}
@@ -109,19 +113,17 @@ export const NotificationsPage = () => {
               <button
                 onClick={handleLoadMore}
                 disabled={loadingMore}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent-text)] border border-[var(--accent-border)] rounded-lg hover:bg-[var(--accent-subtle)] disabled:opacity-50 transition-colors"
               >
                 {loadingMore ? (
                   <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Loading…
+                    Loading
                   </>
-                ) : (
-                  'Load more'
-                )}
+                ) : 'Load more'}
               </button>
             </div>
           )}
@@ -130,19 +132,3 @@ export const NotificationsPage = () => {
     </div>
   );
 };
-
-const EmptyNotifications = ({ activeTab }) => (
-  <div className="flex flex-col items-center justify-center py-20 text-center">
-    <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4">
-      <img src={notificationBellIcon} alt="" className="w-8 h-8 opacity-40" />
-    </div>
-    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-      {activeTab === 'unread' ? 'All caught up!' : 'No notifications yet'}
-    </h3>
-    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-xs">
-      {activeTab === 'unread'
-        ? 'You have no unread notifications.'
-        : "When you're assigned tasks or added to projects, you'll see them here."}
-    </p>
-  </div>
-);

@@ -43,11 +43,11 @@ export const GitHubCallbackPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--surface-base)] gap-4">
         <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
         <button
           onClick={() => navigate('/login', { replace: true })}
-          className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+          className="text-[var(--accent-text)] hover:underline text-sm font-medium"
         >
           Back to sign in
         </button>
@@ -56,9 +56,9 @@ export const GitHubCallbackPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 gap-3">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--surface-base)] gap-3">
       <Spinner size="lg" />
-      <p className="text-sm text-gray-500 dark:text-gray-400">Signing you in with GitHub…</p>
+      <p className="text-sm text-[var(--text-muted)]">Signing you in with GitHub…</p>
     </div>
   );
 };

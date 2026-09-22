@@ -32,7 +32,7 @@ export const GrafanaPage = () => {
           href={grafanaUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="ml-3 text-xs text-primary-400 hover:text-primary-300 underline"
+          className="ml-3 text-xs text-accent-400 hover:text-accent-300 underline"
         >
           Open in new tab ↗
         </a>
@@ -41,7 +41,7 @@ export const GrafanaPage = () => {
       {/* Loading overlay */}
       {!loaded && !error && (
         <div className="absolute inset-0 top-10 flex flex-col items-center justify-center bg-gray-900 z-10 gap-3">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-accent-400 border-t-transparent rounded-full animate-spin" />
           <span className="text-sm text-gray-400">Loading Grafana…</span>
           <span className="text-xs text-gray-500 mt-1">
             If prompted, enter username <span className="font-mono text-gray-400">admin</span> and password{' '}
@@ -63,7 +63,7 @@ export const GrafanaPage = () => {
             href={grafanaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-md transition-colors"
+            className="mt-2 px-4 py-2 bg-accent-500 hover:bg-accent-600 text-white text-sm rounded-md transition-colors"
           >
             Open Grafana directly ↗
           </a>

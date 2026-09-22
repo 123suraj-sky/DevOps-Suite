@@ -11,102 +11,126 @@ import kibanaIcon from '../../assets/40_kibana.svg';
 import usersIcon from '../../assets/41_users.svg';
 
 const baseNavLinks = [
-  { path: '/', label: 'Dashboard', icon: dashboardIcon, iconAlt: 'Dashboard', noInvert: true },
-  { path: '/projects', label: 'Projects', icon: projectsIcon, iconAlt: 'Projects' },
-  { path: '/notifications', label: 'Notifications', icon: notificationsIcon, iconAlt: 'Notifications' },
+  { path: '/',              label: 'Dashboard',     icon: dashboardIcon,      iconAlt: 'Dashboard' },
+  { path: '/projects',      label: 'Projects',      icon: projectsIcon,       iconAlt: 'Projects' },
+  { path: '/notifications', label: 'Notifications', icon: notificationsIcon,  iconAlt: 'Notifications' },
 ];
 
 const adminNavLinks = [
-  { path: '/admin/users', label: 'User Activity', icon: usersIcon, iconAlt: 'User Activity' },
-  { path: '/grafana', label: 'Grafana', icon: grafanaIcon, iconAlt: 'Grafana' },
-  { path: '/kibana', label: 'Kibana', icon: kibanaIcon, iconAlt: 'Kibana' },
+  { path: '/admin/users', label: 'User Activity',     icon: usersIcon,  iconAlt: 'User Activity' },
+  { path: '/grafana',     label: 'Grafana',           icon: grafanaIcon, iconAlt: 'Grafana' },
+  { path: '/kibana',      label: 'Kibana',            icon: kibanaIcon,  iconAlt: 'Kibana' },
 ];
+
+const NavLink = ({ link, onClose }) => {
+  const location = useLocation();
+  const isActive = location.pathname === link.path;
+
+  return (
+    <Link
+      to={link.path}
+      onClick={onClose}
+      className={cn(
+        'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors group',
+        isActive
+          ? 'bg-[var(--accent-subtle)] text-[var(--accent-text)] border border-[var(--accent-border)]'
+          : 'text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]'
+      )}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <img
+        src={link.icon}
+        alt=""
+        aria-hidden="true"
+        className={cn(
+          'w-4 h-4 shrink-0 object-contain',
+          isActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-80',
+          // Only invert when not active (active state uses accent tint)
+          !isActive && 'dark:brightness-0 dark:invert'
+        )}
+      />
+      <span>{link.label}</span>
+    </Link>
+  );
+};
 
 export const Sidebar = ({ isOpen = true, onClose }) => {
   const location = useLocation();
   const { isAdmin } = useAuth();
   const { recent, hasMore, loading } = useProjects();
 
-  const NavLink = ({ link }) => (
-    <Link
-      to={link.path}
-      className={cn(
-        'flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-        location.pathname === link.path
-          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
-          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-      )}
-      onClick={onClose}
-    >
-      <img src={link.icon} alt={link.iconAlt} className={`w-5 h-5 object-contain ${link.noInvert ? '' : 'dark:brightness-0 dark:invert'}`} />
-      <span>{link.label}</span>
-    </Link>
-  );
-
   return (
     <>
+      {/* Mobile backdrop */}
       {isOpen && onClose && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
           onClick={onClose}
+          aria-hidden="true"
         />
       )}
 
       <aside
         className={cn(
-          'fixed lg:static inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-[transform,background-color,border-color] duration-200 lg:transform-none flex flex-col',
+          'fixed lg:static inset-y-0 left-0 z-30',
+          'w-60 flex flex-col shrink-0',
+          'bg-[var(--surface-raised)] border-r border-[var(--border-subtle)]',
+          'transform transition-[transform,background-color,border-color] duration-200 lg:transform-none',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700 shrink-0">
-          <Link to="/" className="flex items-center space-x-2">
-            <img src={logoIcon} alt="DevOps Suite Logo" className="w-8 h-8" />
-            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">DevOps Suite</span>
+        <div className="flex items-center h-14 px-4 border-b border-[var(--border-subtle)] shrink-0">
+          <Link to="/" className="flex items-center gap-2.5" onClick={onClose}>
+            <div className="w-7 h-7 rounded-lg bg-[var(--accent-subtle)] border border-[var(--accent-border)] flex items-center justify-center shrink-0">
+              <img src={logoIcon} alt="DevOps Suite" className="w-4 h-4" />
+            </div>
+            <span className="text-sm font-semibold text-[var(--text-primary)] tracking-tight">DevOps Suite</span>
           </Link>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {/* Main nav links */}
-          <nav className="p-4 space-y-1">
+        {/* Scrollable nav content */}
+        <div className="flex-1 overflow-y-auto py-3">
+          {/* Main nav */}
+          <nav className="px-3 space-y-0.5" aria-label="Main navigation">
             {baseNavLinks.map((link) => (
-              <NavLink key={link.path} link={link} />
+              <NavLink key={link.path} link={link} onClose={onClose} />
             ))}
           </nav>
 
-          {/* Admin tools section */}
+          {/* Admin section */}
           {isAdmin && (
-            <div className="px-4 pb-2">
-              <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+            <div className="px-3 mt-4">
+              <p className="px-3 mb-1 text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">
                 Admin
               </p>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {adminNavLinks.map((link) => (
-                  <NavLink key={link.path} link={link} />
+                  <NavLink key={link.path} link={link} onClose={onClose} />
                 ))}
               </div>
             </div>
           )}
 
           {/* Recent Projects */}
-          <div className="px-4 pb-4">
-            <p className="px-3 mb-1.5 text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+          <div className="px-3 mt-4">
+            <p className="px-3 mb-1 text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">
               Recent Projects
             </p>
 
             {loading ? (
               <div className="space-y-1 px-3">
                 {[1, 2, 3].map((n) => (
-                  <div key={n} className="h-7 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
+                  <div key={n} className="skeleton h-7 rounded" />
                 ))}
               </div>
             ) : recent.length === 0 ? (
-              <p className="px-3 text-xs text-gray-400 dark:text-gray-500 italic">No projects yet</p>
+              <p className="px-3 text-xs text-[var(--text-muted)] italic">No projects yet</p>
             ) : (
               <div className="space-y-0.5">
                 {recent.map((project) => {
                   const projectId = project.id ?? project.projectId;
-                  const isActive  = location.pathname.startsWith(`/projects/${projectId}`);
+                  const isActive = location.pathname.startsWith(`/projects/${projectId}`);
                   return (
                     <Link
                       key={projectId}
@@ -114,33 +138,37 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
                       title={project.name}
                       onClick={onClose}
                       className={cn(
-                        'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors group',
+                        'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs transition-colors group',
                         isActive
-                          ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white font-semibold'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                          ? 'bg-[var(--accent-subtle)] text-[var(--accent-text)] border border-[var(--accent-border)]'
+                          : 'text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)]'
                       )}
+                      aria-current={isActive ? 'page' : undefined}
                     >
                       <img
                         src={projectsIcon}
                         alt=""
                         aria-hidden="true"
                         className={cn(
-                          'w-3.5 h-3.5 shrink-0 object-contain dark:brightness-0 dark:invert',
-                          isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-70'
+                          'w-3.5 h-3.5 shrink-0 object-contain',
+                          isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-60',
+                          !isActive && 'dark:brightness-0 dark:invert'
                         )}
                       />
                       <span className="truncate">{project.name}</span>
                     </Link>
                   );
                 })}
-
                 {hasMore && (
                   <Link
                     to="/projects"
                     onClick={onClose}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-[var(--text-muted)] hover:text-[var(--accent-text)] hover:bg-[var(--surface-sunken)] transition-colors font-medium"
                   >
-                    All projects →
+                    All projects
+                    <svg className="w-3 h-3 ml-auto" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                    </svg>
                   </Link>
                 )}
               </div>

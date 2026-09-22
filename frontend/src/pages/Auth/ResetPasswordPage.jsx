@@ -3,10 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { Card } from '../../components/common/Card';
+import { AuthLayout } from '../../components/layout/AuthLayout';
 import checkIcon from '../../assets/11_check.svg';
 import xIcon from '../../assets/26_x.svg';
-import logoIcon from '../../assets/42_logo.svg';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{8,}$/;
 
@@ -22,35 +21,28 @@ export const ResetPasswordPage = () => {
   const [error, setError] = useState('');
 
   const passwordValid = useMemo(() => PASSWORD_REGEX.test(password), [password]);
-  const confirmMatches = useMemo(
-    () => confirmPassword !== '' && password === confirmPassword,
-    [password, confirmPassword]
-  );
-  const confirmMismatch = useMemo(
-    () => confirmPassword !== '' && password !== confirmPassword,
-    [password, confirmPassword]
-  );
+  const confirmMatches = useMemo(() => confirmPassword !== '' && password === confirmPassword, [password, confirmPassword]);
+  const confirmMismatch = useMemo(() => confirmPassword !== '' && password !== confirmPassword, [password, confirmPassword]);
   const canSubmit = passwordValid && confirmMatches;
 
-  // No token in URL — show an error state immediately
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
-        <Card className="w-full max-w-md">
-          <div className="text-center mb-6">
-            <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Invalid reset link</h1>
+      <AuthLayout>
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Invalid link</h2>
           </div>
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300 text-center mb-4">
+          <div className="p-4 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
             This password reset link is invalid or has already been used.
           </div>
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-            <Link to="/forgot-password" className="text-primary-600 hover:text-primary-700 font-medium">
-              Request a new reset link
-            </Link>
-          </div>
-        </Card>
-      </div>
+          <Link
+            to="/forgot-password"
+            className="block text-center text-sm text-[var(--accent-text)] hover:underline font-medium"
+          >
+            Request a new reset link
+          </Link>
+        </div>
+      </AuthLayout>
     );
   }
 
@@ -61,12 +53,9 @@ export const ResetPasswordPage = () => {
     setLoading(true);
     try {
       await authApi.resetPassword(token, password);
-      navigate('/login', {
-        state: { successMessage: 'Password reset successfully. You can now sign in.' },
-      });
+      navigate('/login', { state: { successMessage: 'Password reset successfully. You can now sign in.' } });
     } catch (err) {
-      const serverMessage = err.response?.data?.message;
-      setError(serverMessage || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -74,26 +63,23 @@ export const ResetPasswordPage = () => {
 
   const passwordHintClass = passwordValid
     ? 'text-green-600 dark:text-green-400'
-    : passwordBlurred
-    ? 'text-red-500 dark:text-red-400'
-    : 'text-gray-400 dark:text-gray-500';
+    : passwordBlurred ? 'text-red-500 dark:text-red-400' : 'text-[var(--text-muted)]';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
-      <Card className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Choose a new password</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Must be at least 8 characters.</p>
+    <AuthLayout>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">New password</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">Choose a strong password for your account.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Input
               label="New password"
@@ -103,35 +89,33 @@ export const ResetPasswordPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setPasswordBlurred(true)}
               required
+              autoComplete="new-password"
             />
-            <p className={`mt-1 text-xs flex items-center gap-1 ${passwordHintClass}`}>
-              {passwordValid && (
-                <img src={checkIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
-              )}
-              {passwordValid
-                ? 'Password meets all requirements'
-                : 'Min 8 chars, must include uppercase, lowercase, digit, and a special character (@#$%^&+=!)'}
+            <p className={`mt-1.5 text-xs flex items-center gap-1.5 ${passwordHintClass}`}>
+              {passwordValid && <img src={checkIcon} alt="" className="w-3 h-3 shrink-0" aria-hidden="true" />}
+              {passwordValid ? 'Password meets all requirements' : 'Min 8 chars, uppercase, lowercase, digit, and special character'}
             </p>
           </div>
 
           <div>
             <Input
-              label="Confirm new password"
+              label="Confirm password"
               type="password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              autoComplete="new-password"
             />
             {confirmMismatch && (
-              <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                <img src={xIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+              <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1.5">
+                <img src={xIcon} alt="" className="w-3 h-3 shrink-0" aria-hidden="true" />
                 Passwords do not match
               </p>
             )}
             {confirmMatches && (
-              <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
-                <img src={checkIcon} alt="" className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+              <p className="mt-1.5 text-xs text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                <img src={checkIcon} alt="" className="w-3 h-3 shrink-0" aria-hidden="true" />
                 Passwords match
               </p>
             )}
@@ -141,13 +125,14 @@ export const ResetPasswordPage = () => {
             Reset password
           </Button>
 
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-            <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-              Back to sign in
-            </Link>
-          </div>
+          <Link
+            to="/login"
+            className="block text-center text-sm text-[var(--text-muted)] hover:text-[var(--accent-text)] transition-colors"
+          >
+            Back to sign in
+          </Link>
         </form>
-      </Card>
-    </div>
+      </div>
+    </AuthLayout>
   );
 };

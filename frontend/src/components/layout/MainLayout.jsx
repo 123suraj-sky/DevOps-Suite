@@ -11,56 +11,54 @@ export const MainLayout = () => {
   const location = useLocation();
   const { isAdmin } = useAuth();
 
-  // Track if Grafana or Kibana have been visited so we lazily mount and keep them persistent
   const [grafanaVisited, setGrafanaVisited] = useState(false);
-  const [kibanaVisited, setKibanaVisited] = useState(false);
+  const [kibanaVisited,  setKibanaVisited]  = useState(false);
 
   const isGrafana = location.pathname === '/grafana';
-  const isKibana = location.pathname === '/kibana';
-  const isCode = location.pathname.endsWith('/code');
+  const isKibana  = location.pathname === '/kibana';
+  const isCode    = location.pathname.endsWith('/code');
 
-  if (isGrafana && !grafanaVisited) {
-    setGrafanaVisited(true);
-  }
-  if (isKibana && !kibanaVisited) {
-    setKibanaVisited(true);
-  }
+  if (isGrafana && !grafanaVisited) setGrafanaVisited(true);
+  if (isKibana  && !kibanaVisited)  setKibanaVisited(true);
 
-  // IDE and embedded admin tools need full-height flex — no scroll, no padding
+  // Grafana/Kibana iframes and the IDE all need full-height flex — no inner padding/scroll.
+  // The IDE manages its own internal spacing inside ProjectLayout.
   const isFullHeight = isCode || isGrafana || isKibana;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-[var(--surface-base)]">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-        {/* Persistent Grafana iframe view */}
+        {/* Persistent Grafana iframe */}
         {isAdmin && grafanaVisited && (
           <div className={isGrafana ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : 'hidden'}>
             <GrafanaPage />
           </div>
         )}
 
-        {/* Persistent Kibana iframe view */}
+        {/* Persistent Kibana iframe */}
         {isAdmin && kibanaVisited && (
           <div className={isKibana ? 'flex-1 flex flex-col min-h-0 overflow-hidden' : 'hidden'}>
             <KibanaPage />
           </div>
         )}
 
-        {/* All other routes render via Outlet */}
+        {/* All other routes */}
         {!isGrafana && !isKibana && (
           isFullHeight ? (
-            // Full-height flex: IDE fills everything below the header
-            <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            // IDE / full-height routes: no padding, no scroll — layout handled inside
+            <main className="flex-1 flex flex-col min-h-0 overflow-hidden page-enter">
               <Outlet />
             </main>
           ) : (
-            // Normal scrollable padded container for every other page
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-              <Outlet />
+            // Normal pages: padded scrollable container
+            <main className="flex-1 overflow-y-auto page-enter">
+              <div className="max-w-7xl mx-auto p-4 lg:p-6">
+                <Outlet />
+              </div>
             </main>
           )
         )}

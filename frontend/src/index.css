@@ -2,33 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --surface-base:    #f8f8f8;
+  --surface-raised:  #ffffff;
+  --surface-overlay: #ffffff;
+  --surface-sunken:  #f2f2f2;
+
+  /* Borders */
+  --border-subtle:   #e8e8e8;
+  --border-strong:   #d0d0d0;
+
+  /* Text */
+  --text-primary:    #111111;
+  --text-secondary:  #606060;
+  --text-muted:      #909090;
+
+  /* Accent — electric cyan */
+  --accent:          #0891b2;
+  --accent-hover:    #0e7490;
+  --accent-subtle:   #ecfeff;
+  --accent-border:   #a5f3fc;
+  --accent-text:     #0891b2;
+
+  /* Status */
+  --status-success:  #10b981;
+  --status-warning:  #f59e0b;
+  --status-danger:   #ef4444;
+  --status-neutral:  #737373;
+
+  /* Kanban column accent borders */
+  --col-backlog:     #737373;
+  --col-todo:        #737373;
+  --col-progress:    #f59e0b;
+  --col-done:        #10b981;
+}
+
 html.dark {
   color-scheme: dark;
+
+  --surface-base:    #0f0f0f;
+  --surface-raised:  #1a1a1a;
+  --surface-overlay: #232323;
+  --surface-sunken:  #141414;
+
+  --border-subtle:   #2a2a2a;
+  --border-strong:   #3d3d3d;
+
+  --text-primary:    #f0f0f0;
+  --text-secondary:  #8a8a8a;
+  --text-muted:      #5a5a5a;
+
+  --accent:          #22d3ee;
+  --accent-hover:    #06b6d4;
+  --accent-subtle:   #0e4a52;
+  --accent-border:   #1a8a9a;
+  --accent-text:     #22d3ee;
 }
 
+/* ── Global base ───────────────────────────────────────────────────────────── */
 body {
   margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Geist', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
 }
 
-code {
-  font-family: 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+code, pre, .font-mono {
+  font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
 }
 
-/*
- * Global dark-mode color transitions
- * Only animates color properties — transform, opacity, width, height etc. are
- * intentionally excluded so the Sidebar slide-in and other non-color animations
- * are unaffected.
- * The `.no-theme-transition` class (applied by ThemeContext during toggle) is
- * used to suppress the transition on the theme icon swap itself.
- */
+/* ── Color transitions for dark mode toggle ────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -38,7 +87,7 @@ code {
   transition-duration: 200ms;
 }
 
-/* Let explicitly-set transition utilities win (e.g. transition-transform on Sidebar) */
+/* Let explicitly-set transition utilities win */
 .transition-none,
 .transition-transform,
 .transition-opacity,
@@ -54,4 +103,75 @@ iframe,
 .monaco-editor,
 .monaco-editor * {
   transition: none !important;
+}
+
+/* ── Page fade-in transition ───────────────────────────────────────────────── */
+.page-enter {
+  animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal animation ───────────────────────────────────────────────────────── */
+.modal-panel {
+  animation: modalIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.97) translateY(-4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Skeleton pulse ────────────────────────────────────────────────────────── */
+.skeleton {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  background-color: var(--surface-sunken);
+  border-radius: 4px;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Scrollbar styling (thin, themed) ─────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  border-radius: 3px;
+}
+
+/* ── Focus-visible ring utility ────────────────────────────────────────────── */
+.focus-accent:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--surface-base), 0 0 0 4px var(--accent);
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .modal-panel,
+  .skeleton {
+    animation: none;
+  }
+
+  * {
+    transition-duration: 0ms !important;
+  }
 }

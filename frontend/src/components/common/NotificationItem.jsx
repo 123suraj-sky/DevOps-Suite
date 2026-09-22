@@ -1,65 +1,59 @@
 import { formatRelativeTime } from '../../utils';
-import taskAssignedIcon from '../../assets/31_task_assigned.svg';
-import projectJoinedIcon from '../../assets/32_project_joined.svg';
-import roleChangedIcon from '../../assets/33_role_changed.svg';
+import taskAssignedIcon   from '../../assets/31_task_assigned.svg';
+import projectJoinedIcon  from '../../assets/32_project_joined.svg';
+import roleChangedIcon    from '../../assets/33_role_changed.svg';
 import projectRemovedIcon from '../../assets/34_project_removed.svg';
-import taskCompletedIcon from '../../assets/35_task_completed.svg';
+import taskCompletedIcon  from '../../assets/35_task_completed.svg';
 import executionFailedIcon from '../../assets/36_execution_failed.svg';
 import notificationBellIcon from '../../assets/09_notification_bell.svg';
-import trashIcon from '../../assets/18_trash.svg';
+import trashIcon          from '../../assets/18_trash.svg';
 
-/** Maps a notification type string to its icon asset and a background tint. */
 const TYPE_META = {
-  TASK_ASSIGNED:   { icon: taskAssignedIcon,   bg: 'bg-indigo-50 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
-  TASK_REASSIGNED: { icon: taskAssignedIcon,   bg: 'bg-indigo-50 dark:bg-indigo-900/30',  dot: 'bg-indigo-500' },
-  TASK_COMPLETED:  { icon: taskCompletedIcon,  bg: 'bg-green-50 dark:bg-green-900/30',    dot: 'bg-green-500'  },
-  PROJECT_JOINED:  { icon: projectJoinedIcon,  bg: 'bg-green-50 dark:bg-green-900/30',    dot: 'bg-green-500'  },
-  ROLE_CHANGED:    { icon: roleChangedIcon,    bg: 'bg-amber-50 dark:bg-amber-900/30',    dot: 'bg-amber-500'  },
-  PROJECT_REMOVED: { icon: projectRemovedIcon, bg: 'bg-red-50 dark:bg-red-900/30',        dot: 'bg-red-500'    },
-  EXECUTION_FAILED:{ icon: executionFailedIcon,bg: 'bg-red-50 dark:bg-red-900/30',        dot: 'bg-red-500'    },
+  TASK_ASSIGNED:   { icon: taskAssignedIcon,   dot: 'bg-[var(--accent)]' },
+  TASK_REASSIGNED: { icon: taskAssignedIcon,   dot: 'bg-[var(--accent)]' },
+  TASK_COMPLETED:  { icon: taskCompletedIcon,  dot: 'bg-green-500' },
+  PROJECT_JOINED:  { icon: projectJoinedIcon,  dot: 'bg-green-500' },
+  ROLE_CHANGED:    { icon: roleChangedIcon,    dot: 'bg-amber-500' },
+  PROJECT_REMOVED: { icon: projectRemovedIcon, dot: 'bg-red-500' },
+  EXECUTION_FAILED:{ icon: executionFailedIcon,dot: 'bg-red-500' },
 };
 
-const DEFAULT_META = { icon: notificationBellIcon, bg: 'bg-gray-50 dark:bg-gray-700', dot: 'bg-gray-400' };
+const DEFAULT_META = { icon: notificationBellIcon, dot: 'bg-[var(--text-muted)]' };
 
 /**
- * A single notification row used in both the header dropdown and the full inbox page.
- *
- * Props:
- *   notification  – the notification object from the backend
- *   onMarkAsRead  – (id) => void
- *   onDelete      – (id) => void  (optional — hidden in dropdown)
- *   compact       – bool — if true, renders in condensed dropdown mode
+ * Notification row for both the header dropdown (compact) and the full inbox page.
  */
 export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact = false }) => {
   const meta = TYPE_META[notification.type] ?? DEFAULT_META;
 
   const handleClick = () => {
-    if (!notification.read && onMarkAsRead) {
-      onMarkAsRead(notification.id);
-    }
+    if (!notification.read && onMarkAsRead) onMarkAsRead(notification.id);
   };
 
   if (compact) {
     return (
       <div
         onClick={handleClick}
-        className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700 cursor-pointer transition-colors ${
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+        className={`px-4 py-3 border-b border-[var(--border-subtle)] cursor-pointer transition-colors ${
           !notification.read
-            ? 'bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30'
-            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            ? 'bg-[var(--accent-subtle)] hover:brightness-95'
+            : 'hover:bg-[var(--surface-sunken)]'
         }`}
       >
         <div className="flex items-start gap-3">
-          <div className={`flex-shrink-0 w-8 h-8 rounded-full ${meta.bg} flex items-center justify-center`}>
-            <img src={meta.icon} alt="" className="w-4 h-4 object-contain" />
+          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--surface-sunken)] border border-[var(--border-subtle)] flex items-center justify-center">
+            <img src={meta.icon} alt="" className="w-3.5 h-3.5 dark:brightness-0 dark:invert opacity-70" aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{notification.title}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{notification.message}</p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)] truncate">{notification.title}</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5 line-clamp-2">{notification.message}</p>
+            <p className="text-2xs text-[var(--text-muted)] mt-1">{formatRelativeTime(notification.createdAt)}</p>
           </div>
           {!notification.read && (
-            <span className={`flex-shrink-0 mt-1.5 w-2 h-2 rounded-full ${meta.dot}`} />
+            <span className={`flex-shrink-0 mt-1.5 w-1.5 h-1.5 rounded-full ${meta.dot}`} aria-label="Unread" />
           )}
         </div>
       </div>
@@ -68,44 +62,42 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
 
   return (
     <div
+      role="listitem"
       className={`group flex items-start gap-4 px-4 py-4 rounded-lg border transition-colors ${
         !notification.read
-          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-100 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30'
-          : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+          ? 'bg-[var(--accent-subtle)] border-[var(--accent-border)]'
+          : 'bg-[var(--surface-raised)] border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]'
       }`}
     >
-      {/* Type icon */}
-      <div className={`flex-shrink-0 w-10 h-10 rounded-full ${meta.bg} flex items-center justify-center`}>
-        <img src={meta.icon} alt="" className="w-5 h-5 object-contain" />
+      {/* Icon */}
+      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--surface-sunken)] border border-[var(--border-subtle)] flex items-center justify-center">
+        <img src={meta.icon} alt="" className="w-4 h-4 dark:brightness-0 dark:invert opacity-70" aria-hidden="true" />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0 cursor-pointer" onClick={handleClick}>
         <div className="flex items-center gap-2">
-          <p className={`text-sm font-semibold ${
-            !notification.read
-              ? 'text-gray-900 dark:text-gray-100'
-              : 'text-gray-700 dark:text-gray-300'
-          }`}>
+          <p className={`text-sm font-semibold ${notification.read ? 'text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
             {notification.title}
           </p>
           {!notification.read && (
-            <span className={`flex-shrink-0 w-2 h-2 rounded-full ${meta.dot}`} />
+            <span className={`flex-shrink-0 w-1.5 h-1.5 rounded-full ${meta.dot}`} aria-label="Unread" />
           )}
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">{notification.message}</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{formatRelativeTime(notification.createdAt)}</p>
+        <p className="text-sm text-[var(--text-secondary)] mt-0.5">{notification.message}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">{formatRelativeTime(notification.createdAt)}</p>
       </div>
 
-      {/* Actions — visible on hover */}
-      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Actions (visible on hover or focus-within) */}
+      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
         {!notification.read && onMarkAsRead && (
           <button
             onClick={handleClick}
             title="Mark as read"
-            className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+            className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--accent-text)] hover:bg-[var(--accent-subtle)] transition-colors focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            aria-label="Mark as read"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </button>
@@ -114,9 +106,10 @@ export const NotificationItem = ({ notification, onMarkAsRead, onDelete, compact
           <button
             onClick={() => onDelete(notification.id)}
             title="Delete"
-            className="p-1.5 rounded-md text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            className="p-1.5 rounded-md text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+            aria-label="Delete notification"
           >
-            <img src={trashIcon} alt="Delete" className="w-4 h-4 object-contain" />
+            <img src={trashIcon} alt="" className="w-3.5 h-3.5 dark:brightness-0 dark:invert opacity-70" aria-hidden="true" />
           </button>
         )}
       </div>

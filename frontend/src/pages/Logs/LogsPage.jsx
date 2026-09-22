@@ -7,51 +7,40 @@ import toast from 'react-hot-toast';
 
 export const LogsPage = () => {
   const { id: projectId } = useParams();
-  const [logs, setLogs] = useState([]);
+  const [logs,        setLogs]        = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading,     setLoading]     = useState(false);
   const { connected } = useWebSocket();
-  const consoleEndRef = useRef(null);
-  const isInitialLoad = useRef(true);
+  const consoleEndRef  = useRef(null);
+  const isInitialLoad  = useRef(true);
 
-  // Auto-scroll logs panel only when a new live log arrives, not on initial load
+  // Auto-scroll only on new live logs, not on initial load
   useEffect(() => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false;
-      return;
-    }
+    if (isInitialLoad.current) { isInitialLoad.current = false; return; }
     consoleEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
 
-  // Load initial/recent logs
   useEffect(() => {
     const fetchRecentLogs = async () => {
       setLoading(true);
       try {
         const data = await logApi.search({ projectId, size: 50 });
-        // Assume logApi returns a list of log entries under logs or direct array
         setLogs(Array.isArray(data) ? data : data?.content || []);
-      } catch (error) {
-        console.error('Failed to fetch recent logs:', error);
-        toast.error('Failed to load historic logs');
+      } catch {
+        toast.error('Failed to load logs');
       } finally {
         setLoading(false);
       }
     };
-
     fetchRecentLogs();
   }, [projectId]);
 
-  // Subscribe to real-time logs
   useEffect(() => {
-    if (connected && projectId) {
-      const unsubscribe = subscribe(`/topic/logs/${projectId}`, (logEvent) => {
-        setLogs((prevLogs) => [...prevLogs, logEvent]);
-      });
-      return () => {
-        unsubscribe();
-      };
-    }
+    if (!connected || !projectId) return;
+    const unsub = subscribe(`/topic/logs/${projectId}`, (event) => {
+      setLogs((prev) => [...prev, event]);
+    });
+    return () => unsub();
   }, [connected, projectId]);
 
   const handleSearch = async (e) => {
@@ -60,106 +49,109 @@ export const LogsPage = () => {
     try {
       const data = await logApi.search({ projectId, query: searchQuery, size: 100 });
       setLogs(Array.isArray(data) ? data : data?.content || []);
-    } catch (error) {
-      console.error('Logs search failed:', error);
-      toast.error('Logs search failed');
+    } catch {
+      toast.error('Log search failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-8rem)] space-y-4">
-      {/* Control bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center space-x-3">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Project Stream Logs</h2>
+    <div className="flex flex-col h-full space-y-3">
+      {/* Toolbar — flat, no card */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base font-semibold text-[var(--text-primary)]">Stream Logs</h2>
           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
             connected
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-              : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
           }`}>
-            {connected ? 'Live Streaming' : 'Offline'}
+            {connected ? 'Live' : 'Offline'}
           </span>
         </div>
 
-        <form onSubmit={handleSearch} className="flex items-center space-x-2">
+        <form onSubmit={handleSearch} className="flex items-center gap-2">
           <input
             type="text"
             placeholder="Search logs (e.g. GET, 500)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-64 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-2"
+            className="w-full sm:w-64 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-sunken)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] px-3 py-1.5 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-25"
           />
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex items-center px-3.5 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none disabled:opacity-50 transition-colors"
+            className="px-3 py-1.5 text-sm font-medium rounded-md border border-[var(--border-subtle)] bg-[var(--surface-raised)] text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
         </form>
       </div>
 
-      {/* Logs Terminal */}
-      <div className="flex-1 bg-gray-950 text-gray-100 p-4 rounded-lg shadow-inner font-mono text-xs overflow-y-auto flex flex-col space-y-1">
-        {loading && logs.length === 0 && <div className="text-gray-500">Retrieving system logs...</div>}
+      {/* Terminal */}
+      <div className="flex-1 bg-gray-950 text-gray-100 p-4 rounded-lg font-mono text-xs overflow-y-auto flex flex-col gap-0.5" style={{ minHeight: '400px' }}>
+        {loading && logs.length === 0 && (
+          <div className="text-gray-500">Retrieving logs<span className="animate-pulse">...</span></div>
+        )}
         {!loading && logs.length === 0 && (
-          <div className="text-gray-500 italic">No logs found. Trigger some API requests or execution jobs to view activity.</div>
+          <div className="text-gray-600 italic">
+            No logs in buffer. Trigger API requests or code executions to generate activity.
+            <span className="ml-1 text-gray-500 animate-pulse">_</span>
+          </div>
         )}
         {logs.map((log, index) => {
-          const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '';
-          const isError = log.status >= 400 || log.level === 'ERROR';
-          const level = log.level || (log.status >= 500 ? 'ERROR' : log.status >= 400 ? 'WARN' : 'INFO');
-          const levelBadgeClass = level === 'ERROR'
-            ? 'bg-red-950 text-red-400 border border-red-800'
-            : level === 'WARN'
-            ? 'bg-yellow-950 text-yellow-400 border border-yellow-800'
-            : 'bg-emerald-950 text-emerald-400 border border-emerald-800';
+          const timestamp   = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '';
+          const level       = log.level || (log.status >= 500 ? 'ERROR' : log.status >= 400 ? 'WARN' : 'INFO');
+          const levelStyle  =
+            level === 'ERROR' ? 'bg-red-950 text-red-400 border border-red-800/60' :
+            level === 'WARN'  ? 'bg-yellow-950 text-yellow-400 border border-yellow-800/60' :
+                                'bg-emerald-950 text-emerald-400 border border-emerald-800/60';
+          const methodStyle =
+            log.method === 'GET'    ? 'text-sky-400' :
+            log.method === 'POST'   ? 'text-emerald-400' :
+            log.method === 'PUT'    ? 'text-amber-400' :
+            log.method === 'DELETE' ? 'text-red-400' : 'text-gray-400';
+          const statusColor =
+            log.status >= 500 ? 'text-red-400' :
+            log.status >= 400 ? 'text-amber-400' :
+            log.status >= 200 ? 'text-green-400' : 'text-gray-400';
 
           return (
-            <div key={index} className="hover:bg-gray-900/80 p-1.5 rounded flex flex-col space-y-1 transition-colors border-b border-gray-900">
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-500 select-none">[{timestamp}]</span>
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${levelBadgeClass}`}>
-                  {level}
-                </span>
+            <div
+              key={index}
+              className="flex flex-col py-1.5 border-b border-gray-900/80 hover:bg-gray-900/50 transition-colors px-1 rounded"
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-gray-600 select-none tabular-nums">[{timestamp}]</span>
+                <span className={`px-1.5 py-0.5 rounded text-2xs font-bold ${levelStyle}`}>{level}</span>
                 {log.eventType && log.eventType !== 'HTTP' && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-950 text-purple-300 border border-purple-800 font-semibold">
+                  <span className="px-1.5 py-0.5 rounded text-2xs bg-purple-950 text-purple-300 border border-purple-800/60 font-semibold">
                     {log.eventType}
                   </span>
                 )}
-                <span className={`font-bold ${isError ? 'text-red-400' : 'text-green-400'}`}>{log.method}</span>
+                {log.method && <span className={`font-bold ${methodStyle}`}>{log.method}</span>}
                 <span className="text-gray-200 flex-1 truncate">{log.uri}</span>
-                <span className={`px-1.5 py-0.2 rounded font-semibold ${
-                  log.status >= 500 ? 'bg-red-900 text-red-200' : log.status >= 400 ? 'bg-yellow-900 text-yellow-200' : 'bg-green-900 text-green-200'
-                }`}>{log.status}</span>
-                <span className="text-blue-400 font-semibold">{log.durationMs}ms</span>
-              </div>
-
-              {/* Context row: traceId, clientIp, user, error message */}
-              <div className="flex items-center space-x-3 text-[11px] text-gray-400 pl-4">
-                {log.traceId && (
-                  <span className="text-indigo-400 font-mono">
-                    <span className="text-gray-500">trace:</span> {log.traceId}
-                  </span>
+                {log.status && (
+                  <span className={`font-semibold tabular-nums ${statusColor}`}>{log.status}</span>
                 )}
-                {log.clientIp && (
-                  <span className="text-gray-400">
-                    <span className="text-gray-500">ip:</span> {log.clientIp}
-                  </span>
-                )}
-                {log.userId && (
-                  <span className="text-gray-400 truncate max-w-xs">
-                    <span className="text-gray-500">user:</span> {log.userId}
-                  </span>
-                )}
-                {log.errorMessage && (
-                  <span className="text-rose-400 truncate flex-1 font-sans font-medium">
-                    ⚠ {log.errorMessage} {log.errorClass ? `(${log.errorClass})` : ''}
-                  </span>
+                {log.durationMs != null && (
+                  <span className="text-blue-400 tabular-nums">{log.durationMs}ms</span>
                 )}
               </div>
+              {/* Context row */}
+              {(log.traceId || log.clientIp || log.userId || log.errorMessage) && (
+                <div className="flex flex-wrap gap-3 mt-0.5 pl-4 text-2xs text-gray-500">
+                  {log.traceId    && <span><span className="text-gray-600">trace:</span> <span className="text-[var(--accent-text)]">{log.traceId}</span></span>}
+                  {log.clientIp   && <span><span className="text-gray-600">ip:</span> {log.clientIp}</span>}
+                  {log.userId     && <span className="truncate max-w-xs"><span className="text-gray-600">user:</span> {log.userId}</span>}
+                  {log.errorMessage && (
+                    <span className="text-rose-400 font-sans">
+                      {log.errorMessage}{log.errorClass ? ` (${log.errorClass})` : ''}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

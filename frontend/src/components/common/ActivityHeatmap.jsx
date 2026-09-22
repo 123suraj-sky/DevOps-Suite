@@ -203,7 +203,7 @@ export function ActivityHeatmap({ data = [], loading = false, totalDays = 365 })
 
       {/* ── Legend ── */}
       <div className="flex items-center gap-1.5 mt-2 justify-end">
-        <span className="text-[10px] text-gray-400">Less</span>
+        <span className="text-2xs text-[var(--text-muted)]">Less</span>
         {LEVEL_CLASSES.map((cls, i) => (
           <div
             key={i}
@@ -211,7 +211,7 @@ export function ActivityHeatmap({ data = [], loading = false, totalDays = 365 })
             title={LEVEL_LABELS[i]}
           />
         ))}
-        <span className="text-[10px] text-gray-400">More</span>
+        <span className="text-2xs text-[var(--text-muted)]">More</span>
       </div>
 
       {/* ── Tooltip (fixed, follows mouse) ── */}

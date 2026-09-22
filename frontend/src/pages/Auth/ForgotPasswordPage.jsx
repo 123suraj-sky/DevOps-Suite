@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
-import { Card } from '../../components/common/Card';
-import logoIcon from '../../assets/42_logo.svg';
+import { AuthLayout } from '../../components/layout/AuthLayout';
 
 export const ForgotPasswordPage = () => {
   const [email, setEmail] = useState('');
@@ -20,39 +19,38 @@ export const ForgotPasswordPage = () => {
       await authApi.forgotPassword(email);
       setSubmitted(true);
     } catch (err) {
-      const serverMessage = err.response?.data?.message;
-      setError(serverMessage || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4">
-      <Card className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src={logoIcon} alt="DevOps Suite Logo" className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reset your password</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+    <AuthLayout>
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-semibold text-[var(--text-primary)] tracking-tight">Reset password</h2>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
             Enter your email and we'll send you a reset link.
           </p>
         </div>
 
         {submitted ? (
           <div className="space-y-4">
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md text-sm text-green-700 dark:text-green-300 text-center">
-              If that email is registered you will receive a reset link shortly. Check your inbox.
+            <div className="p-4 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm text-green-700 dark:text-green-300">
+              If that email is registered you'll receive a reset link shortly. Check your inbox.
             </div>
-            <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Back to sign in
-              </Link>
-            </div>
+            <Link
+              to="/login"
+              className="block text-center text-sm text-[var(--accent-text)] hover:underline font-medium"
+            >
+              Back to sign in
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-md text-sm text-red-700 dark:text-red-300">
+              <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -64,20 +62,22 @@ export const ForgotPasswordPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
             />
 
             <Button type="submit" loading={loading} className="w-full">
               Send reset link
             </Button>
 
-            <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Back to sign in
-              </Link>
-            </div>
+            <Link
+              to="/login"
+              className="block text-center text-sm text-[var(--text-muted)] hover:text-[var(--accent-text)] transition-colors"
+            >
+              Back to sign in
+            </Link>
           </form>
         )}
-      </Card>
-    </div>
+      </div>
+    </AuthLayout>
   );
 };

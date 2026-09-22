@@ -221,14 +221,14 @@ export const CodeEditorPage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
       {/* Control Panel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--surface-raised)] border border-[var(--border-subtle)] p-4 rounded-lg">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Sandbox Code Runner</h2>
+          <h2 className="text-base font-semibold text-[var(--text-primary)]">Sandbox Code Runner</h2>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             disabled={running}
-            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-1.5 disabled:opacity-50"
+            className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-sunken)] text-sm text-[var(--text-primary)] px-3 py-1.5 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-25 disabled:opacity-50"
           >
             <optgroup label="Executable">
               <option value="python">Python 3</option>
@@ -247,8 +247,8 @@ export const CodeEditorPage = () => {
           <button
             onClick={handleRun}
             disabled={running}
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
-              running ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'
+            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white active:scale-[0.97] transition-all ${
+              running ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
             }`}
           >
             {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : (
@@ -268,9 +268,9 @@ export const CodeEditorPage = () => {
       {/* Editor + panels — stack vertically on mobile, side-by-side on lg+ */}
       <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         {/* Editor */}
-        <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[300px] lg:min-h-0">
-          <div className="bg-gray-50 dark:bg-gray-700/50 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source Code</span>
+        <div className="flex-1 flex flex-col bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-lg overflow-hidden min-h-[300px] lg:min-h-0">
+          <div className="bg-[var(--surface-sunken)] px-4 py-2 border-b border-[var(--border-subtle)]">
+            <span className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">Source Code</span>
           </div>
           <div className="flex-1 min-h-0">
             <Editor
@@ -289,24 +289,24 @@ export const CodeEditorPage = () => {
           {RUNNABLE_LANGUAGES.has(language) ? (
             <>
               {/* Stdin */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col h-40">
-                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <div className="bg-[var(--surface-raised)] border border-[var(--border-subtle)] p-4 rounded-lg flex flex-col h-40">
+                <label className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-2">
                   Standard Input (stdin)
                 </label>
                 <textarea
                   value={stdin}
                   onChange={(e) => setStdin(e.target.value)}
-                  className="flex-1 w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm resize-none font-mono p-2"
+                  className="flex-1 w-full rounded-md border border-[var(--border-subtle)] bg-[var(--surface-sunken)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] resize-none font-mono p-2 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-25"
                   placeholder="Provide stdin inputs here…"
                 />
               </div>
 
               {/* Output Console */}
-              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col flex-1 min-h-[200px] lg:min-h-0">
-                <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <div className="bg-[var(--surface-raised)] border border-[var(--border-subtle)] p-4 rounded-lg flex flex-col flex-1 min-h-[200px] lg:min-h-0">
+                <span className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-2">
                   Output Console
                 </span>
-                <div className="flex-1 bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-xs overflow-y-auto whitespace-pre-wrap">
+                <div className="flex-1 bg-gray-950 text-gray-100 p-4 rounded-md font-mono text-xs overflow-y-auto whitespace-pre-wrap">
                   {renderOutput()}
                 </div>
               </div>
@@ -318,8 +318,8 @@ export const CodeEditorPage = () => {
             </div>
           ) : (
             /* CSS — no preview, just an info note */
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center text-center flex-1 min-h-[200px]">
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+            <div className="bg-[var(--surface-raised)] border border-[var(--border-subtle)] p-6 rounded-lg flex flex-col items-center justify-center text-center flex-1 min-h-[200px]">
+              <p className="text-sm text-[var(--text-secondary)] font-medium">
                 CSS files are stylesheets — open them alongside an HTML file in the full IDE to see them in context.
               </p>
             </div>

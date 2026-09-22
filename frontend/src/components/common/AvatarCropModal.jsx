@@ -337,14 +337,14 @@ export const AvatarCropModal = ({ isOpen, onClose, onConfirm }) => {
                     };
                   });
                 }}
-                className="w-full accent-primary-600"
+                className="w-full accent-accent-500"
               />
             </div>
 
             {/* Re-pick */}
             <button
               type="button"
-              className="text-xs text-primary-600 hover:text-primary-800 underline"
+              className="text-xs text-[var(--accent-text)] hover:underline"
               onClick={() => { setImageSrc(null); fileInputRef.current?.click(); }}
             >
               Choose a different image

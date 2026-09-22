@@ -4,14 +4,6 @@ import { projectApi } from '../../api/projectApi';
 import { ProjectHeaderNav } from './ProjectHeaderNav';
 import { Spinner } from '../common/Spinner';
 
-/**
- * Persistent layout wrapper for all project sub-routes.
- *
- * Two rendering modes:
- *  - Normal pages (Overview, Task Board, Logs): padded scrollable container
- *  - IDE page (/code): full-height flex container, no padding, no scroll
- *    so the IDE can fill the entire viewport below the header.
- */
 export const ProjectLayout = () => {
   const { id: projectId } = useParams();
   const location = useLocation();
@@ -44,32 +36,38 @@ export const ProjectLayout = () => {
   }
 
   if (isIDE) {
-    // Full-height layout: header nav + IDE fills remaining space, no scroll
+    // IDE layout: ProjectHeaderNav at top, then the IDE panel fills all remaining
+    // height with equal padding on all four sides — no page scroll.
     return (
-      <div className="flex flex-col flex-1 min-h-0 h-full">
-        <div className="px-4 lg:px-6 pt-4 lg:pt-6 pb-0 shrink-0 bg-gray-50 dark:bg-gray-900">
-          <ProjectHeaderNav
-            projectId={projectId}
-            projectName={project?.name}
-            projectDescription={project?.description}
-          />
-        </div>
-        <div className="flex flex-col flex-1 min-h-0 overflow-hidden p-4 lg:p-6 pt-4">
-          <Outlet context={{ project, refreshProject: fetchProject }} />
+      <div className="flex flex-col flex-1 min-h-0">
+        <ProjectHeaderNav
+          projectId={projectId}
+          projectName={project?.name}
+          projectDescription={project?.description}
+        />
+        {/* p-4/p-6 gives equal spacing on all sides around the IDE panel.
+            flex-1 min-h-0 ensures the container stretches to fill available
+            height without triggering a scrollbar. */}
+        <div className="flex-1 min-h-0 p-4 lg:p-6 overflow-hidden">
+          <div className="h-full">
+            <Outlet context={{ project, refreshProject: fetchProject }} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // Normal scrollable layout for all other project sub-pages
+  // Normal scrollable layout for Overview, Task Board, Logs
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 min-h-0">
       <ProjectHeaderNav
         projectId={projectId}
         projectName={project?.name}
         projectDescription={project?.description}
       />
-      <Outlet context={{ project, refreshProject: fetchProject }} />
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-5">
+        <Outlet context={{ project, refreshProject: fetchProject }} />
+      </div>
     </div>
   );
 };

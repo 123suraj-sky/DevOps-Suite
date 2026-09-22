@@ -10,13 +10,14 @@ describe('Button', () => {
   it('applies primary variant by default', () => {
     render(<Button>Primary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-primary-600');
+    // Primary variant now uses CSS custom property accent token
+    expect(button.className).toContain('bg-[var(--accent)]');
   });
 
   it('applies secondary variant', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button');
-    expect(button.className).toContain('bg-gray-200');
+    expect(button.className).toContain('bg-[var(--surface-raised)]');
   });
 
   it('disables when loading', () => {

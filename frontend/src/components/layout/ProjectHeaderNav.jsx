@@ -1,57 +1,60 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
-import { Button } from '../common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { cn } from '../../utils';
+
+const TabLink = ({ to, isActive, children }) => (
+  <Link
+    to={to}
+    className={cn(
+      'px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap',
+      'border-b-2 -mb-px',
+      isActive
+        ? 'border-[var(--accent)] text-[var(--accent-text)]'
+        : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]'
+    )}
+    aria-current={isActive ? 'page' : undefined}
+  >
+    {children}
+  </Link>
+);
 
 export const ProjectHeaderNav = ({ projectId, projectName, projectDescription }) => {
   const location = useLocation();
   const { isAdmin } = useAuth();
 
-  const isOverview = location.pathname === `/projects/${projectId}`;
-  const isTasks = location.pathname === `/projects/${projectId}/tasks`;
-  const isCode = location.pathname === `/projects/${projectId}/code`;
-  const isLogs = location.pathname === `/projects/${projectId}/logs`;
+  const base = `/projects/${projectId}`;
+  const isOverview = location.pathname === base;
+  const isTasks    = location.pathname === `${base}/tasks`;
+  const isCode     = location.pathname === `${base}/code`;
+  const isLogs     = location.pathname === `${base}/logs`;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/projects/${projectId}`}
-              className="text-2xl font-bold text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-            >
-              {projectName || 'Project'}
-            </Link>
-          </div>
-          {projectDescription && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{projectDescription}</p>
-          )}
-        </div>
-        <div className="flex items-center flex-wrap gap-2">
-          <Link to={`/projects/${projectId}`} className="inline-flex">
-            <Button variant={isOverview ? 'secondary' : 'ghost'} size="sm">
-              Overview
-            </Button>
-          </Link>
-          <Link to={`/projects/${projectId}/tasks`} className="inline-flex">
-            <Button variant={isTasks ? 'secondary' : 'ghost'} size="sm">
-              Task Board
-            </Button>
-          </Link>
-          <Link to={`/projects/${projectId}/code`} className="inline-flex">
-            <Button variant={isCode ? 'secondary' : 'ghost'} size="sm">
-              Code Editor
-            </Button>
-          </Link>
-          {isAdmin && (
-            <Link to={`/projects/${projectId}/logs`} className="inline-flex">
-              <Button variant={isLogs ? 'secondary' : 'ghost'} size="sm">
-                Logs
-              </Button>
-            </Link>
-          )}
-        </div>
+    <div className="bg-[var(--surface-raised)] border-b border-[var(--border-subtle)]">
+      {/* Project name + description */}
+      <div className="px-4 lg:px-6 pt-4 pb-3">
+        <Link
+          to={base}
+          className="text-base font-semibold text-[var(--text-primary)] hover:text-[var(--accent-text)] transition-colors"
+        >
+          {projectName || 'Project'}
+        </Link>
+        {projectDescription && (
+          <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-1">{projectDescription}</p>
+        )}
       </div>
+
+      {/* Tab bar */}
+      <nav
+        className="flex items-end px-4 lg:px-6"
+        aria-label="Project sections"
+      >
+        <TabLink to={base}           isActive={isOverview}>Overview</TabLink>
+        <TabLink to={`${base}/tasks`} isActive={isTasks}>Task Board</TabLink>
+        <TabLink to={`${base}/code`}  isActive={isCode}>Code Editor</TabLink>
+        {isAdmin && (
+          <TabLink to={`${base}/logs`} isActive={isLogs}>Logs</TabLink>
+        )}
+      </nav>
     </div>
   );
 };

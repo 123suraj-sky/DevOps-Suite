@@ -451,7 +451,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
   return (
     <>
       {/* ── Mobile gate — IDE requires a large screen ───────────────────── */}
-      <div className="flex lg:hidden flex-1 items-center justify-center p-8 text-center bg-gray-900">
+      <div className="flex lg:hidden flex-1 items-center justify-center p-8 text-center bg-[#1e1e1e] rounded-lg">
         <div className="space-y-3 max-w-xs">
           <svg className="w-12 h-12 mx-auto text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
@@ -462,7 +462,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
       </div>
 
       {/* ── Full IDE — visible on lg+ only ─────────────────────────────── */}
-      <div className="hidden lg:flex flex-col h-full bg-[#1e1e1e] overflow-hidden rounded-lg shadow-md">
+      <div className="hidden lg:flex flex-col flex-1 min-h-0 bg-[#1e1e1e] overflow-hidden rounded-lg">
 
       {/* ── Top toolbar ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#323233] border-b border-[#252526] shrink-0">

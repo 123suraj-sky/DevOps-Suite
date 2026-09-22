@@ -2,26 +2,28 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { taskApi } from '../../api/taskApi';
+import { taskApi }    from '../../api/taskApi';
 import { projectApi } from '../../api/projectApi';
 import { useWebSocket } from '../../context/WebSocketContext';
-import { subscribe } from '../../services/websocketService';
-import { Button } from '../../components/common/Button';
-import { Modal } from '../../components/common/Modal';
-import { Input } from '../../components/common/Input';
-import { Select } from '../../components/common/Select';
-import { Spinner } from '../../components/common/Spinner';
-import { TaskCard } from './TaskCard';
-import { TaskContextMenu } from './TaskContextMenu';
-import { TaskDetailModal } from './TaskDetailModal';
+import { subscribe }  from '../../services/websocketService';
+import { Button }     from '../../components/common/Button';
+import { Modal }      from '../../components/common/Modal';
+import { Input }      from '../../components/common/Input';
+import { Select }     from '../../components/common/Select';
+import { Spinner }    from '../../components/common/Spinner';
+import { Skeleton }   from '../../components/common/Skeleton';
+import { TaskCard }   from './TaskCard';
+import { TaskContextMenu }  from './TaskContextMenu';
+import { TaskDetailModal }  from './TaskDetailModal';
 import toast from 'react-hot-toast';
+import plusIcon from '../../assets/20_plus.svg';
 
-// ── Column definitions ─────────────────────────────────────────────────────
+// Column definitions — top-border accent drives visual identity
 const COLUMNS = [
-  { id: 'BACKLOG',     title: 'Backlog',     bg: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'    },
-  { id: 'TODO',        title: 'To Do',       bg: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'    },
-  { id: 'IN_PROGRESS', title: 'In Progress', bg: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' },
-  { id: 'DONE',        title: 'Done',        bg: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'  },
+  { id: 'BACKLOG',     title: 'Backlog',     topBorder: 'border-t-gray-400 dark:border-t-gray-500',   badge: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
+  { id: 'TODO',        title: 'To Do',       topBorder: 'border-t-gray-400 dark:border-t-gray-500',   badge: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
+  { id: 'IN_PROGRESS', title: 'In Progress', topBorder: 'border-t-amber-400 dark:border-t-amber-500', badge: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' },
+  { id: 'DONE',        title: 'Done',        topBorder: 'border-t-green-500 dark:border-t-green-400', badge: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' },
 ];
 
 const normalizeStatusKey = (value) => {
@@ -31,13 +33,11 @@ const normalizeStatusKey = (value) => {
 
 const EMPTY_TASK = { title: '', description: '', priority: 'MEDIUM', assigneeId: '', dueDate: '' };
 
-// ── Component ──────────────────────────────────────────────────────────────
 export const TasksPage = () => {
   const { id: projectId }       = useParams();
   const { project }             = useOutletContext();
   const { user: currentUser, isAdmin: isGlobalAdmin } = useAuth();
 
-  // Derive project-level role (OWNER/ADMIN → can create/delete tasks)
   const userProjectRole = project?.members?.find(
     (m) => m.userId === currentUser?.id || m.email === currentUser?.email
   )?.role ?? 'MEMBER';
@@ -47,47 +47,41 @@ export const TasksPage = () => {
   const [loading,    setLoading]    = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Add-task modal
+  // Mobile: which column tab is active
+  const [mobileCol, setMobileCol] = useState('TODO');
+
+  // Add modal
   const [showAddModal,   setShowAddModal]   = useState(false);
   const [selectedColumn, setSelectedColumn] = useState('TODO');
   const [taskData,       setTaskData]       = useState(EMPTY_TASK);
   const [saving,         setSaving]         = useState(false);
 
-  // Edit-task modal
-  const [editingTask,    setEditingTask]    = useState(null);
-  const [editTaskData,   setEditTaskData]   = useState(EMPTY_TASK);
-  const [updating,       setUpdating]       = useState(false);
+  // Edit modal
+  const [editingTask,  setEditingTask]  = useState(null);
+  const [editTaskData, setEditTaskData] = useState(EMPTY_TASK);
+  const [updating,     setUpdating]     = useState(false);
 
-  // Per-card delete tracking
   const [deletingTaskId, setDeletingTaskId] = useState(null);
-
-  // Board / column mapping
-  const [columnIdMap, setColumnIdMap] = useState({});
-  const [boardId,     setBoardId]     = useState(null);
-
-  // Context menu  { x, y, task } | null
-  const [contextMenu, setContextMenu] = useState(null);
-
-  // Task detail modal  task | null
-  const [detailTask, setDetailTask] = useState(null);
+  const [columnIdMap,    setColumnIdMap]    = useState({});
+  const [boardId,        setBoardId]        = useState(null);
+  const [contextMenu,    setContextMenu]    = useState(null);
+  const [detailTask,     setDetailTask]     = useState(null);
 
   const { connected } = useWebSocket();
 
-  // ── Data loading ───────────────────────────────────────────────────────
+  // ── Data loading ─────────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
     try {
       const [taskList, boards] = await Promise.all([
         projectApi.getTasks(projectId).catch(() => []),
         projectApi.getBoards(projectId).catch(() => []),
       ]);
-
       setTasks(taskList || []);
-
-      if (boards && boards.length > 0) {
-        const firstBoard = boards[0];
-        setBoardId(firstBoard.id || firstBoard.board_id);
+      if (boards?.length > 0) {
+        const first = boards[0];
+        setBoardId(first.id || first.board_id);
         const map = {};
-        (firstBoard.columns || []).forEach((col) => {
+        (first.columns || []).forEach((col) => {
           map[normalizeStatusKey(col.name)] = col.id || col.column_id;
         });
         setColumnIdMap(map);
@@ -102,63 +96,46 @@ export const TasksPage = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── WebSocket live updates ─────────────────────────────────────────────
+  // ── WebSocket live updates ────────────────────────────────────────────────
   useEffect(() => {
-    if (connected && projectId) {
-      const unsub = subscribe(`/topic/tasks/${projectId}`, (update) => {
-        // update shape: { action, task, task_id, project_id }
-        // Gracefully fall back to a full reload if the shape is unexpected.
-        const action = update?.action;
-        const incoming = update?.task;
-
-        if (!action) {
-          // Legacy / unexpected shape — just reload
-          fetchData();
-          return;
-        }
-
-        setTasks((prev) => {
-          const getTaskId = (t) => t?.id || t?.taskId || t?.task_id;
-          switch (action) {
-            case 'CREATED': {
-              const incomingId = getTaskId(incoming);
-              if (!incomingId || prev.some((t) => getTaskId(t) === incomingId)) return prev;
-              return [...prev, incoming];
-            }
-
-            case 'UPDATED':
-            case 'STATUS_CHANGED':
-            case 'MOVED': {
-              const incomingId = getTaskId(incoming);
-              if (!incomingId) return prev;
-              return prev.map((t) => (getTaskId(t) === incomingId ? incoming : t));
-            }
-
-            case 'DELETED': {
-              const removedId = update.task_id || update.taskId || getTaskId(incoming);
-              if (!removedId) return prev;
-              return prev.filter((t) => getTaskId(t) !== removedId);
-            }
-
-            default:
-              return prev;
+    if (!connected || !projectId) return;
+    const unsub = subscribe(`/topic/tasks/${projectId}`, (update) => {
+      const action   = update?.action;
+      const incoming = update?.task;
+      if (!action) { fetchData(); return; }
+      setTasks((prev) => {
+        const getId = (t) => t?.id || t?.taskId || t?.task_id;
+        switch (action) {
+          case 'CREATED': {
+            const id = getId(incoming);
+            if (!id || prev.some((t) => getId(t) === id)) return prev;
+            return [...prev, incoming];
           }
-        });
-
-        // If the detail modal is open for an updated task, refresh it too
-        if ((action === 'UPDATED' || action === 'STATUS_CHANGED' || action === 'MOVED') && incoming) {
-          setDetailTask((prev) => (prev && prev.id === incoming.id ? incoming : prev));
-        }
-        if (action === 'DELETED') {
-          const removedId = update.task_id || update.taskId;
-          setDetailTask((prev) => (prev && prev.id === removedId ? null : prev));
+          case 'UPDATED': case 'STATUS_CHANGED': case 'MOVED': {
+            const id = getId(incoming);
+            if (!id) return prev;
+            return prev.map((t) => getId(t) === id ? incoming : t);
+          }
+          case 'DELETED': {
+            const id = update.task_id || update.taskId || getId(incoming);
+            if (!id) return prev;
+            return prev.filter((t) => getId(t) !== id);
+          }
+          default: return prev;
         }
       });
-      return () => unsub();
-    }
+      if ((action === 'UPDATED' || action === 'STATUS_CHANGED') && incoming) {
+        setDetailTask((prev) => prev?.id === incoming.id ? incoming : prev);
+      }
+      if (action === 'DELETED') {
+        const id = update.task_id || update.taskId;
+        setDetailTask((prev) => prev?.id === id ? null : prev);
+      }
+    });
+    return () => unsub();
   }, [connected, projectId, fetchData]);
 
-  // ── Drag & drop ────────────────────────────────────────────────────────
+  // ── Drag & drop ───────────────────────────────────────────────────────────
   const onDragStart = () => setIsDragging(true);
 
   const onDragEnd = async (result) => {
@@ -169,24 +146,20 @@ export const TasksPage = () => {
 
     const destColId = columnIdMap[destination.droppableId];
     if (!boardId || !destColId) {
-      toast.error('Task board is still loading. Please try again.');
+      toast.error('Board still loading — please try again.');
       return;
     }
 
     const previousTasks = tasks;
     const byStatus = COLUMNS.reduce((acc, col) => {
-      acc[col.id] = tasks
-        .filter((t) => t.status === col.id)
+      acc[col.id] = tasks.filter((t) => t.status === col.id)
         .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
       return acc;
     }, {});
 
     const srcList  = [...byStatus[source.droppableId]];
-    const dstList  = source.droppableId === destination.droppableId
-      ? srcList
-      : [...byStatus[destination.droppableId]];
-
-    const si = srcList.findIndex((t) => t.id === draggableId);
+    const dstList  = source.droppableId === destination.droppableId ? srcList : [...byStatus[destination.droppableId]];
+    const si       = srcList.findIndex((t) => t.id === draggableId);
     if (si === -1) return;
 
     const [moved] = srcList.splice(si, 1);
@@ -212,15 +185,13 @@ export const TasksPage = () => {
         columnId: t.columnId || t.column_id,
         sortOrder: t.sortOrder ?? t.sort_order ?? 0,
       })));
-      toast.success('Task board updated');
-    } catch (err) {
-      console.error('Failed to reorder tasks:', err);
-      toast.error('Failed to save task move. Rolling back…');
+    } catch {
+      toast.error('Failed to save task move. Rolling back.');
       setTasks(previousTasks);
     }
   };
 
-  // ── Status change ──────────────────────────────────────────────────────
+  // ── Status change ─────────────────────────────────────────────────────────
   const handleStatusChange = async (taskId, newStatus) => {
     const previous = tasks;
     setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
@@ -228,13 +199,12 @@ export const TasksPage = () => {
       const updated = await taskApi.updateStatus(taskId, newStatus);
       setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t));
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to update status';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Failed to update status');
       setTasks(previous);
     }
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────────────────────────
   const handleDeleteTask = async (e, taskId) => {
     if (e?.stopPropagation) e.stopPropagation();
     if (!window.confirm('Delete this task? This cannot be undone.')) return;
@@ -244,37 +214,32 @@ export const TasksPage = () => {
       setTasks((prev) => prev.filter((t) => t.id !== taskId));
       toast.success('Task deleted');
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to delete task';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Failed to delete task');
     } finally {
       setDeletingTaskId(null);
     }
   };
 
-  // ── Duplicate ──────────────────────────────────────────────────────────
+  // ── Duplicate ─────────────────────────────────────────────────────────────
   const handleDuplicate = async (task) => {
     try {
       const created = await taskApi.duplicate(task.id);
-      const createdId = created?.id || created?.taskId || created?.task_id;
+      const id = created?.id || created?.taskId || created?.task_id;
       setTasks((prev) => {
-        if (createdId && prev.some((t) => (t.id || t.taskId || t.task_id) === createdId)) return prev;
+        if (id && prev.some((t) => (t.id || t.taskId || t.task_id) === id)) return prev;
         return [...prev, created];
       });
       toast.success('Task duplicated');
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to duplicate task';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Failed to duplicate task');
     }
   };
 
-  // ── Add task ───────────────────────────────────────────────────────────
+  // ── Add task ──────────────────────────────────────────────────────────────
   const handleAddTask = async (e) => {
     e.preventDefault();
     const columnId = columnIdMap[selectedColumn];
-    if (!columnId) {
-      toast.error(`No column found for "${selectedColumn}". Please set up the project board first.`);
-      return;
-    }
+    if (!columnId) { toast.error(`Column "${selectedColumn}" not found.`); return; }
     setSaving(true);
     try {
       const payload = {
@@ -284,32 +249,27 @@ export const TasksPage = () => {
         status:      selectedColumn,
         priority:    taskData.priority,
         assigneeId:  taskData.assigneeId || null,
-        ...(taskData.dueDate && { dueDate: taskData.dueDate }),    // nullable
+        ...(taskData.dueDate && { dueDate: taskData.dueDate }),
       };
       const created = await taskApi.create(payload);
-      const createdId = created?.id || created?.taskId || created?.task_id;
+      const id = created?.id || created?.taskId || created?.task_id;
       setTasks((prev) => {
-        if (createdId && prev.some((t) => (t.id || t.taskId || t.task_id) === createdId)) return prev;
+        if (id && prev.some((t) => (t.id || t.taskId || t.task_id) === id)) return prev;
         return [...prev, created];
       });
       setShowAddModal(false);
       setTaskData(EMPTY_TASK);
-      toast.success('Task created successfully');
+      toast.success('Task created');
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to create task';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Failed to create task');
     } finally {
       setSaving(false);
     }
   };
 
-  const openAddModal = (colId) => {
-    setSelectedColumn(colId);
-    setTaskData(EMPTY_TASK);
-    setShowAddModal(true);
-  };
+  const openAddModal = (colId) => { setSelectedColumn(colId); setTaskData(EMPTY_TASK); setShowAddModal(true); };
 
-  // ── Edit task ──────────────────────────────────────────────────────────
+  // ── Edit task ─────────────────────────────────────────────────────────────
   const openEditModal = (task) => {
     setEditingTask(task);
     setEditTaskData({
@@ -327,7 +287,7 @@ export const TasksPage = () => {
     if (!editingTask) return;
     setUpdating(true);
     try {
-      const targetColumn = editTaskData.status || editingTask.status;
+      const targetColumn   = editTaskData.status || editingTask.status;
       const targetColumnId = columnIdMap[targetColumn] || editingTask.column_id || editingTask.columnId;
       const payload = {
         columnId:    targetColumnId,
@@ -336,119 +296,199 @@ export const TasksPage = () => {
         status:      targetColumn,
         priority:    editTaskData.priority,
         assigneeId:  editTaskData.assigneeId || null,
-        ...(editTaskData.dueDate ? { dueDate: editTaskData.dueDate } : { dueDate: null }),
+        dueDate:     editTaskData.dueDate || null,
       };
       const updated = await taskApi.update(editingTask.id, payload);
-      setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? updated : t)));
-      // If the detail modal is also open for this task, update it too
-      setDetailTask((prev) => (prev && prev.id === editingTask.id ? updated : prev));
+      setTasks((prev) => prev.map((t) => t.id === editingTask.id ? updated : t));
+      setDetailTask((prev) => prev?.id === editingTask.id ? updated : prev);
       setEditingTask(null);
-      toast.success('Task updated successfully');
+      toast.success('Task updated');
     } catch (err) {
-      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to update task';
-      toast.error(msg);
+      toast.error(err.response?.data?.message || 'Failed to update task');
     } finally {
       setUpdating(false);
     }
   };
 
-  // ── Context menu ───────────────────────────────────────────────────────
-  const handleOpenContextMenu  = (x, y, task) => setContextMenu({ x, y, task });
-  const handleCloseContextMenu = () => setContextMenu(null);
+  if (loading) return (
+    <div className="space-y-4 page-enter">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-6 w-28" />
+        <Skeleton className="h-5 w-20" />
+      </div>
+      <div className="hidden lg:grid lg:grid-cols-4 gap-4">
+        {COLUMNS.map((col) => <Skeleton.KanbanColumn key={col.id} />)}
+      </div>
+      <div className="lg:hidden">
+        <Skeleton.KanbanColumn />
+      </div>
+    </div>
+  );
 
-  // ── Render ─────────────────────────────────────────────────────────────
-  if (loading) return <Spinner size="lg" className="mt-20" />;
-
-  // All project members are assignable, including the current user
   const assignableMembers = project?.members || [];
 
-  return (
-    <div className="space-y-6 flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Task Board</h2>
-        <div className="flex items-center space-x-2">
-          {isGlobalAdmin && (
-            <>
-              <span className={`h-2.5 w-2.5 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-sm text-gray-500 dark:text-gray-400">{connected ? 'Live updates enabled' : 'Offline Mode'}</span>
-            </>
-          )}
+  const getColumnTasks = (colId) => {
+    const seen = new Set();
+    return tasks
+      .filter((t) => {
+        if (t.status !== colId) return false;
+        const tid = t.id || t.taskId || t.task_id;
+        if (!tid || seen.has(tid)) return false;
+        seen.add(tid);
+        return true;
+      })
+      .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
+  };
+
+  // ── Shared form fields ────────────────────────────────────────────────────
+  const TaskFormFields = ({ data, setData, showStatus = false }) => (
+    <div className="space-y-4">
+      <Input label="Title" value={data.title} onChange={(e) => setData((p) => ({ ...p, title: e.target.value }))} required />
+      <Input label="Description" value={data.description} onChange={(e) => setData((p) => ({ ...p, description: e.target.value }))} />
+      <div className="grid grid-cols-2 gap-3">
+        {showStatus && (
+          <Select label="Status" value={data.status} onChange={(e) => setData((p) => ({ ...p, status: e.target.value }))}>
+            {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.title}</option>)}
+          </Select>
+        )}
+        <Select label="Priority" value={data.priority} onChange={(e) => setData((p) => ({ ...p, priority: e.target.value }))}>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+        </Select>
+        <Select label="Assignee" value={data.assigneeId} onChange={(e) => setData((p) => ({ ...p, assigneeId: e.target.value }))}>
+          <option value="">Unassigned</option>
+          {assignableMembers.map((m) => (
+            <option key={m.userId} value={m.userId}>{m.displayName || m.email} ({m.role})</option>
+          ))}
+        </Select>
+      </div>
+      <Input label="Due Date (optional)" type="date" value={data.dueDate} onChange={(e) => setData((p) => ({ ...p, dueDate: e.target.value }))} />
+    </div>
+  );
+
+  // ── Column component ──────────────────────────────────────────────────────
+  const KanbanColumn = ({ col, columnTasks, visible = true }) => (
+    <div
+      className={`flex flex-col ${visible ? '' : 'hidden lg:flex'} bg-[var(--surface-sunken)] border border-[var(--border-subtle)] border-t-2 ${col.topBorder} rounded-lg min-w-[240px] lg:min-w-0 w-[240px] lg:w-auto`}
+    >
+      {/* Column header */}
+      <div className="flex items-center justify-between px-3 pt-3 pb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-[var(--text-primary)]">{col.title}</span>
+          <span className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${col.badge}`}>
+            {columnTasks.length}
+          </span>
         </div>
+        {isAdminOrOwner && (
+          <button
+            onClick={() => openAddModal(col.id)}
+            title={`Add task to ${col.title}`}
+            className="p-1 rounded hover:bg-[var(--border-subtle)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+            aria-label={`Add task to ${col.title}`}
+          >
+            <img src={plusIcon} alt="" className="w-3.5 h-3.5 dark:brightness-0 dark:invert opacity-60" aria-hidden="true" />
+          </button>
+        )}
       </div>
 
-      {/* Kanban board — horizontally scrollable on mobile/tablet, grid on lg+ */}
-      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        <div className="overflow-x-auto pb-4 -mx-1 px-1">
-          <div className="flex gap-4 lg:grid lg:grid-cols-4 flex-nowrap lg:flex-wrap min-w-max lg:min-w-0">
-          {COLUMNS.map((col) => {
-            const seen = new Set();
-            const columnTasks = tasks
-              .filter((t) => {
-                if (t.status !== col.id) return false;
-                const tid = t.id || t.taskId || t.task_id;
-                if (!tid || seen.has(tid)) return false;
-                seen.add(tid);
-                return true;
-              })
-              .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
-
-            return (
-              <div key={col.id} className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg flex flex-col min-w-[250px] lg:min-w-0 w-[250px] lg:w-auto">
-                {/* Column header */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded ${col.bg}`}>
-                    {col.title} ({columnTasks.length})
-                  </span>
-                  {isAdminOrOwner && (
-                    <button
-                      onClick={() => openAddModal(col.id)}
-                      className="text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold text-lg leading-none"
-                      title={`Add task to ${col.title}`}
-                    >
-                      +
-                    </button>
-                  )}
-                </div>
-
-                {/* Droppable */}
-                <Droppable droppableId={col.id}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className="flex-1 space-y-3 overflow-y-auto min-h-[32px]"
-                    >
-                      {columnTasks.map((task, idx) => (
-                        <Draggable key={task.id} draggableId={task.id} index={idx}>
-                          {(drag) => (
-                            <div
-                              ref={drag.innerRef}
-                              {...drag.draggableProps}
-                              {...drag.dragHandleProps}
-                              className="group"
-                            >
-                              <TaskCard
-                                task={task}
-                                isDeleting={deletingTaskId === task.id}
-                                isAdminOrOwner={isAdminOrOwner}
-                                onDelete={handleDeleteTask}
-                                onEdit={openEditModal}
-                                onContextMenu={handleOpenContextMenu}
-                                onOpenDetail={(t) => setDetailTask(t)}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
-            );
-          })}
+      {/* Droppable area */}
+      <Droppable droppableId={col.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 space-y-2 px-3 pb-3 overflow-y-auto min-h-[48px] transition-colors ${
+              snapshot.isDraggingOver ? 'bg-[var(--accent-subtle)]' : ''
+            }`}
+            style={{ minHeight: '48px' }}
+          >
+            {columnTasks.map((task, idx) => (
+              <Draggable key={task.id} draggableId={task.id} index={idx}>
+                {(drag, dragSnap) => (
+                  <div
+                    ref={drag.innerRef}
+                    {...drag.draggableProps}
+                    {...drag.dragHandleProps}
+                    style={{
+                      ...drag.draggableProps.style,
+                      ...(dragSnap.isDragging ? { boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
+                    }}
+                  >
+                    <TaskCard
+                      task={task}
+                      isDeleting={deletingTaskId === task.id}
+                      isAdminOrOwner={isAdminOrOwner}
+                      onDelete={handleDeleteTask}
+                      onEdit={openEditModal}
+                      onContextMenu={(x, y, t) => setContextMenu({ x, y, task: t })}
+                      onOpenDetail={(t) => setDetailTask(t)}
+                    />
+                  </div>
+                )}
+              </Draggable>
+            ))}
+            {provided.placeholder}
           </div>
+        )}
+      </Droppable>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Task Board</h2>
+        {isGlobalAdmin && (
+          <div className="flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'bg-red-500'}`} aria-hidden="true" />
+            <span className="text-xs text-[var(--text-muted)]">{connected ? 'Live' : 'Offline'}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Mobile: column tab switcher */}
+      <div className="flex lg:hidden gap-1 bg-[var(--surface-sunken)] border border-[var(--border-subtle)] p-0.5 rounded-md overflow-x-auto">
+        {COLUMNS.map((col) => {
+          const count = getColumnTasks(col.id).length;
+          return (
+            <button
+              key={col.id}
+              onClick={() => setMobileCol(col.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded whitespace-nowrap transition-colors ${
+                mobileCol === col.id
+                  ? 'bg-[var(--surface-raised)] text-[var(--text-primary)] border border-[var(--border-subtle)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+              aria-pressed={mobileCol === col.id}
+            >
+              {col.title}
+              <span className={`text-2xs px-1 py-0.5 rounded-full font-semibold ${col.badge}`}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Kanban board */}
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        {/* Desktop: all 4 columns side-by-side */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-4">
+          {COLUMNS.map((col) => (
+            <KanbanColumn key={col.id} col={col} columnTasks={getColumnTasks(col.id)} visible />
+          ))}
+        </div>
+
+        {/* Mobile: single column shown based on tab */}
+        <div className="lg:hidden">
+          {COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col.id}
+              col={col}
+              columnTasks={getColumnTasks(col.id)}
+              visible={mobileCol === col.id}
+            />
+          ))}
         </div>
       </DragDropContext>
 
@@ -462,7 +502,7 @@ export const TasksPage = () => {
         />
       )}
 
-      {/* Context menu — portal, so it's never clipped by DragDropContext */}
+      {/* Context menu */}
       {contextMenu && (
         <TaskContextMenu
           x={contextMenu.x}
@@ -470,156 +510,36 @@ export const TasksPage = () => {
           task={contextMenu.task}
           columns={COLUMNS}
           isAdminOrOwner={isAdminOrOwner}
-          onMoveToColumn={(task, colId) => {
-            handleStatusChange(task.id, colId);
-            handleCloseContextMenu();
-          }}
-          onEdit={(task) => {
-            openEditModal(task);
-            handleCloseContextMenu();
-          }}
-          onDuplicate={(task) => {
-            handleDuplicate(task);
-            handleCloseContextMenu();
-          }}
-          onDelete={(taskId) => {
-            handleDeleteTask(null, taskId);
-            handleCloseContextMenu();
-          }}
-          onClose={handleCloseContextMenu}
+          onMoveToColumn={(task, colId) => { handleStatusChange(task.id, colId); setContextMenu(null); }}
+          onEdit={(task) => { openEditModal(task); setContextMenu(null); }}
+          onDuplicate={(task) => { handleDuplicate(task); setContextMenu(null); }}
+          onDelete={(taskId) => { handleDeleteTask(null, taskId); setContextMenu(null); }}
+          onClose={() => setContextMenu(null)}
         />
       )}
 
-      {/* Add-task modal */}
+      {/* Add task modal */}
       <Modal
         isOpen={showAddModal}
         onClose={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}
         title={`Add Task — ${COLUMNS.find((c) => c.id === selectedColumn)?.title ?? selectedColumn}`}
       >
         <form onSubmit={handleAddTask} className="space-y-4">
-          <Input
-            label="Task Title"
-            value={taskData.title}
-            onChange={(e) => setTaskData((p) => ({ ...p, title: e.target.value }))}
-            required
-          />
-          <Input
-            label="Description"
-            value={taskData.description}
-            onChange={(e) => setTaskData((p) => ({ ...p, description: e.target.value }))}
-          />
-          <Select
-            label="Priority"
-            value={taskData.priority}
-            onChange={(e) => setTaskData((p) => ({ ...p, priority: e.target.value }))}
-          >
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-          </Select>
-
-          {/* Assigned To */}
-          <Select
-            label="Assign To"
-            value={taskData.assigneeId}
-            onChange={(e) => setTaskData((p) => ({ ...p, assigneeId: e.target.value }))}
-          >
-            <option value="">Unassigned</option>
-            {assignableMembers.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                {m.displayName || m.email} ({m.role})
-              </option>
-            ))}
-          </Select>
-
-          {/* Due Date */}
-          <Input
-            label="Due Date (optional)"
-            type="date"
-            value={taskData.dueDate}
-            onChange={(e) => setTaskData((p) => ({ ...p, dueDate: e.target.value }))}
-          />
-
-          <div className="flex justify-end space-x-2">
-            <Button variant="ghost" onClick={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={saving}>
-              Add Task
-            </Button>
+          <TaskFormFields data={taskData} setData={setTaskData} />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="ghost" type="button" onClick={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}>Cancel</Button>
+            <Button type="submit" loading={saving}>Add Task</Button>
           </div>
         </form>
       </Modal>
 
-      {/* Edit-task modal */}
-      <Modal
-        isOpen={!!editingTask}
-        onClose={() => setEditingTask(null)}
-        title="Edit Task"
-      >
+      {/* Edit task modal */}
+      <Modal isOpen={!!editingTask} onClose={() => setEditingTask(null)} title="Edit Task">
         <form onSubmit={handleUpdateTask} className="space-y-4">
-          <Input
-            label="Task Title"
-            value={editTaskData.title}
-            onChange={(e) => setEditTaskData((p) => ({ ...p, title: e.target.value }))}
-            required
-          />
-          <Input
-            label="Description"
-            value={editTaskData.description}
-            onChange={(e) => setEditTaskData((p) => ({ ...p, description: e.target.value }))}
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Select
-              label="Status"
-              value={editTaskData.status}
-              onChange={(e) => setEditTaskData((p) => ({ ...p, status: e.target.value }))}
-            >
-              {COLUMNS.map((col) => (
-                <option key={col.id} value={col.id}>{col.title}</option>
-              ))}
-            </Select>
-
-            <Select
-              label="Priority"
-              value={editTaskData.priority}
-              onChange={(e) => setEditTaskData((p) => ({ ...p, priority: e.target.value }))}
-            >
-              <option value="LOW">Low</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HIGH">High</option>
-            </Select>
-          </div>
-
-          {/* Assigned To */}
-          <Select
-            label="Assign To"
-            value={editTaskData.assigneeId}
-            onChange={(e) => setEditTaskData((p) => ({ ...p, assigneeId: e.target.value }))}
-          >
-            <option value="">Unassigned</option>
-            {assignableMembers.map((m) => (
-              <option key={m.userId} value={m.userId}>
-                {m.displayName || m.email} ({m.role})
-              </option>
-            ))}
-          </Select>
-
-          {/* Due Date */}
-          <Input
-            label="Due Date (optional)"
-            type="date"
-            value={editTaskData.dueDate}
-            onChange={(e) => setEditTaskData((p) => ({ ...p, dueDate: e.target.value }))}
-          />
-
-          <div className="flex justify-end space-x-2 pt-2">
-            <Button variant="ghost" onClick={() => setEditingTask(null)}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={updating}>
-              Save Changes
-            </Button>
+          <TaskFormFields data={editTaskData} setData={setEditTaskData} showStatus />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="ghost" type="button" onClick={() => setEditingTask(null)}>Cancel</Button>
+            <Button type="submit" loading={updating}>Save Changes</Button>
           </div>
         </form>
       </Modal>
