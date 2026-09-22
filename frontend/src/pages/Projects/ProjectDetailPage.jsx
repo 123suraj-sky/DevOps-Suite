@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { Card } from '../../components/common/Card';
 import { Button } from '../../components/common/Button';
@@ -18,21 +19,46 @@ const ROLE_STYLES = {
 
 const RolePillDropdown = ({ value, disabled, onChange }) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  const [pos, setPos]   = useState({ top: 0, left: 0 });
+  const btnRef          = useRef(null);
+  const menuRef         = useRef(null);
 
+  // Position the portal menu under the trigger button
+  const updatePos = useCallback(() => {
+    if (!btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + window.scrollY + 6, left: r.right + window.scrollX });
+  }, []);
+
+  const handleOpen = () => {
+    updatePos();
+    setOpen((o) => !o);
+  };
+
+  // Close on outside click or scroll
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const close = (e) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target) &&
+        btnRef.current  && !btnRef.current.contains(e.target)
+      ) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('scroll', () => setOpen(false), true);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('scroll', () => setOpen(false), true);
+    };
   }, [open]);
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         disabled={disabled}
-        onClick={() => setOpen((o) => !o)}
+        onClick={handleOpen}
         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium
           transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]
           disabled:opacity-50 disabled:cursor-not-allowed
@@ -44,8 +70,12 @@ const RolePillDropdown = ({ value, disabled, onChange }) => {
         </svg>
       </button>
 
-      {open && (
-        <div className="absolute right-0 z-30 mt-1.5 w-28 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-overlay)] shadow-dark-md overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'absolute', top: pos.top, left: pos.left, transform: 'translateX(-100%)', zIndex: 9999 }}
+          className="w-28 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-overlay)] shadow-dark-md overflow-hidden"
+        >
           {['MEMBER', 'ADMIN'].map((opt) => (
             <button
               key={opt}
@@ -65,9 +95,10 @@ const RolePillDropdown = ({ value, disabled, onChange }) => {
               )}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
