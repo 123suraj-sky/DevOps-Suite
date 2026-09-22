@@ -448,7 +448,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
   const isPreview = activeTab && PREVIEW_LANGUAGES.has(activeTab.language);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 space-y-4">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* Header matching Task Board */}
       {!isFullScreen && (
         <div className="flex items-center justify-between shrink-0">
@@ -468,7 +468,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
       </div>
 
       {/* ── Full IDE — visible on lg+ only ─────────────────────────────── */}
-      <div className="hidden lg:flex flex-col flex-1 min-h-0 bg-[var(--surface-raised)] overflow-hidden rounded-lg border border-[var(--border-subtle)] shadow-sm">
+      <div className={`hidden lg:flex flex-col ${isFullScreen ? 'flex-1 min-h-0' : 'h-[calc(100vh-18rem)]'} bg-[var(--surface-raised)] overflow-hidden rounded-lg border border-[var(--border-subtle)] shadow-sm`}>
 
       {/* ── Main three-panel body ───────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
