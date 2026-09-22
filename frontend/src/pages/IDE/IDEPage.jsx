@@ -10,7 +10,6 @@ import { EditorTabs }        from './EditorTabs';
 import { IDEEditor, disposeEditorModel } from './IDEEditor';
 import { IDEOutputPanel }    from './IDEOutputPanel';
 import { PreviewPanel }      from './PreviewPanel';
-import circleDotIcon   from '../../assets/27_circle_dot.svg';
 import playIcon        from '../../assets/28_play.svg';
 import fullscreenIcon  from '../../assets/37_fullscreen.svg';
 
@@ -449,9 +448,16 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
   const isPreview = activeTab && PREVIEW_LANGUAGES.has(activeTab.language);
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0 space-y-4">
+      {/* Header matching Task Board */}
+      {!isFullScreen && (
+        <div className="flex items-center justify-between shrink-0">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Code Editor</h2>
+        </div>
+      )}
+
       {/* ── Mobile gate — IDE requires a large screen ───────────────────── */}
-      <div className="flex lg:hidden flex-1 items-center justify-center p-8 text-center bg-[#1e1e1e] rounded-lg">
+      <div className="flex lg:hidden flex-1 items-center justify-center p-8 text-center bg-[#1e1e1e] rounded-lg border border-[var(--border-subtle)]">
         <div className="space-y-3 max-w-xs">
           <svg className="w-12 h-12 mx-auto text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3" />
@@ -462,90 +468,7 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
       </div>
 
       {/* ── Full IDE — visible on lg+ only ─────────────────────────────── */}
-      <div className="hidden lg:flex flex-col flex-1 min-h-0 bg-[#1e1e1e] overflow-hidden rounded-lg">
-
-      {/* ── Top toolbar ────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#323233] border-b border-[#252526] shrink-0">
-        <div className="flex items-center gap-2">
-          {/* VS Code-style activity label */}
-          <svg className="w-5 h-5 text-blue-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M17 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2zm-5 14H9v-2h3v2zm3-4H9v-2h6v2zm0-4H9V7h6v2z" />
-          </svg>
-          <span className="text-sm font-semibold text-[#cccccc]">IDE</span>
-          {activeTab && (
-            <span className="text-xs text-[#858585] font-mono ml-2 truncate max-w-[300px]">
-              {activeTab.path}
-              {activeTab.isDirty && (
-                <img
-                  src={circleDotIcon}
-                  alt="unsaved"
-                  className="w-2 h-2 inline-block ml-1"
-                  style={{ filter: 'invert(85%) sepia(30%) saturate(500%) hue-rotate(5deg)' }}
-                />
-              )}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Save button */}
-          <button
-            onClick={handleManualSave}
-            disabled={!activeTab || !activeTab.isDirty}
-            title="Save (Ctrl+S)"
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded
-                       text-[#cccccc] hover:bg-[#3c3c3c] disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586l-1.293-1.293z" />
-              <path d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5z" />
-            </svg>
-            Save
-          </button>
-
-          {/* Open in full-screen button — hidden when already in full-screen */}
-          {!isFullScreen && (
-            <button
-              onClick={handleOpenFullScreen}
-              title="Open IDE in full screen (new tab)"
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded
-                         text-[#cccccc] hover:bg-[#3c3c3c]"
-            >
-              <img src={fullscreenIcon} alt="" className="w-3.5 h-3.5 invert opacity-70" aria-hidden="true" />
-              Full screen
-            </button>
-          )}
-
-          {/* Run button */}
-          <button
-            onClick={handleRun}
-            disabled={!canRun}
-            title={canRun ? 'Run active file' : running ? 'Running…' : 'No runnable file open'}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded transition-colors
-              ${canRun
-                ? 'bg-green-600 hover:bg-green-500 text-white'
-                : running
-                  ? 'bg-green-800 text-green-300 cursor-not-allowed animate-pulse'
-                  : 'bg-[#3c3c3c] text-[#666] cursor-not-allowed'
-              }`}
-          >
-            {running ? (
-              <>
-                <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
-                  <path d="M12 2a10 10 0 0110 10" />
-                </svg>
-                {pollStatus ?? 'Running…'}
-              </>
-            ) : (
-              <>
-                <img src={playIcon} alt="" className="w-3.5 h-3.5" aria-hidden="true" />
-                Run
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+      <div className="hidden lg:flex flex-col flex-1 min-h-0 bg-[var(--surface-raised)] overflow-hidden rounded-lg border border-[var(--border-subtle)] shadow-sm">
 
       {/* ── Main three-panel body ───────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -585,6 +508,64 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
             activeTabId={activeTabId}
             onSelect={ctxSelectTab}
             onClose={handleCloseTab}
+            actions={
+              <>
+                {/* Save */}
+                <button
+                  onClick={handleManualSave}
+                  disabled={!activeTab || !activeTab.isDirty}
+                  title="Save (Ctrl+S)"
+                  className="flex items-center gap-1 px-2 py-0.5 text-xs rounded text-[#cccccc] hover:bg-[#3c3c3c] disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h-2v5.586l-1.293-1.293z" />
+                    <path d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2H5z" />
+                  </svg>
+                  Save
+                </button>
+
+                {/* Full screen — hidden when already in full-screen */}
+                {!isFullScreen && (
+                  <button
+                    onClick={handleOpenFullScreen}
+                    title="Open IDE in full screen (new tab)"
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs rounded text-[#cccccc] hover:bg-[#3c3c3c]"
+                  >
+                    <img src={fullscreenIcon} alt="" className="w-3.5 h-3.5 invert opacity-70" aria-hidden="true" />
+                    Full screen
+                  </button>
+                )}
+
+                {/* Run */}
+                <button
+                  onClick={handleRun}
+                  disabled={!canRun}
+                  title={canRun ? 'Run active file' : running ? 'Running…' : 'No runnable file open'}
+                  className={`flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded transition-colors
+                    ${canRun
+                      ? 'bg-green-600 hover:bg-green-500 text-white'
+                      : running
+                        ? 'bg-green-800 text-green-300 cursor-not-allowed animate-pulse'
+                        : 'bg-[#3c3c3c] text-[#666] cursor-not-allowed'
+                    }`}
+                >
+                  {running ? (
+                    <>
+                      <svg className="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0110 10" />
+                      </svg>
+                      {pollStatus ?? 'Running…'}
+                    </>
+                  ) : (
+                    <>
+                      <img src={playIcon} alt="" className="w-3 h-3" aria-hidden="true" />
+                      Run
+                    </>
+                  )}
+                </button>
+              </>
+            }
           />
           <IDEEditor
             ref={editorRef}
@@ -626,6 +607,6 @@ export function IDEPage({ projectIdOverride, projectOverride, isFullScreen = fal
         </div>
       </div>
     </div>
-    </>
+    </div>
   );
 }

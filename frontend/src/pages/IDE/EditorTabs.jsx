@@ -6,23 +6,27 @@
  *   activeTabId — UUID of the currently visible tab
  *   onSelect    — (tabId) => void
  *   onClose     — (tabId) => void
+ *   actions     — optional ReactNode rendered at the right end of the tab bar
+ *                 (Save / Fullscreen / Run buttons live here)
  */
-export function EditorTabs({ tabs = [], activeTabId, onSelect, onClose }) {
+export function EditorTabs({ tabs = [], activeTabId, onSelect, onClose, actions }) {
   if (tabs.length === 0) {
     return (
-      <div className="flex items-center h-9 bg-[#1e1e1e] border-b border-[#252526] px-4">
+      <div className="flex items-center justify-between h-9 bg-[#1e1e1e] border-b border-[#252526] px-4">
         <span className="text-xs text-[#555]">No files open</span>
+        {actions && <div className="flex items-center gap-1 shrink-0 ml-2">{actions}</div>}
       </div>
     );
   }
 
   return (
     <div
-      className="flex items-end h-9 bg-[#252526] border-b border-[#1e1e1e] overflow-x-auto
-                 scrollbar-thin scrollbar-thumb-[#555] scrollbar-track-transparent"
+      className="flex items-end h-9 bg-[#252526] border-b border-[#1e1e1e]"
       role="tablist"
       aria-label="Open editor tabs"
     >
+      {/* Scrollable tabs */}
+      <div className="flex items-end flex-1 min-w-0 overflow-x-auto scrollbar-thin scrollbar-thumb-[#555] scrollbar-track-transparent">
       {tabs.map((tab) => {
         const isActive = tab.id === activeTabId;
         return (
@@ -76,6 +80,14 @@ export function EditorTabs({ tabs = [], activeTabId, onSelect, onClose }) {
           </div>
         );
       })}
+      </div>
+
+      {/* Action buttons — pinned to the right of the tab bar */}
+      {actions && (
+        <div className="flex items-center gap-1 shrink-0 px-2 self-center border-l border-[#3c3c3c] ml-1">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

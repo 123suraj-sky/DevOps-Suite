@@ -21,9 +21,9 @@ export const MainLayout = () => {
   if (isGrafana && !grafanaVisited) setGrafanaVisited(true);
   if (isKibana  && !kibanaVisited)  setKibanaVisited(true);
 
-  // Grafana/Kibana iframes and the IDE all need full-height flex — no inner padding/scroll.
-  // The IDE manages its own internal spacing inside ProjectLayout.
-  const isFullHeight = isCode || isGrafana || isKibana;
+  // Grafana/Kibana iframes need full-height flex — no inner padding/scroll.
+  // The IDE uses the same normal padded container as Overview/Task Board.
+  const isFullHeight = isGrafana || isKibana;
 
   return (
     <div className="flex h-screen bg-[var(--surface-base)]">

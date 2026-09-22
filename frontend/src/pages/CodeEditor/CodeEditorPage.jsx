@@ -220,57 +220,53 @@ export const CodeEditorPage = () => {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-8rem)] space-y-4">
-      {/* Control Panel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--surface-raised)] border border-[var(--border-subtle)] p-4 rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <h2 className="text-base font-semibold text-[var(--text-primary)]">Sandbox Code Runner</h2>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            disabled={running}
-            className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-sunken)] text-sm text-[var(--text-primary)] px-3 py-1.5 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-25 disabled:opacity-50"
-          >
-            <optgroup label="Executable">
-              <option value="python">Python 3</option>
-              <option value="javascript">Node.js (JavaScript)</option>
-              <option value="java">Java 21</option>
-              <option value="cpp">C++ (g++)</option>
-            </optgroup>
-            <optgroup label="Markup / Style / Docs">
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="markdown">Markdown</option>
-            </optgroup>
-          </select>
-        </div>
-        {RUNNABLE_LANGUAGES.has(language) ? (
-          <button
-            onClick={handleRun}
-            disabled={running}
-            className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white active:scale-[0.97] transition-all ${
-              running ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
-            }`}
-          >
-            {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : (
-              <span className="inline-flex items-center gap-1.5">
-                Run Code
-                <img src={playIcon} alt="" className="w-4 h-4" aria-hidden="true" />
-              </span>
-            )}
-          </button>
-        ) : (
-          <span className="text-xs text-gray-400 dark:text-gray-500 italic px-2">
-            {language.toUpperCase()} is not executable in the sandbox
-          </span>
-        )}
-      </div>
-
       {/* Editor + panels — stack vertically on mobile, side-by-side on lg+ */}
       <div className="flex flex-col lg:flex-row flex-1 gap-4 min-h-0">
         {/* Editor */}
         <div className="flex-1 flex flex-col bg-[var(--surface-raised)] border border-[var(--border-subtle)] rounded-lg overflow-hidden min-h-[300px] lg:min-h-0">
-          <div className="bg-[var(--surface-sunken)] px-4 py-2 border-b border-[var(--border-subtle)]">
+          {/* Editor toolbar — language selector lives here instead of a separate card */}
+          <div className="bg-[var(--surface-sunken)] px-4 py-2 border-b border-[var(--border-subtle)] flex items-center justify-between gap-3">
             <span className="text-2xs font-semibold text-[var(--text-muted)] uppercase tracking-widest">Source Code</span>
+            <div className="flex items-center gap-2">
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                disabled={running}
+                className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-raised)] text-xs text-[var(--text-primary)] px-2 py-1 focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-25 disabled:opacity-50"
+              >
+                <optgroup label="Executable">
+                  <option value="python">Python 3</option>
+                  <option value="javascript">Node.js (JavaScript)</option>
+                  <option value="java">Java 21</option>
+                  <option value="cpp">C++ (g++)</option>
+                </optgroup>
+                <optgroup label="Markup / Style / Docs">
+                  <option value="html">HTML</option>
+                  <option value="css">CSS</option>
+                  <option value="markdown">Markdown</option>
+                </optgroup>
+              </select>
+              {RUNNABLE_LANGUAGES.has(language) ? (
+                <button
+                  onClick={handleRun}
+                  disabled={running}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-md text-white active:scale-[0.97] transition-all ${
+                    running ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
+                  }`}
+                >
+                  {running ? (STATUS_CONFIG[pollStatus]?.label || 'Running…') : (
+                    <>
+                      Run
+                      <img src={playIcon} alt="" className="w-3.5 h-3.5" aria-hidden="true" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <span className="text-2xs text-[var(--text-muted)] italic">
+                  {language.toUpperCase()} — preview only
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex-1 min-h-0">
             <Editor
