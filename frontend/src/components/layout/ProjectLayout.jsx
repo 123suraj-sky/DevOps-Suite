@@ -10,7 +10,8 @@ export const ProjectLayout = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const isIDE = location.pathname.endsWith('/code');
+  const isIDE   = location.pathname.endsWith('/code');
+  const isTasks = location.pathname.endsWith('/tasks');
 
   const fetchProject = async () => {
     try {
@@ -42,7 +43,7 @@ export const ProjectLayout = () => {
         projectName={project?.name}
         projectDescription={project?.description}
       />
-      <div className={`flex-1 ${isIDE ? 'min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 lg:p-6 space-y-5 flex flex-col`}>
+      <div className={`flex-1 ${(isIDE || isTasks) ? 'min-h-0 overflow-hidden' : 'overflow-y-auto'} p-4 lg:p-6 space-y-5 flex flex-col`}>
         <Outlet context={{ project, refreshProject: fetchProject }} />
       </div>
     </div>

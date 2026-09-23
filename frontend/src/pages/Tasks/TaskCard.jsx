@@ -56,7 +56,6 @@ export const TaskCard = ({
       <div className="flex items-start justify-between gap-2">
         <button
           type="button"
-          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); onOpenDetail?.(task); }}
           className="text-left text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent-text)] transition-colors line-clamp-2 flex-1 min-w-0"
           title="View task details"
@@ -74,7 +73,6 @@ export const TaskCard = ({
             <>
               <button
                 type="button"
-                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); onEdit?.(task); }}
                 title="Edit task"
                 className="p-0.5 rounded opacity-0 group-hover:opacity-60 hover:!opacity-100 hover:bg-[var(--surface-sunken)] transition-all focus:opacity-100"
@@ -84,7 +82,6 @@ export const TaskCard = ({
               </button>
               <button
                 type="button"
-                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => { e.stopPropagation(); onDelete(e, task.id); }}
                 disabled={isDeleting}
                 title="Delete task"

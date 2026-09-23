@@ -17,13 +17,15 @@ export const MainLayout = () => {
   const isGrafana = location.pathname === '/grafana';
   const isKibana  = location.pathname === '/kibana';
   const isCode    = location.pathname.endsWith('/code');
+  const isTasks   = location.pathname.endsWith('/tasks');
 
   if (isGrafana && !grafanaVisited) setGrafanaVisited(true);
   if (isKibana  && !kibanaVisited)  setKibanaVisited(true);
 
   // Grafana/Kibana iframes need full-height flex — no inner padding/scroll.
-  // The IDE uses the same normal padded container as Overview/Task Board.
-  const isFullHeight = isGrafana || isKibana;
+  // Task board also needs full-height to prevent a scroll container sitting above
+  // the Droppables, which breaks @hello-pangea/dnd drag detection.
+  const isFullHeight = isGrafana || isKibana || isTasks;
 
   return (
     <div className="flex h-screen bg-[var(--surface-base)]">

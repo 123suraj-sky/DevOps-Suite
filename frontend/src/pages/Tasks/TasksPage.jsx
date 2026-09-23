@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -32,6 +32,87 @@ const normalizeStatusKey = (value) => {
 };
 
 const EMPTY_TASK = { title: '', description: '', priority: 'MEDIUM', assigneeId: '', dueDate: '' };
+
+// ── KanbanColumn — must live outside TasksPage so React never re-creates it as
+//    a new component type during a drag, which would unmount all Droppables mid-drag
+//    and cause "Cannot find droppable entry" errors.
+const KanbanColumn = ({
+  col,
+  columnTasks,
+  visible = true,
+  isAdminOrOwner,
+  deletingTaskId,
+  onAddClick,
+  onDelete,
+  onEdit,
+  onContextMenu,
+  onOpenDetail,
+}) => (
+  <div
+    className={`flex flex-col ${visible ? '' : 'hidden lg:flex'} bg-[var(--surface-sunken)] border border-[var(--border-subtle)] border-t-2 ${col.topBorder} rounded-lg min-w-[240px] lg:min-w-0 w-[240px] lg:w-auto`}
+  >
+    {/* Column header */}
+    <div className="flex items-center justify-between px-3 pt-3 pb-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium text-[var(--text-primary)]">{col.title}</span>
+        <span className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${col.badge}`}>
+          {columnTasks.length}
+        </span>
+      </div>
+      {isAdminOrOwner && (
+        <button
+          onClick={() => onAddClick(col.id)}
+          title={`Add task to ${col.title}`}
+          className="p-1 rounded hover:bg-[var(--border-subtle)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          aria-label={`Add task to ${col.title}`}
+        >
+          <img src={plusIcon} alt="" className="w-3.5 h-3.5 dark:brightness-0 dark:invert opacity-60" aria-hidden="true" />
+        </button>
+      )}
+    </div>
+
+    {/* Droppable area — must NOT have overflow-y-auto here; column wrapper scrolls instead */}
+    <Droppable droppableId={col.id}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.droppableProps}
+          className={`flex-1 space-y-2 px-3 pb-3 min-h-[48px] transition-colors ${
+            snapshot.isDraggingOver ? 'bg-[var(--accent-subtle)]' : ''
+          }`}
+          style={{ minHeight: '48px' }}
+        >
+          {columnTasks.map((task, idx) => (
+            <Draggable key={String(task.id)} draggableId={String(task.id)} index={idx}>
+              {(drag, dragSnap) => (
+                <div
+                  ref={drag.innerRef}
+                  {...drag.draggableProps}
+                  {...drag.dragHandleProps}
+                  style={{
+                    ...drag.draggableProps.style,
+                    ...(dragSnap.isDragging ? { boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
+                  }}
+                >
+                  <TaskCard
+                    task={task}
+                    isDeleting={deletingTaskId === task.id}
+                    isAdminOrOwner={isAdminOrOwner}
+                    onDelete={onDelete}
+                    onEdit={onEdit}
+                    onContextMenu={(x, y, t) => onContextMenu(x, y, t)}
+                    onOpenDetail={(t) => onOpenDetail(t)}
+                  />
+                </div>
+              )}
+            </Draggable>
+          ))}
+          {provided.placeholder}
+        </div>
+      )}
+    </Droppable>
+  </div>
+);
 
 export const TasksPage = () => {
   const { id: projectId }       = useParams();
@@ -84,6 +165,14 @@ export const TasksPage = () => {
         (first.columns || []).forEach((col) => {
           map[normalizeStatusKey(col.name)] = col.id || col.column_id;
         });
+        // Fallback: if the board has no seeded columns (legacy projects), derive
+        // column IDs from the task list so drag-and-drop still works.
+        if (Object.keys(map).length === 0 && taskList?.length > 0) {
+          taskList.forEach((t) => {
+            const key = normalizeStatusKey(t.status);
+            if (key && !map[key]) map[key] = t.column_id || t.columnId;
+          });
+        }
         setColumnIdMap(map);
       }
     } catch (err) {
@@ -159,7 +248,7 @@ export const TasksPage = () => {
 
     const srcList  = [...byStatus[source.droppableId]];
     const dstList  = source.droppableId === destination.droppableId ? srcList : [...byStatus[destination.droppableId]];
-    const si       = srcList.findIndex((t) => t.id === draggableId);
+    const si       = srcList.findIndex((t) => String(t.id) === String(draggableId));
     if (si === -1) return;
 
     const [moved] = srcList.splice(si, 1);
@@ -199,7 +288,17 @@ export const TasksPage = () => {
       const updated = await taskApi.updateStatus(taskId, newStatus);
       setTasks((prev) => prev.map((t) => t.id === taskId ? updated : t));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update status');
+      const rawMsg =
+        err.response?.data?.error?.message ||
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        '';
+      const lower = rawMsg.toLowerCase();
+      const userMsg =
+        lower.includes('wip') || lower.includes('limit')
+          ? 'Cannot move task: column WIP limit reached'
+          : rawMsg || 'Failed to update status';
+      toast.error(userMsg);
       setTasks(previous);
     }
   };
@@ -367,76 +466,19 @@ export const TasksPage = () => {
     </div>
   );
 
-  // ── Column component ──────────────────────────────────────────────────────
-  const KanbanColumn = ({ col, columnTasks, visible = true }) => (
-    <div
-      className={`flex flex-col ${visible ? '' : 'hidden lg:flex'} bg-[var(--surface-sunken)] border border-[var(--border-subtle)] border-t-2 ${col.topBorder} rounded-lg min-w-[240px] lg:min-w-0 w-[240px] lg:w-auto`}
-    >
-      {/* Column header */}
-      <div className="flex items-center justify-between px-3 pt-3 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-[var(--text-primary)]">{col.title}</span>
-          <span className={`text-2xs font-semibold px-1.5 py-0.5 rounded-full ${col.badge}`}>
-            {columnTasks.length}
-          </span>
-        </div>
-        {isAdminOrOwner && (
-          <button
-            onClick={() => openAddModal(col.id)}
-            title={`Add task to ${col.title}`}
-            className="p-1 rounded hover:bg-[var(--border-subtle)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-            aria-label={`Add task to ${col.title}`}
-          >
-            <img src={plusIcon} alt="" className="w-3.5 h-3.5 dark:brightness-0 dark:invert opacity-60" aria-hidden="true" />
-          </button>
-        )}
-      </div>
-
-      {/* Droppable area */}
-      <Droppable droppableId={col.id}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={`flex-1 space-y-2 px-3 pb-3 overflow-y-auto min-h-[48px] transition-colors ${
-              snapshot.isDraggingOver ? 'bg-[var(--accent-subtle)]' : ''
-            }`}
-            style={{ minHeight: '48px' }}
-          >
-            {columnTasks.map((task, idx) => (
-              <Draggable key={task.id} draggableId={task.id} index={idx}>
-                {(drag, dragSnap) => (
-                  <div
-                    ref={drag.innerRef}
-                    {...drag.draggableProps}
-                    {...drag.dragHandleProps}
-                    style={{
-                      ...drag.draggableProps.style,
-                      ...(dragSnap.isDragging ? { boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
-                    }}
-                  >
-                    <TaskCard
-                      task={task}
-                      isDeleting={deletingTaskId === task.id}
-                      isAdminOrOwner={isAdminOrOwner}
-                      onDelete={handleDeleteTask}
-                      onEdit={openEditModal}
-                      onContextMenu={(x, y, t) => setContextMenu({ x, y, task: t })}
-                      onOpenDetail={(t) => setDetailTask(t)}
-                    />
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </div>
-  );
+  // ── Column shared props (stable references — avoids re-creating KanbanColumn) ──
+  const colCallbacks = {
+    isAdminOrOwner,
+    deletingTaskId,
+    onAddClick:    openAddModal,
+    onDelete:      handleDeleteTask,
+    onEdit:        openEditModal,
+    onContextMenu: (x, y, t) => setContextMenu({ x, y, task: t }),
+    onOpenDetail:  (t) => setDetailTask(t),
+  };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4 overflow-y-auto flex-1 min-h-0">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Task Board</h2>
@@ -475,7 +517,7 @@ export const TasksPage = () => {
         {/* Desktop: all 4 columns side-by-side */}
         <div className="hidden lg:grid lg:grid-cols-4 gap-4">
           {COLUMNS.map((col) => (
-            <KanbanColumn key={col.id} col={col} columnTasks={getColumnTasks(col.id)} visible />
+            <KanbanColumn key={col.id} col={col} columnTasks={getColumnTasks(col.id)} visible {...colCallbacks} />
           ))}
         </div>
 
@@ -487,6 +529,7 @@ export const TasksPage = () => {
               col={col}
               columnTasks={getColumnTasks(col.id)}
               visible={mobileCol === col.id}
+              {...colCallbacks}
             />
           ))}
         </div>
@@ -546,3 +589,4 @@ export const TasksPage = () => {
     </div>
   );
 };
+

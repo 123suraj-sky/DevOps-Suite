@@ -1,0 +1,153 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092911539
+      },
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092924669
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150095964
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150437637
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092912681
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150446793
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150633539
+      }
+    ],
+    "3.1 Add `columnIdMap` fallback from task list in `fetchData` (`TasksPage.jsx`)": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092912763
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150644348
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150688600
+      }
+    ],
+    "3.2 Improve WIP limit error message in `handleStatusChange` catch block (`TasksPage.jsx`)": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092912841
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150696372
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150703203
+      }
+    ],
+    "3.3 Verify `IllegalStateException` → 409 handler already exists in `ProjectExceptionHandler` (backend)": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092912970
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150709750
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150729728
+      }
+    ],
+    "3.4 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092913048
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150736456
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150790816
+      }
+    ],
+    "3.5 Verify preservation tests still pass": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092913097
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150796375
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150802024
+      }
+    ],
+    "4. Checkpoint — End-to-end validation and all tests pass": [
+      {
+        "executionId": "4d056bc4-6edd-400a-802e-c031da828ee9",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790092913149
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150812125
+      },
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150845289
+      }
+    ],
+    "3. Fix for Kanban task move broken on legacy projects + WIP limit error messaging": [
+      {
+        "executionId": "715ed7d0-48f7-41d4-bcab-331d1fe66481",
+        "chatSessionId": "sess_de09daee-af34-47a4-ac42-562c5bdea87e",
+        "timestamp": 1790150802093
+      }
+    ]
+  }
+}
