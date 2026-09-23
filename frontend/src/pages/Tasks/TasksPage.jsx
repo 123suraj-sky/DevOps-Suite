@@ -1,7 +1,6 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { taskApi }    from '../../api/taskApi';
 import { projectApi } from '../../api/projectApi';
 import { useWebSocket } from '../../context/WebSocketContext';
@@ -33,9 +32,7 @@ const normalizeStatusKey = (value) => {
 
 const EMPTY_TASK = { title: '', description: '', priority: 'MEDIUM', assigneeId: '', dueDate: '' };
 
-// ── KanbanColumn — must live outside TasksPage so React never re-creates it as
-//    a new component type during a drag, which would unmount all Droppables mid-drag
-//    and cause "Cannot find droppable entry" errors.
+// ── KanbanColumn — defined outside TasksPage to keep a stable component identity
 const KanbanColumn = ({
   col,
   columnTasks,
@@ -71,46 +68,21 @@ const KanbanColumn = ({
       )}
     </div>
 
-    {/* Droppable area — must NOT have overflow-y-auto here; column wrapper scrolls instead */}
-    <Droppable droppableId={col.id}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-          className={`flex-1 space-y-2 px-3 pb-3 min-h-[48px] transition-colors ${
-            snapshot.isDraggingOver ? 'bg-[var(--accent-subtle)]' : ''
-          }`}
-          style={{ minHeight: '48px' }}
-        >
-          {columnTasks.map((task, idx) => (
-            <Draggable key={String(task.id)} draggableId={String(task.id)} index={idx}>
-              {(drag, dragSnap) => (
-                <div
-                  ref={drag.innerRef}
-                  {...drag.draggableProps}
-                  {...drag.dragHandleProps}
-                  style={{
-                    ...drag.draggableProps.style,
-                    ...(dragSnap.isDragging ? { boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
-                  }}
-                >
-                  <TaskCard
-                    task={task}
-                    isDeleting={deletingTaskId === task.id}
-                    isAdminOrOwner={isAdminOrOwner}
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                    onContextMenu={(x, y, t) => onContextMenu(x, y, t)}
-                    onOpenDetail={(t) => onOpenDetail(t)}
-                  />
-                </div>
-              )}
-            </Draggable>
-          ))}
-          {provided.placeholder}
-        </div>
-      )}
-    </Droppable>
+    {/* Task list */}
+    <div className="flex-1 space-y-2 px-3 pb-3 min-h-[48px]">
+      {columnTasks.map((task) => (
+        <TaskCard
+          key={String(task.id)}
+          task={task}
+          isDeleting={deletingTaskId === task.id}
+          isAdminOrOwner={isAdminOrOwner}
+          onDelete={onDelete}
+          onEdit={onEdit}
+          onContextMenu={(x, y, t) => onContextMenu(x, y, t)}
+          onOpenDetail={(t) => onOpenDetail(t)}
+        />
+      ))}
+    </div>
   </div>
 );
 
@@ -126,7 +98,6 @@ export const TasksPage = () => {
 
   const [tasks,      setTasks]      = useState([]);
   const [loading,    setLoading]    = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Mobile: which column tab is active
   const [mobileCol, setMobileCol] = useState('TODO');
@@ -144,7 +115,6 @@ export const TasksPage = () => {
 
   const [deletingTaskId, setDeletingTaskId] = useState(null);
   const [columnIdMap,    setColumnIdMap]    = useState({});
-  const [boardId,        setBoardId]        = useState(null);
   const [contextMenu,    setContextMenu]    = useState(null);
   const [detailTask,     setDetailTask]     = useState(null);
 
@@ -160,13 +130,10 @@ export const TasksPage = () => {
       setTasks(taskList || []);
       if (boards?.length > 0) {
         const first = boards[0];
-        setBoardId(first.id || first.board_id);
         const map = {};
         (first.columns || []).forEach((col) => {
           map[normalizeStatusKey(col.name)] = col.id || col.column_id;
         });
-        // Fallback: if the board has no seeded columns (legacy projects), derive
-        // column IDs from the task list so drag-and-drop still works.
         if (Object.keys(map).length === 0 && taskList?.length > 0) {
           taskList.forEach((t) => {
             const key = normalizeStatusKey(t.status);
@@ -223,62 +190,6 @@ export const TasksPage = () => {
     });
     return () => unsub();
   }, [connected, projectId, fetchData]);
-
-  // ── Drag & drop ───────────────────────────────────────────────────────────
-  const onDragStart = () => setIsDragging(true);
-
-  const onDragEnd = async (result) => {
-    setIsDragging(false);
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
-    const destColId = columnIdMap[destination.droppableId];
-    if (!boardId || !destColId) {
-      toast.error('Board still loading — please try again.');
-      return;
-    }
-
-    const previousTasks = tasks;
-    const byStatus = COLUMNS.reduce((acc, col) => {
-      acc[col.id] = tasks.filter((t) => t.status === col.id)
-        .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
-      return acc;
-    }, {});
-
-    const srcList  = [...byStatus[source.droppableId]];
-    const dstList  = source.droppableId === destination.droppableId ? srcList : [...byStatus[destination.droppableId]];
-    const si       = srcList.findIndex((t) => String(t.id) === String(draggableId));
-    if (si === -1) return;
-
-    const [moved] = srcList.splice(si, 1);
-    const updMoved = { ...moved, status: destination.droppableId, columnId: destColId, column_id: destColId };
-
-    if (source.droppableId === destination.droppableId) {
-      srcList.splice(destination.index, 0, updMoved);
-      byStatus[source.droppableId] = srcList;
-    } else {
-      dstList.splice(destination.index, 0, updMoved);
-      byStatus[source.droppableId]      = srcList;
-      byStatus[destination.droppableId] = dstList;
-    }
-
-    const reordered = COLUMNS.flatMap((col) =>
-      byStatus[col.id].map((t, idx) => ({ ...t, sortOrder: idx, sort_order: idx }))
-    );
-    setTasks(reordered);
-
-    try {
-      await taskApi.reorder(projectId, boardId, reordered.map((t) => ({
-        id: t.id,
-        columnId: t.columnId || t.column_id,
-        sortOrder: t.sortOrder ?? t.sort_order ?? 0,
-      })));
-    } catch {
-      toast.error('Failed to save task move. Rolling back.');
-      setTasks(previousTasks);
-    }
-  };
 
   // ── Status change ─────────────────────────────────────────────────────────
   const handleStatusChange = async (taskId, newStatus) => {
@@ -466,7 +377,7 @@ export const TasksPage = () => {
     </div>
   );
 
-  // ── Column shared props (stable references — avoids re-creating KanbanColumn) ──
+  // ── Column shared props ──────────────────────────────────────────────────
   const colCallbacks = {
     isAdminOrOwner,
     deletingTaskId,
@@ -513,27 +424,25 @@ export const TasksPage = () => {
       </div>
 
       {/* Kanban board */}
-      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-        {/* Desktop: all 4 columns side-by-side */}
-        <div className="hidden lg:grid lg:grid-cols-4 gap-4">
-          {COLUMNS.map((col) => (
-            <KanbanColumn key={col.id} col={col} columnTasks={getColumnTasks(col.id)} visible {...colCallbacks} />
-          ))}
-        </div>
+      {/* Desktop: all 4 columns side-by-side */}
+      <div className="hidden lg:grid lg:grid-cols-4 gap-4">
+        {COLUMNS.map((col) => (
+          <KanbanColumn key={col.id} col={col} columnTasks={getColumnTasks(col.id)} visible {...colCallbacks} />
+        ))}
+      </div>
 
-        {/* Mobile: single column shown based on tab */}
-        <div className="lg:hidden">
-          {COLUMNS.map((col) => (
-            <KanbanColumn
-              key={col.id}
-              col={col}
-              columnTasks={getColumnTasks(col.id)}
-              visible={mobileCol === col.id}
-              {...colCallbacks}
-            />
-          ))}
-        </div>
-      </DragDropContext>
+      {/* Mobile: single column shown based on tab */}
+      <div className="lg:hidden">
+        {COLUMNS.map((col) => (
+          <KanbanColumn
+            key={col.id}
+            col={col}
+            columnTasks={getColumnTasks(col.id)}
+            visible={mobileCol === col.id}
+            {...colCallbacks}
+          />
+        ))}
+      </div>
 
       {/* Task detail modal */}
       {detailTask && (
@@ -589,4 +498,3 @@ export const TasksPage = () => {
     </div>
   );
 };
-

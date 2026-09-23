@@ -75,8 +75,8 @@ export const Sidebar = ({ isOpen = true, onClose }) => {
           'fixed lg:static inset-y-0 left-0 z-30',
           'w-60 flex flex-col shrink-0',
           'bg-[var(--surface-raised)] border-r border-[var(--border-subtle)]',
-          'transform transition-[transform,background-color,border-color] duration-200 lg:transform-none',
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'transition-[left,background-color,border-color] duration-200 lg:transform-none',
+          isOpen ? 'left-0' : '-left-60 lg:left-0'
         )}
       >
         {/* Logo */}

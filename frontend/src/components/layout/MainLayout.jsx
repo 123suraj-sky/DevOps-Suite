@@ -22,9 +22,8 @@ export const MainLayout = () => {
   if (isGrafana && !grafanaVisited) setGrafanaVisited(true);
   if (isKibana  && !kibanaVisited)  setKibanaVisited(true);
 
-  // Grafana/Kibana iframes need full-height flex — no inner padding/scroll.
-  // Task board also needs full-height to prevent a scroll container sitting above
-  // the Droppables, which breaks @hello-pangea/dnd drag detection.
+  // Grafana/Kibana iframes need full-height flex â€” no inner padding/scroll.
+  // Task board also needs full-height to allow proper column scrolling.
   const isFullHeight = isGrafana || isKibana || isTasks;
 
   return (
@@ -51,7 +50,7 @@ export const MainLayout = () => {
         {/* All other routes */}
         {!isGrafana && !isKibana && (
           isFullHeight ? (
-            // IDE / full-height routes: no padding, no scroll — layout handled inside
+            // IDE / full-height routes: no padding, no scroll â€” layout handled inside
             <main className="flex-1 flex flex-col min-h-0 overflow-hidden page-enter">
               <Outlet />
             </main>

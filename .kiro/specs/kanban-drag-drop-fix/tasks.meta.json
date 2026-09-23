@@ -1,0 +1,126 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "8/8 tests failed on unfixed code (expected — confirms bug exists).\n\nCounterexamples documented from actual test output:\n\nisOpen=true → aside.className contains:\n  - 'transform' (the Tailwind base class, compiles to transform: translateX(0))\n  - 'translate-x-0' (compiles to transform: translateX(0))\n  Full className: \"fixed lg:static inset-y-0 left-0 z-30 w-60 flex flex-col shrink-0 bg-[var(--surface-raised)] border-r border-[var(--border-subtle)] transform transition-[transform,background-color,border-color] duration-200 lg:transform-none translate-x-0\"\n  → DnD clone origin = Sidebar bounding box = top-left of screen\n\nisOpen=false → aside.className contains:\n  - 'transform' (same base class violation)\n  - '-translate-x-full' (compiles to transform: translateX(-100%) = translateX(-240px))\n  Full className: \"... transform transition-[transform,background-color,border-color] duration-200 lg:transform-none -translate-x-full lg:translate-x-0\"\n  → Bug persists even when sidebar is closed — DnD clone still uses Sidebar coordinate space\n\nBoth states confirm: transition-[transform,...] present, no transition-[left,...], no -left-60 class.\nThe `lg:transform-none` reset only applies at ≥1024px; on mobile the transform is always active.",
+      "lastRunTimestamp": 1790154253156
+    },
+    "3.2 Verify bug condition exploration test now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1790154693345
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766078
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151777283
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154277865
+      }
+    ],
+    "2. Write preservation property tests (BEFORE implementing fix)": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766160
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154282147
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154550499
+      }
+    ],
+    "3.1 Apply the className change in `frontend/src/components/layout/Sidebar.jsx`": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766223
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154555855
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154607070
+      }
+    ],
+    "3.2 Verify bug condition exploration test now passes": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766276
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154612913
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154705204
+      }
+    ],
+    "3.3 Verify preservation tests still pass": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766331
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154709344
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154820550
+      }
+    ],
+    "4. Verify fix in browser (manual validation)": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766369
+      },
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154826285
+      }
+    ],
+    "5. Checkpoint — Ensure all tests pass": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790151766409
+      }
+    ],
+    "3. Fix: remove transform-based slide animation from Sidebar `<aside>`": [
+      {
+        "executionId": "cad0a513-4f17-4e68-b8a9-72239c950597",
+        "chatSessionId": "sess_b6e56f14-94ad-487c-8d30-49c7bbcfe65a",
+        "timestamp": 1790154820607
+      }
+    ]
+  }
+}
