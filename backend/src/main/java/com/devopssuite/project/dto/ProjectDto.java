@@ -3,7 +3,6 @@ package com.devopssuite.project.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -276,29 +275,6 @@ public class ProjectDto {
         private String status;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ReorderTasksRequest {
-        @Valid
-        private List<ReorderTaskItem> tasks;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ReorderTaskItem {
-        @NotNull
-        private UUID id;
-        
-        @NotNull
-        @JsonAlias("column_id")
-        private UUID columnId;
-        
-        @Min(0)
-        @JsonAlias("sort_order")
-        private int sortOrder;
-    }
 
     /**
      * Lightweight WebSocket push payload sent to {@code /topic/tasks/{projectId}}

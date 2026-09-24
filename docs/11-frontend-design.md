@@ -8,7 +8,6 @@
 - HTTP Client: Axios with interceptors
 - WebSocket: SockJS + STOMP.js
 - Code Editor: Monaco Editor
-- Drag and Drop: react-beautiful-dnd
 - Charts: Recharts
 - UI Framework: Tailwind CSS
 - Testing: Jest + React Testing Library + Cypress
@@ -106,7 +105,6 @@ App
 
 ### 7.1 Kanban Board
 - Columns: TODO, IN_PROGRESS, IN_REVIEW, DONE
-- Drag and drop via react-beautiful-dnd
 - Optimistic updates with rollback on error
 - WebSocket subscription for real-time updates
 

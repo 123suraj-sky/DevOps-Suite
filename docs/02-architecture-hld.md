@@ -111,7 +111,6 @@ The production Dockerfile compiles the code inside a Maven-capable JDK container
 ## 11. Frontend Architecture
 - React 18 + TypeScript SPA.
 - Monaco Editor for writing code.
-- react-beautiful-dnd for drag-and-drop Kanban updates.
 - SockJS/STOMP client for real-time WebSocket messaging.
 - Axios client configured to target `http://localhost:8081/api` by default.
 

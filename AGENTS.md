@@ -158,7 +158,6 @@ docker-compose down -v       # Stop + wipe volumes (fresh start)
 - React Router v6 (lazy-loaded routes)
 - Axios (with JWT interceptors)
 - Monaco Editor (code editor)
-- react-beautiful-dnd (Kanban drag-and-drop)
 - SockJS + STOMP.js (WebSocket client)
 - Recharts (metrics charts)
 - Tailwind CSS

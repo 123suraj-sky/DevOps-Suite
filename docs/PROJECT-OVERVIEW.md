@@ -238,15 +238,11 @@ Component updates state → React re-renders UI
 ### 4.3 Kanban Board (Drag & Drop)
 
 ```
-User drags task from "To Do" to "In Progress"
+User moves task via context menu or edit modal from "To Do" to "In Progress"
       │
-react-beautiful-dnd / @hello-pangea/dnd fires onDragEnd
-      │
-TasksPage updates local column state immediately (optimistic UI)
-      │
-taskApi.reorderTasks(projectId, boardId, { tasks: [...] })
-  └── PUT /api/v1/projects/{id}/boards/{boardId}/tasks/reorder
-        └── Backend updates task.columnId and task.position in DB
+TasksPage calls taskApi.updateStatus(taskId, 'IN_PROGRESS')
+  └── PATCH /api/tasks/{id}/status
+        └── Backend updates task.status in DB
 ```
 
 ### 4.4 Code Editor

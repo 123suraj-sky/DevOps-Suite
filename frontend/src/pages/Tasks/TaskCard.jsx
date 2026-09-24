@@ -46,7 +46,7 @@ export const TaskCard = ({
 
   return (
     <div
-      className={`group relative bg-[var(--surface-raised)] rounded-lg border border-[var(--border-subtle)] border-l-2 ${priorityBorder} p-3 space-y-2 select-none hover:border-[var(--border-strong)] hover:border-l-2 transition-colors cursor-grab active:cursor-grabbing`}
+      className={`group relative bg-[var(--surface-raised)] rounded-lg border border-[var(--border-subtle)] border-l-2 ${priorityBorder} p-3 space-y-2 select-none hover:border-[var(--border-strong)] hover:border-l-2 transition-all`}
       onContextMenu={(e) => {
         e.preventDefault();
         onContextMenu(e.clientX, e.clientY, task);

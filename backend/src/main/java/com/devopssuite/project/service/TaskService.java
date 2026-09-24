@@ -251,53 +251,6 @@ public class TaskService {
         return dupResponse;
     }
 
-    @Transactional
-    public void reorderTasks(UUID projectId, UUID boardId, List<ReorderTaskItem> taskUpdates, UUID userId) {
-        projectService.checkPermission(projectId, userId, "ADMIN", "OWNER", "MEMBER");
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ResourceNotFoundException("Board not found"));
-        if (!board.getProjectId().equals(projectId)) {
-            throw new ResourceNotFoundException("Board not found in project");
-        }
-
-        for (ReorderTaskItem item : taskUpdates) {
-            Task task = taskRepository.findById(item.getId()).orElse(null);
-            if (task != null) {
-                UUID taskProjectId = projectService.getProjectIdForColumn(task.getColumnId());
-                UUID targetProjectId = projectService.getProjectIdForColumn(item.getColumnId());
-                if (!taskProjectId.equals(projectId) || !targetProjectId.equals(projectId)) {
-                    throw new ForbiddenException("Task reorder contains resources outside this project");
-                }
-                Column targetColumn = columnRepository.findById(item.getColumnId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Column not found"));
-                enforceWipLimit(targetColumn, taskRepository.findByColumnIdOrderBySortOrderAsc(item.getColumnId()), task.getId());
-                
-                String oldStatus = task.getStatus();
-                String newStatus = normalizeStatus(null, targetColumn);
-                boolean statusChanged = oldStatus != null && !oldStatus.equals(newStatus);
-
-                task.setColumnId(item.getColumnId());
-                task.setSortOrder(item.getSortOrder());
-                task.setStatus(newStatus);
-
-                Task saved = taskRepository.save(task);
-                if (statusChanged) {
-                    Map<String, Object> extra = new LinkedHashMap<>();
-                    extra.put("previous_status", oldStatus);
-                    writeAudit(saved, userId, "STATUS_CHANGED", extra);
-                }
-
-                // Notify when dragged to the Done column
-                if ("DONE".equals(newStatus) && !"DONE".equals(oldStatus)) {
-                    UUID notifyId = saved.getAssigneeId() != null ? saved.getAssigneeId() : userId;
-                    eventPublisher.publishEvent(new TaskCompletedEvent(
-                            saved.getId(), projectId, saved.getTitle(), notifyId));
-                }
-
-                broadcastTaskUpdate("MOVED", mapToTaskResponse(saved), projectId);
-            }
-        }
-    }
 
     @Transactional(readOnly = true)
     public List<TaskResponse> getTasksByProject(UUID projectId, UUID userId) {

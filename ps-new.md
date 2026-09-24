@@ -103,7 +103,7 @@ The original blueprint called for microservices (Auth Service, API Gateway, Code
 | Layer | Technology |
 |---|---|
 | Backend | Java 21, Spring Boot 3.x, Spring Security, Spring Data JPA, Flyway |
-| Frontend | React 18, Vite, Tailwind CSS, Monaco Editor, react-beautiful-dnd, Recharts |
+| Frontend | React 18, Vite, Tailwind CSS, Monaco Editor, Recharts |
 | Database | PostgreSQL (single DB: `devopssuite`) |
 | Cache / rate limit | Redis 7 |
 | Logs | Elasticsearch + Kibana |

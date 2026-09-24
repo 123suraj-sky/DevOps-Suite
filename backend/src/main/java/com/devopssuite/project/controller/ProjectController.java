@@ -200,15 +200,5 @@ public class ProjectController {
                 .build());
     }
 
-    @PutMapping("/{projectId}/boards/{boardId}/tasks/reorder")
-    public ResponseEntity<ApiResponse<Void>> reorderTasks(
-            @PathVariable("projectId") UUID projectId,
-            @PathVariable("boardId") UUID boardId,
-            @Valid @RequestBody ReorderTasksRequest request) {
-        UUID userId = getCurrentUserId();
-        taskService.reorderTasks(projectId, boardId, request.getTasks(), userId);
-        return ResponseEntity.ok(ApiResponse.<Void>builder()
-                .message("Tasks reordered successfully")
-                .build());
-    }
+
 }

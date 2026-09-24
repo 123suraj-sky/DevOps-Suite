@@ -97,8 +97,7 @@
   - **Option F** — `TaskUpdateDto` + `SimpMessagingTemplate` in `TaskService`; broadcasts CREATED/UPDATED/STATUS_CHANGED/MOVED/DELETED to `/topic/tasks/{projectId}`; `TasksPage` applies granular diffs without re-fetch
   - **Option G** — `V14` Flyway migration (`notification_preferences` table); full preference entity/repository/service/controller; `NotificationService.createNotification` and email sends gated by user preference; profile page preference toggle grid (in-app × email per type)
 
----
-
+- [x] **Task Board Drag and Drop** ~~— Added full drag-and-drop capability using `@hello-pangea/dnd`~~ — **Removed.** Tasks are moved between columns via the context menu or edit modal.
 - [ ] Multi-stage Docker build for production frontend (Nginx)
 - [x] **Add more code execution languages (Java, C++)** — Added and verified full sandboxed execution support for Java 21 and C++ (g++ 15) alongside Python and JavaScript.
 - [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)

@@ -87,7 +87,7 @@ The system provides authenticated users the ability to: write and run code in a 
 - FR-32: Send code to Code Execution endpoints and display results inline.
 
 ### 8.3 Kanban Board
-- FR-33: Kanban board with drag-and-drop using react-beautiful-dnd.
+- FR-33: Kanban board with columns: Backlog, To Do, In Progress, Done.
 - FR-34: Create edit delete tasks within board columns.
 - FR-35: Assign tasks to users and filter by assignee.
 

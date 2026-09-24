@@ -4,7 +4,6 @@ import com.devopssuite.auth.repository.UserRepository;
 import com.devopssuite.metrics.AppMetrics;
 import com.devopssuite.project.repository.TaskAuditHistoryRepository;
 import com.devopssuite.project.dto.ProjectDto.TaskRequest;
-import com.devopssuite.project.dto.ProjectDto.ReorderTaskItem;
 import com.devopssuite.project.model.Board;
 import com.devopssuite.project.model.Column;
 import com.devopssuite.project.model.Task;
@@ -144,32 +143,5 @@ class TaskServiceTest {
                 .hasMessageContaining("WIP limit");
     }
 
-    @Test
-    void reorderTasksNormalizesToDoColumnToTodoStatus() {
-        UUID projectId = UUID.randomUUID();
-        UUID boardId = UUID.randomUUID();
-        UUID taskId = UUID.randomUUID();
-        UUID sourceColumnId = UUID.randomUUID();
-        UUID targetColumnId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
 
-        Board board = Board.builder().id(boardId).projectId(projectId).name("Main").build();
-        Column sourceColumn = Column.builder().id(sourceColumnId).boardId(boardId).name("Backlog").build();
-        Column targetColumn = Column.builder().id(targetColumnId).boardId(boardId).name("To Do").build();
-        Task task = Task.builder().id(taskId).columnId(sourceColumnId).title("Move me").status("BACKLOG").build();
-
-        when(boardRepository.findById(boardId)).thenReturn(Optional.of(board));
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(projectService.getProjectIdForColumn(sourceColumnId)).thenReturn(projectId);
-        when(projectService.getProjectIdForColumn(targetColumnId)).thenReturn(projectId);
-        when(columnRepository.findById(targetColumnId)).thenReturn(Optional.of(targetColumn));
-        when(taskRepository.findByColumnIdOrderBySortOrderAsc(targetColumnId)).thenReturn(List.of());
-        when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        taskService.reorderTasks(projectId, boardId, List.of(new ReorderTaskItem(taskId, targetColumnId, 0)), userId);
-
-        assertThat(task.getColumnId()).isEqualTo(targetColumnId);
-        assertThat(task.getSortOrder()).isZero();
-        assertThat(task.getStatus()).isEqualTo("TODO");
-    }
 }

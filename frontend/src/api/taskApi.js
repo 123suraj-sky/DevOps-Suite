@@ -35,7 +35,4 @@ export const taskApi = {
     return response.data.data;
   },
 
-  reorder: async (projectId, boardId, tasks) => {
-    await apiClient.put(`/projects/${projectId}/boards/${boardId}/tasks/reorder`, { tasks });
-  },
 };

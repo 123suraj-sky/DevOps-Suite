@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { taskApi }    from '../../api/taskApi';
@@ -9,7 +9,6 @@ import { Button }     from '../../components/common/Button';
 import { Modal }      from '../../components/common/Modal';
 import { Input }      from '../../components/common/Input';
 import { Select }     from '../../components/common/Select';
-import { Spinner }    from '../../components/common/Spinner';
 import { Skeleton }   from '../../components/common/Skeleton';
 import { TaskCard }   from './TaskCard';
 import { TaskContextMenu }  from './TaskContextMenu';
@@ -69,7 +68,7 @@ const KanbanColumn = ({
     </div>
 
     {/* Task list */}
-    <div className="flex-1 space-y-2 px-3 pb-3 min-h-[48px]">
+    <div className="flex-1 space-y-2 px-3 pb-3 min-h-[64px] rounded-b-lg">
       {columnTasks.map((task) => (
         <TaskCard
           key={String(task.id)}
