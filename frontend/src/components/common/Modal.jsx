@@ -1,4 +1,5 @@
 import { useEffect, useRef, useId } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Accessible modal dialog.
@@ -72,9 +73,9 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4"
+      className="fixed inset-0 z-[200] grid place-items-center p-4"
       role="presentation"
     >
       {/* Backdrop */}
@@ -121,7 +122,8 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

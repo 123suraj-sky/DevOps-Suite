@@ -349,6 +349,21 @@ export const TasksPage = () => {
       .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
   };
 
+  // ── Priority indicator dot — maps priority value → Tailwind bg color class
+  const PRIORITY_INDICATOR = {
+    LOW:    'bg-[var(--status-neutral)]',
+    MEDIUM: 'bg-amber-400',
+    HIGH:   'bg-[var(--status-danger)]',
+  };
+
+  // ── Status indicator dot — maps status value → color class
+  const STATUS_INDICATOR = {
+    BACKLOG:     'bg-[var(--status-neutral)]',
+    TODO:        'bg-[var(--status-neutral)]',
+    IN_PROGRESS: 'bg-amber-400',
+    DONE:        'bg-[var(--status-success)]',
+  };
+
   // ── Shared form fields ────────────────────────────────────────────────────
   const TaskFormFields = ({ data, setData, showStatus = false }) => (
     <div className="space-y-4">
@@ -356,16 +371,33 @@ export const TasksPage = () => {
       <Input label="Description" value={data.description} onChange={(e) => setData((p) => ({ ...p, description: e.target.value }))} />
       <div className="grid grid-cols-2 gap-3">
         {showStatus && (
-          <Select label="Status" value={data.status} onChange={(e) => setData((p) => ({ ...p, status: e.target.value }))}>
+          <Select
+            label="Status"
+            value={data.status}
+            onChange={(e) => setData((p) => ({ ...p, status: e.target.value }))}
+            indicator={STATUS_INDICATOR[data.status]}
+            colorScheme="dark"
+          >
             {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.title}</option>)}
           </Select>
         )}
-        <Select label="Priority" value={data.priority} onChange={(e) => setData((p) => ({ ...p, priority: e.target.value }))}>
+        <Select
+          label="Priority"
+          value={data.priority}
+          onChange={(e) => setData((p) => ({ ...p, priority: e.target.value }))}
+          indicator={PRIORITY_INDICATOR[data.priority]}
+          colorScheme="dark"
+        >
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
           <option value="HIGH">High</option>
         </Select>
-        <Select label="Assignee" value={data.assigneeId} onChange={(e) => setData((p) => ({ ...p, assigneeId: e.target.value }))}>
+        <Select
+          label="Assignee"
+          value={data.assigneeId}
+          onChange={(e) => setData((p) => ({ ...p, assigneeId: e.target.value }))}
+          colorScheme="dark"
+        >
           <option value="">Unassigned</option>
           {assignableMembers.map((m) => (
             <option key={m.userId} value={m.userId}>{m.displayName || m.email} ({m.role})</option>

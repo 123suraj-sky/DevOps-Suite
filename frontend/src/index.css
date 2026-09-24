@@ -163,6 +163,47 @@ iframe,
   box-shadow: 0 0 0 2px var(--surface-base), 0 0 0 4px var(--accent);
 }
 
+/* ── Native form control theming ───────────────────────────────────────────── */
+/*
+ * <select> option panel:
+ *   Firefox supports background/color on <option>. Chrome/Safari do not —
+ *   they use the OS picker which already respects color-scheme:dark (set on
+ *   html.dark above). This block makes Firefox match the dark token surface.
+ */
+html.dark select option {
+  background-color: var(--surface-overlay);
+  color: var(--text-primary);
+}
+
+html.dark select option:checked,
+html.dark select option:hover {
+  background-color: var(--surface-raised);
+}
+
+/*
+ * <input type="date"> calendar-picker icon:
+ *   The picker chrome follows color-scheme, already set on html.dark.
+ *   This declaration reinforces it on the element itself so browsers that
+ *   don't fully inherit from <html> still render the icon correctly.
+ */
+html.dark input[type="date"],
+html.dark input[type="time"],
+html.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* Light mode equivalents for completeness */
+html:not(.dark) select option {
+  background-color: var(--surface-overlay);
+  color: var(--text-primary);
+}
+
+html:not(.dark) input[type="date"],
+html:not(.dark) input[type="time"],
+html:not(.dark) input[type="datetime-local"] {
+  color-scheme: light;
+}
+
 /* ── Reduced motion ────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .page-enter,
