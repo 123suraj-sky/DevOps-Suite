@@ -85,6 +85,65 @@ const KanbanColumn = ({
   </div>
 );
 
+// ── Priority indicator dot — maps priority value → Tailwind bg color class
+const PRIORITY_INDICATOR = {
+  LOW:    'bg-[var(--status-neutral)]',
+  MEDIUM: 'bg-amber-400',
+  HIGH:   'bg-[var(--status-danger)]',
+};
+
+// ── Status indicator dot — maps status value → color class
+const STATUS_INDICATOR = {
+  BACKLOG:     'bg-[var(--status-neutral)]',
+  TODO:        'bg-[var(--status-neutral)]',
+  IN_PROGRESS: 'bg-amber-400',
+  DONE:        'bg-[var(--status-success)]',
+};
+
+// ── TaskFormFields — defined at module scope so its identity is stable across
+// re-renders of TasksPage. Defining it inside the parent component causes React
+// to see a NEW component type on every render (because the const is recreated),
+// which unmounts + remounts the subtree and drops focus after every keystroke.
+const TaskFormFields = ({ data, setData, showStatus = false, members = [] }) => (
+  <div className="space-y-4">
+    <Input label="Title" value={data.title} onChange={(e) => setData((p) => ({ ...p, title: e.target.value }))} required />
+    <Input label="Description" value={data.description} onChange={(e) => setData((p) => ({ ...p, description: e.target.value }))} />
+    <div className="grid grid-cols-2 gap-3">
+      {showStatus && (
+        <Select
+          label="Status"
+          value={data.status}
+          onChange={(e) => setData((p) => ({ ...p, status: e.target.value }))}
+          indicator={STATUS_INDICATOR[data.status]}
+        >
+          {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.title}</option>)}
+        </Select>
+      )}
+      <Select
+        label="Priority"
+        value={data.priority}
+        onChange={(e) => setData((p) => ({ ...p, priority: e.target.value }))}
+        indicator={PRIORITY_INDICATOR[data.priority]}
+      >
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+      </Select>
+      <Select
+        label="Assignee"
+        value={data.assigneeId}
+        onChange={(e) => setData((p) => ({ ...p, assigneeId: e.target.value }))}
+      >
+        <option value="">Unassigned</option>
+        {members.map((m) => (
+          <option key={m.userId} value={m.userId}>{m.displayName || m.email} ({m.role})</option>
+        ))}
+      </Select>
+    </div>
+    <Input label="Due Date (optional)" type="date" value={data.dueDate} onChange={(e) => setData((p) => ({ ...p, dueDate: e.target.value }))} />
+  </div>
+);
+
 export const TasksPage = () => {
   const { id: projectId }       = useParams();
   const { project }             = useOutletContext();
@@ -349,65 +408,6 @@ export const TasksPage = () => {
       .sort((a, b) => (a.sort_order ?? a.sortOrder ?? 0) - (b.sort_order ?? b.sortOrder ?? 0));
   };
 
-  // ── Priority indicator dot — maps priority value → Tailwind bg color class
-  const PRIORITY_INDICATOR = {
-    LOW:    'bg-[var(--status-neutral)]',
-    MEDIUM: 'bg-amber-400',
-    HIGH:   'bg-[var(--status-danger)]',
-  };
-
-  // ── Status indicator dot — maps status value → color class
-  const STATUS_INDICATOR = {
-    BACKLOG:     'bg-[var(--status-neutral)]',
-    TODO:        'bg-[var(--status-neutral)]',
-    IN_PROGRESS: 'bg-amber-400',
-    DONE:        'bg-[var(--status-success)]',
-  };
-
-  // ── Shared form fields ────────────────────────────────────────────────────
-  const TaskFormFields = ({ data, setData, showStatus = false }) => (
-    <div className="space-y-4">
-      <Input label="Title" value={data.title} onChange={(e) => setData((p) => ({ ...p, title: e.target.value }))} required />
-      <Input label="Description" value={data.description} onChange={(e) => setData((p) => ({ ...p, description: e.target.value }))} />
-      <div className="grid grid-cols-2 gap-3">
-        {showStatus && (
-          <Select
-            label="Status"
-            value={data.status}
-            onChange={(e) => setData((p) => ({ ...p, status: e.target.value }))}
-            indicator={STATUS_INDICATOR[data.status]}
-            colorScheme="dark"
-          >
-            {COLUMNS.map((col) => <option key={col.id} value={col.id}>{col.title}</option>)}
-          </Select>
-        )}
-        <Select
-          label="Priority"
-          value={data.priority}
-          onChange={(e) => setData((p) => ({ ...p, priority: e.target.value }))}
-          indicator={PRIORITY_INDICATOR[data.priority]}
-          colorScheme="dark"
-        >
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-        </Select>
-        <Select
-          label="Assignee"
-          value={data.assigneeId}
-          onChange={(e) => setData((p) => ({ ...p, assigneeId: e.target.value }))}
-          colorScheme="dark"
-        >
-          <option value="">Unassigned</option>
-          {assignableMembers.map((m) => (
-            <option key={m.userId} value={m.userId}>{m.displayName || m.email} ({m.role})</option>
-          ))}
-        </Select>
-      </div>
-      <Input label="Due Date (optional)" type="date" value={data.dueDate} onChange={(e) => setData((p) => ({ ...p, dueDate: e.target.value }))} />
-    </div>
-  );
-
   // ── Column shared props ──────────────────────────────────────────────────
   const colCallbacks = {
     isAdminOrOwner,
@@ -508,7 +508,7 @@ export const TasksPage = () => {
         title={`Add Task — ${COLUMNS.find((c) => c.id === selectedColumn)?.title ?? selectedColumn}`}
       >
         <form onSubmit={handleAddTask} className="space-y-4">
-          <TaskFormFields data={taskData} setData={setTaskData} />
+          <TaskFormFields data={taskData} setData={setTaskData} members={assignableMembers} />
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="ghost" type="button" onClick={() => { setShowAddModal(false); setTaskData(EMPTY_TASK); }}>Cancel</Button>
             <Button type="submit" loading={saving}>Add Task</Button>
@@ -519,7 +519,7 @@ export const TasksPage = () => {
       {/* Edit task modal */}
       <Modal isOpen={!!editingTask} onClose={() => setEditingTask(null)} title="Edit Task">
         <form onSubmit={handleUpdateTask} className="space-y-4">
-          <TaskFormFields data={editTaskData} setData={setEditTaskData} showStatus />
+          <TaskFormFields data={editTaskData} setData={setEditTaskData} showStatus members={assignableMembers} />
           <div className="flex justify-end gap-2 pt-1">
             <Button variant="ghost" type="button" onClick={() => setEditingTask(null)}>Cancel</Button>
             <Button type="submit" loading={updating}>Save Changes</Button>
