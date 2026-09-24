@@ -259,8 +259,12 @@ public class AuthService {
                             });
                 });
 
-        // 5. Update last login timestamp and issue app JWT pair
+        // 5. Update last login timestamp, refresh avatar URL, and issue app JWT pair
         user.setLastLoginAt(Instant.now());
+        // Always refresh the Google avatar URL so stale CDN links don't cause broken images
+        if (pictureUrl != null && !pictureUrl.isBlank()) {
+            user.setAvatarUrl(pictureUrl);
+        }
         userRepository.save(user);
 
         String accessToken  = jwtUtils.generateAccessToken(user);

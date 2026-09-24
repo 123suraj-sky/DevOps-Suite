@@ -50,17 +50,18 @@ const methodColor = (method) => {
 
 // ── User avatar renderer ───────────────────────────────────────────────────────
 const UserAvatar = ({ user, size = 'md' }) => {
+  const [imgError, setImgError] = useState(false);
   const cls = size === 'lg' ? 'w-11 h-11 text-base' : 'w-9 h-9 text-sm';
   const initial = (user?.displayName || user?.email || 'U').charAt(0).toUpperCase();
   const genderAvatar = getDefaultAvatar(user?.gender);
 
-  if (user?.avatarUrl) {
+  if (user?.avatarUrl && !imgError) {
     return (
       <img
         src={user.avatarUrl}
         alt={user.displayName || 'User'}
         className={`${cls} rounded-full object-cover border border-[var(--border-subtle)] shrink-0`}
-        onError={(e) => { e.target.onerror = null; e.target.src = genderAvatar || ''; }}
+        onError={() => setImgError(true)}
       />
     );
   }
