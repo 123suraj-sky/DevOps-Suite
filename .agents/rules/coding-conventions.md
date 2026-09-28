@@ -8,8 +8,8 @@
 ## ☕ Java / Spring Boot (Backend)
 
 ### Package & Naming
-- **Base package:** `com.devopssuite.monolith`
-- **Sub-packages per domain:** `auth`, `project`, `execution`, `logging`, `metrics`, `notification`, `security`, `config`
+- **Base package:** `com.devopssuite`
+- **Sub-packages per domain:** `auth`, `project`, `execution`, `ide`, `logging`, `metrics`, `notification`, `security`, `config`
 - **Class naming:**
   - Controllers: `{Domain}Controller` (e.g., `ProjectController`)
   - Services: `{Domain}Service` (e.g., `ProjectService`)
@@ -50,9 +50,9 @@
 
 ### Security
 - All secrets via `@Value("${property}")` from environment — never hardcoded
-- Security config lives in `com.devopssuite.monolith.security.SecurityConfig`
-- JWT utility in `com.devopssuite.monolith.security.JwtUtil`
-- Filter in `com.devopssuite.monolith.security.JwtRequestFilter`
+- Security config lives in `com.devopssuite.security.SecurityConfig`
+- JWT utility in `com.devopssuite.security.JwtUtils`
+- Filter in `com.devopssuite.security.JwtRequestFilter`
 
 ---
 
@@ -132,7 +132,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/) format:
 | `test` | Adding/updating tests |
 | `chore` | Build, CI, dependency updates |
 
-**Scopes:** `auth`, `project`, `execution`, `logging`, `metrics`, `notification`, `frontend`, `infra`, `ci`
+**Scopes:** `auth`, `project`, `execution`, `ide`, `logging`, `metrics`, `notification`, `frontend`, `infra`, `ci`
 
 **Examples:**
 ```

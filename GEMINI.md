@@ -34,9 +34,11 @@
 ### Running Commands
 - **Backend (compiles + runs in Docker):** `docker-compose up -d postgres redis backend`
 - **Backend rebuild after code change:** `docker-compose up -d --build backend`
-- **Frontend install + run (local):** `cd frontend && npm install && npm run dev`
-- **Full stack (all services):** `docker-compose up -d`
+- **Full stack (all services including frontend nginx, Grafana, Kibana):** `docker-compose up -d`
+- **Frontend install + run (local dev):** `cd frontend && npm install && npm run dev`
 - **Stop everything:** `docker-compose down`
+
+> **Port note:** When running via Docker Compose, the backend is exposed on **port 8082** on the host (mapped from internal 8081). Set `VITE_API_URL=http://localhost:8082` when running the frontend locally against the Dockerized backend. The frontend nginx container serves on port 80.
 
 ### When to Use Subagents
 - Use `research` subagent for broad codebase surveys (e.g., "find all places where X is used")

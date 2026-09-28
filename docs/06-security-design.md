@@ -1,7 +1,15 @@
 # Security Design - DevOps Suite
 
 ## 1. Overview
+
 Multi-layer security: transport, authentication, authorization, input validation, and runtime sandboxing are managed within the monolithic Spring Boot application.
+
+Supported authentication methods:
+- **Local credentials** — email + BCrypt-hashed password
+- **Google OAuth2** — via Spring OAuth2 Resource Server
+- **GitHub OAuth2** — OAuth2 social login, handled by `GitHubCallbackPage` on the frontend with token exchange via backend
+
+All authenticated sessions use **JWT tokens** (access: 1h, refresh: 7d). Tokens are blacklisted on logout via Redis.
 
 ---
 
@@ -88,7 +96,9 @@ flowchart TD
 
 ---
 
-## 6. API Security - Rate Limiting
+## 6. API Security — Rate Limiting
+
+Redis sliding-window rate limiting is implemented in `RateLimitFilter`. Returns `429 Too Many Requests` when exceeded.
 
 ```mermaid
 flowchart TD
@@ -98,6 +108,16 @@ flowchart TD
     C --> E[Increment counter in Redis]
     E --> F[Return response]
 ```
+
+### Default Limits (per 60-second sliding window)
+
+| Scope | Env Variable | Default |
+|---|---|---|
+| Code execution endpoints | `RATE_LIMIT_EXECUTION_MAX` | 10 requests |
+| Auth endpoints (login/register) | `RATE_LIMIT_AUTH_MAX` | 20 requests |
+| General API | `RATE_LIMIT_API_MAX` | 300 requests |
+
+All limits are configurable via `.env` / environment variables.
 
 ---
 
@@ -130,8 +150,20 @@ flowchart TD
 ---
 
 ## 8. Secrets Management
-- All secrets are loaded from environment variables (e.g. `JWT_SECRET`, `DB_PASSWORD`, `GOOGLE_CLIENT_ID`).
-- Safe fallback defaults are configured for development.
+
+All secrets are loaded from environment variables via the `.env` file. Never hardcoded in source.
+
+| Variable | Purpose |
+|---|---|
+| `JWT_SECRET` | JWT signing key (HS256) |
+| `DB_PASSWORD` | PostgreSQL password |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth2 |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub OAuth2 |
+| `ADMIN_PASSWORD` | nginx Basic Auth for Grafana/Kibana |
+| `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD` | SMTP for email notifications |
+| `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` | Default admin account seeded on startup |
+
+> [!CAUTION] `ADMIN_SEED_EMAIL`/`ADMIN_SEED_PASSWORD` default to `admin@admin.com`/`admin` for dev. **Always override in production** before deploying.
 
 ---
 
@@ -173,3 +205,34 @@ Two route guard components are used:
 The "Metrics" item in the `Sidebar` is conditionally rendered only when `isAdmin === true`, so non-admin users never see the link — the route guard is a defence-in-depth measure, not the primary UI gate.
 
 `DashboardPage` internally checks `isAdmin` and renders either `<AdminDashboard />` or `<UserDashboard />` — no separate route is needed.
+
+---
+
+## 12. WebSocket Authentication
+
+WebSocket connections (STOMP over SockJS) are authenticated via JWT on the CONNECT frame.
+
+**Flow:**
+1. Frontend sends STOMP CONNECT with `Authorization: Bearer <token>` in headers
+2. `StompAuthChannelInterceptor` (in `com.devopssuite.notification.security`) intercepts every STOMP CONNECT command
+3. JWT is validated for signature validity + Redis blacklist check
+4. If invalid → connection is rejected with a STOMP ERROR frame
+5. If valid → security context is set for the WebSocket session
+
+**Topics and required auth:**
+| Topic | Auth Required |
+|---|---|
+| `/topic/notifications/{userId}` | Authenticated user |
+| `/topic/tasks/{projectId}` | Authenticated project member |
+| `/topic/logs/{projectId}` | Authenticated project member |
+
+---
+
+## 13. Password Reset Security
+
+The forgot-password / reset-password flow uses time-limited tokens:
+1. `POST /api/auth/forgot-password` — generates a UUID token, stores in `password_reset_tokens` table with 24h expiry, sends email link
+2. `POST /api/auth/reset-password` — validates token not expired and not used, updates password hash, marks token as used
+3. Old tokens are never reusable — `used = true` is set immediately on consumption
+
+Email links contain the token in the URL: `{FRONTEND_URL}/reset-password?token={uuid}`

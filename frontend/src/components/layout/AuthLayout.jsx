@@ -1,4 +1,15 @@
 import logoIcon from '../../assets/42_logo.svg';
+import lightningIcon from '../../assets/12_lightning.svg';
+import kanbanIcon from '../../assets/48_kanban.svg';
+import streamIcon from '../../assets/49_stream.svg';
+import metricsIcon from '../../assets/10_metrics.svg';
+
+const FEATURES = [
+  { icon: lightningIcon, alt: 'Execution', label: 'Sandboxed code execution' },
+  { icon: kanbanIcon,   alt: 'Kanban',    label: 'Kanban project management' },
+  { icon: streamIcon,   alt: 'Streaming', label: 'Real-time log streaming' },
+  { icon: metricsIcon,  alt: 'Metrics',   label: 'System metrics & observability' },
+];
 
 /**
  * Split-screen auth layout.
@@ -28,18 +39,13 @@ export const AuthLayout = ({ children }) => (
       </div>
 
       {/* Feature list — hidden on mobile, shown on lg+ */}
-      <ul className="hidden lg:flex flex-col gap-3 w-full max-w-xs">
-        {[
-          { icon: '⚡', label: 'Sandboxed code execution' },
-          { icon: '📋', label: 'Kanban project management' },
-          { icon: '📡', label: 'Real-time log streaming' },
-          { icon: '📊', label: 'System metrics & observability' },
-        ].map(({ icon, label }) => (
+      <ul className="hidden lg:flex flex-col gap-3 w-full max-w-[220px]">
+        {FEATURES.map(({ icon, alt, label }) => (
           <li key={label} className="flex items-center gap-3 text-sm text-gray-400">
-            <span className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-base shrink-0" aria-hidden="true">
-              {icon}
+            <span className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
+              <img src={icon} alt={alt} className="w-4 h-4" style={{ filter: 'brightness(0) invert(0.6)' }} />
             </span>
-            {label}
+            <span className="flex-1" style={{ textAlign: 'justify', textAlignLast: 'justify' }}>{label}</span>
           </li>
         ))}
       </ul>

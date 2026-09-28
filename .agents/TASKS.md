@@ -6,121 +6,104 @@
 
 ---
 
-## 🟢 Project Status: COMPLETED (as of 2026-08-22)
-> All development is complete. The project is in the **manual testing & bug fixing** phase only.
+## 🟢 Project Status: COMPLETED (as of 2026-09-24)
+
+> All development is complete. The project is fully implemented and functional.
 > Do NOT start new feature work unless explicitly instructed.
+> Only maintenance, hardening, and optional enhancements remain.
 
 ---
 
 ## 🔴 In Progress
 
-- **Manual Testing & Bug Fixing** — All features are implemented. Only manual QA and bug fixes are active.
+*None.* All features are implemented.
 
 ---
 
-## 🟡 Backlog — High Priority
+## 🟡 Backlog — Remaining Improvements
 
 ### Backend
 
 - [ ] **Replace hardcoded admin seed credentials**
-  - `DataSeeder.java` (`com.devopssuite.config`) currently creates a default admin user with
-    `email=admin` / `password=admin` on every startup if the account does not exist.
-  - This is **DEV-ONLY**. Before any production deployment, replace with one of:
+  - `DataSeeder.java` (`com.devopssuite.config`) creates a default admin user with
+    `email=admin` / `password=admin` on startup if the account does not exist.
+  - This is **DEV-ONLY**. Before any production deployment, replace with:
     - Environment-variable-driven credentials (`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`)
-    - A one-time setup endpoint that is disabled after first use
-    - An external identity provider / LDAP / SSO
+    - Or a one-time setup endpoint disabled after first use
   - File to update: `backend/src/main/java/com/devopssuite/config/DataSeeder.java`
 
-- [x] **Complete Code Execution Sandbox**
-  - All phases implemented: Docker path fix, DinD bind-mount, API alignment, terminal statuses, history endpoint, frontend, unit tests
-  - Files: `execution/` package under `com.devopssuite.execution`
-  - **Detailed plan:** [`.agents/tasks/complete-code-execution-sandbox.md`](tasks/complete-code-execution-sandbox.md)
-  - Ref: `docs/05-lld-detailed-design.md` §5
+- [ ] **Migrate PostgreSQL to Neon** *(optional enhancement)*
+  - Replace the self-hosted `postgres:16-alpine` Docker container with a [Neon](https://neon.tech) serverless PostgreSQL instance.
+  - Steps: provision Neon project, update `SPRING_DATASOURCE_URL` in `docker-compose.yml`, add credentials to `.env`, remove the `postgres` service + `postgres_data` volume from Compose.
 
-- [x] **Wire Elasticsearch logging pipeline**
-  - ~~Structured log emission works; Elasticsearch write pipeline not connected~~
-  - **DONE (2026-09-09)**: `ElasticsearchLogService` fully wired. Every HTTP request is indexed to `devopssuite-logs-yyyy.MM.dd`.
-  - **DONE (2026-09-13)**: Kibana auto-provisions data view (`devopssuite-logs-*`), saved searches, and 3 dedicated dashboards for Observability, Security, and Analytics on startup via `kibana-init`.
-  - **DONE (2026-09-14)**: Enriched logging pipeline with industry-standard observability fields: severity levels (`INFO`/`WARN`/`ERROR`), `traceId` correlation (via `X-Trace-Id` / MDC), `clientIp` (`X-Forwarded-For`), `userAgent`, structured exception details (`errorMessage`, `errorClass`), enriched code execution details (`exitCode`, `timedOut`, `oomKilled`, `language`), domain audit events (`AuditLogEventListener`), and updated frontend log terminal.
-  - **DONE (2026-09-14)**: ILM retention policy — Elasticsearch auto-deletes indices older than 180 days (6 months). Policy `devopssuite_logs_retention_policy` + index template `devopssuite_logs_template` provisioned via `config/kibana/init-kibana.sh` at stack startup.
-  - Ref: `docs/09-monitoring-observability.md`
-
-- [x] **WebSocket end-to-end testing**
-  - All WebSocket topics now implemented and wired:
-    - `/topic/notifications/{userId}` — in-app notifications (full pipeline)
-    - `/topic/tasks/{projectId}` — live Kanban board updates
-    - `/topic/logs/{projectId}` — log streaming **now fully wired** (2026-09-13):
-      - `RequestLoggingFilter` now reads `X-Project-Id` header as fallback for task/execution URLs
-      - `ExecutionRequest` entity now stores `project_id`; `ExecutionQueueWorker` publishes `LogEvent` after sandbox completes
-      - `GET /api/logs/search` implemented in `LogController` + `LogSearchService` (Elasticsearch query)
-      - Frontend: axios client injects `X-Project-Id` from current page URL; IDE execute passes `project_id`
-  - Need live integration testing with frontend running against the backend
-
-- [ ] **CI/CD Pipeline — GitHub Actions**
-  - No `.github/workflows/` files exist
-  - Need: build, test, Docker image build + push workflows
-  - Ref: `docs/07-deployment-devops.md`
-
-- [x] **Dockerfile for backend** — Multi-stage build (`maven:3.9-eclipse-temurin-21` → `eclipse-temurin:21-jre-alpine`); backend now compiles and runs inside Docker via `docker-compose up -d --build backend`
+- [ ] **Full integration test with live backend**
+  - Verify all API calls work against the running backend end-to-end.
+  - Focus areas: Auth flow (including Google + GitHub OAuth2), Kanban CRUD, IDE file persistence, Code Execution submit/result/history, WebSocket log streaming, Notification delivery, Admin user management.
 
 ### Frontend
 
-- [ ] **Full integration test with live backend**
-  - Frontend pages are scaffolded; need to verify all API calls work against the running backend
-  - Focus: Auth flow, Kanban CRUD, Code Editor submit/result, WebSocket log streaming
+- [ ] **End-to-end Cypress tests**
+  - `cypress/` directory exists in the repo; tests have not been written yet.
+  - Priority flows: login, register, create project, create task, run code, view notifications.
 
-- [x] **Metrics Dashboard charts**
-  - Connected dashboard, metrics, and health charts/cards to real aggregated Actuator and repository counts via `/api/metrics/dashboard`
+### CI/CD
+
+- [ ] **Complete CI/CD pipeline** *(partially done)*
+  - `.github/workflows/deploy.yml` exists but may need completion / verification.
+  - Need: build, test, Docker image build + push workflows fully verified.
+  - Ref: `docs/07-deployment-devops.md`
 
 ---
 
 ## 🟢 Completed
 
-- [x] **Monolith backend scaffold** — Single Spring Boot app under `com.devopssuite.monolith` compiles successfully
-- [x] **Auth module** — Registration, login, refresh tokens, secure logout (Redis-backed blacklist), validation annotations, complex password rules, and custom exception handler fully implemented.
-- [x] **Project module** — Projects, boards, columns, tasks entities + Flyway migrations + CRUD controllers done
-- [x] **Flyway migration** — Single unified migration file for all domain schemas
-- [x] **Docker Compose infrastructure** — PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, Grafana all configured; network isolation (app + observability); nginx admin-proxy with Basic Auth protecting Grafana (8080) and Kibana (8083); all infra services unexposed from host
-- [x] **Frontend routing & layout** — React Router, ProtectedRoute/PublicRoute, Header, Sidebar, MainLayout done
-- [x] **Frontend state/context** — AuthContext, NotificationContext, WebSocketContext implemented
-- [x] **Frontend API clients** — Axios clients for auth, projects, tasks, execution, logs, metrics
-- [x] **Frontend pages scaffold** — Login, Register, Projects, Kanban, Code Editor, Logs, Metrics pages exist
+- [x] **Monolith backend scaffold** — Single Spring Boot app under `com.devopssuite` compiles successfully
+- [x] **Auth module** — Registration, login, logout (Redis blacklist), refresh tokens, validation, complex password rules, global exception handler
+- [x] **Google OAuth2** — Spring OAuth2 Resource Server integration; `/api/auth/oauth2/callback/google`
+- [x] **GitHub OAuth2** — GitHub authorization code exchange; frontend `GitHubCallbackPage` at `/auth/github/callback`
+- [x] **Password reset flow** — `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` with time-limited token via email link; frontend pages `/forgot-password` and `/reset-password`
+- [x] **Project module** — Projects, boards, columns, tasks entities + Flyway migrations + full CRUD controllers
+- [x] **Kanban board** — Column/task management, status transitions, task reordering; WebSocket real-time updates via `/topic/tasks/{projectId}`; task movement via context menu / edit modal
+- [x] **Code Execution Sandbox** — Ephemeral Docker containers; async queue worker; Python 3.12, Node 24, Java 21, C++ (g++ 15); stdin piping; compilation; resource constraints (1 CPU, 256MB RAM, no-network, 30s timeout); execution history endpoint
+- [x] **Full IDE** — `IDEPage` at `/projects/:id/code` with FileExplorer, EditorTabs, IDEEditor (Monaco), IDEOutputPanel, PreviewPanel; file persistence via `ideFilesApi` (`/api/ide/files`); `FullScreenIDEPage` at `/editor` (standalone no-sidebar)
+- [x] **Flyway migrations** — 16 migrations (V1–V16) covering all domain schemas
+- [x] **Docker Compose infrastructure** — PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, Grafana; network isolation (app + observability networks); all infra ports unexposed from host
+- [x] **Nginx admin proxy** — Grafana proxied at `:8080`, Kibana proxied at `:8083`; both protected by HTTP Basic Auth via nginx
+- [x] **Multi-stage Docker builds** — Frontend: multi-stage Vite build → nginx image (port 80); Backend: `maven:3.9-eclipse-temurin-21` → `eclipse-temurin:21-jre-alpine`
+- [x] **Docker Compose frontend service** — `frontend` nginx service at port 80; two ways to run frontend: Docker (`http://localhost:80`) or local npm dev (`http://localhost:5173`)
+- [x] **Elasticsearch logging pipeline** — `ElasticsearchLogService` indexes every HTTP request to `devopssuite-logs-yyyy.MM.dd`; enriched fields: severity, `traceId` (MDC), `clientIp`, `userAgent`, exception details, code execution metadata, domain audit events
+- [x] **ILM retention policy** — Elasticsearch auto-deletes indices older than 180 days; policy `devopssuite_logs_retention_policy` + index template `devopssuite_logs_template` provisioned at startup
+- [x] **Kibana auto-provisioning** — `kibana-init` container provisions data view (`devopssuite-logs-*`), saved searches, and 3 dashboards: Observability, Security, Analytics
+- [x] **WebSocket real-time** — 3 topics fully wired: `/topic/notifications/{userId}`, `/topic/tasks/{projectId}`, `/topic/logs/{projectId}`
+- [x] **STOMP JWT auth** — `StompAuthChannelInterceptor` validates JWT signature + Redis blacklist on STOMP CONNECT
+- [x] **Rate limiting** — Redis sliding-window rate limiting for Auth, Execution, and general API; configurable via `RATE_LIMIT_EXECUTION_MAX`, `RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_API_MAX` env vars
+- [x] **Notification system (full)** — In-app WebSocket toasts, email HTML templates, 6 notification types (TaskAssigned, TaskCompleted, TaskReassigned, ExecutionFailed, ProjectInvited, MentionedInComment), per-user notification preferences (in-app × email per type), NotificationsPage with tabs + pagination
+- [x] **Notification preferences** — `V14` Flyway migration; full entity/repository/service/controller; profile page preference toggle grid
+- [x] **User profile** — Avatar customization (presets + custom URL + crop modal), user stats, activity heatmap, follow/unfollow, profile view count, notification preferences
+- [x] **Admin panel** — `/admin/users` page (AdminUsersPage); manage users and roles; guarded by `AdminRoute`; backed by `adminApi.js`
+- [x] **Dark / Light theme** — `ThemeContext` + `ThemeProvider` (outermost provider); persisted to localStorage; Tailwind `dark` class strategy
+- [x] **Frontend routing & layout** — React Router, ProtectedRoute/PublicRoute/AdminRoute, Header, Sidebar, MainLayout; all 17 routes implemented
+- [x] **Frontend contexts** — AuthContext, WebSocketContext, NotificationContext, EditorContext, ProjectsContext, ThemeContext
+- [x] **Frontend API clients** — 13 files: authApi, adminApi, client, codeExecutionApi, ideFilesApi, index, logApi, metricsApi, notificationApi, notificationPreferenceApi, projectApi, taskApi, userApi
+- [x] **Metrics in Dashboard** — Admin dashboard embeds Recharts metrics charts (throughput, latency, error rate) + service health panel; no standalone `/metrics` page
+- [x] **GitHub Actions CI/CD** — `.github/workflows/deploy.yml` created
+- [x] **Prometheus + Grafana** — Spring Actuator / Micrometer endpoints; Grafana dashboards configured
 - [x] **Architecture conversion** — Converted from microservices to monolith; removed Kafka, Zookeeper, API Gateway
-- [x] **Agent context files** — AGENTS.md, GEMINI.md, .agents/ directory created
-- [x] **User Profile & Details** — Added User Profile page (`/profile`) with avatar customization (presets and custom URLs), user stats, `PUT/PATCH /api/auth/me` endpoints, and resolved real user names/emails for project members.
-- [x] **Full Notification System (Options A–G)** — Implemented 2026-09-08:
-  - **Option A** — Fixed 4 frontend bugs: wrong WS topic (`/topic/notifications/${userId}`), HTTP method mismatch (PATCH→PUT), unread count parsing (`response.data.count`), empty list on page load
-  - **Option B** — Full `NotificationsPage` with All/Unread tabs, paginated list, per-item mark-as-read + delete; `NotificationItem` component (compact + full modes) with 6 type-specific SVG icons; `Header.jsx` uses compact `NotificationItem` + "See all" link
-  - **Option C** — `EmailNotificationService` with per-type HTML email templates; injected into `NotificationEventListener`; graceful no-op when SMTP unconfigured
-  - **Option D** — `StompAuthChannelInterceptor` validates JWT on STOMP CONNECT (signature + Redis blacklist); registered in `WebSocketConfig`
-  - **Option E** — New event triggers: `TaskReassignedEvent` (assignee change on update), `TaskCompletedEvent` (status→DONE from `updateStatus` and `reorderTasks`), `ExecutionFailedEvent` (FAILED/TIMEOUT/OOM_KILLED in `ExecutionQueueWorker`)
-  - **Option F** — `TaskUpdateDto` + `SimpMessagingTemplate` in `TaskService`; broadcasts CREATED/UPDATED/STATUS_CHANGED/MOVED/DELETED to `/topic/tasks/{projectId}`; `TasksPage` applies granular diffs without re-fetch
-  - **Option G** — `V14` Flyway migration (`notification_preferences` table); full preference entity/repository/service/controller; `NotificationService.createNotification` and email sends gated by user preference; profile page preference toggle grid (in-app × email per type)
-
-- [x] **Task Board Drag and Drop** ~~— Added full drag-and-drop capability using `@hello-pangea/dnd`~~ — **Removed.** Tasks are moved between columns via the context menu or edit modal.
-- [ ] Multi-stage Docker build for production frontend (Nginx)
-- [x] **Add more code execution languages (Java, C++)** — Added and verified full sandboxed execution support for Java 21 and C++ (g++ 15) alongside Python and JavaScript.
-- [ ] End-to-end Cypress tests (`cypress/` directory exists, tests not yet written)
-- [ ] Health page with status of all infrastructure components
-- [x] Notification email delivery — `EmailNotificationService` with per-type HTML templates; gated by user preferences
-- [x] **Full notification system (Options A–G)** — in-app WebSocket, email, STOMP auth, expanded triggers, live Kanban, preferences
-- [ ] **Migrate PostgreSQL to Neon** — Replace the self-hosted `postgres:16-alpine` Docker container with a [Neon](https://neon.tech) serverless PostgreSQL instance. Steps: provision a Neon project, update `SPRING_DATASOURCE_URL` in `docker-compose.yml` with the Neon connection string, add credentials to `.env`, and remove the `postgres` service + `postgres_data` volume from Compose.
-- [ ] **Reset Password flow** — `POST /api/auth/forgot-password` + `POST /api/auth/reset-password` with time-limited token via email link. Requires an email service to be wired first (e.g. Mailtrap for dev, SendGrid for prod). Add `spring-boot-starter-mail` to `pom.xml` and configure SMTP credentials in `.env` before implementing.
-
+- [x] **Agent context files** — AGENTS.md, GEMINI.md, .agents/ directory, MEMORY.md, ARCHITECTURE.md, TASKS.md, coding-conventions.md
 
 ---
 
 ## 📌 Task Notes
 
-> _Append notes about blocked tasks or important context for ongoing work._
-
 | Task | Note |
 |---|---|
+| Admin seed credentials | Default: `email=admin` / `password=admin`. Set `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` before production. |
 | Code Execution Sandbox | Docker Desktop must be running on the host. Test with simple Python `print("hello")` first. |
-| Elasticsearch pipeline | DONE. Kibana index pattern `devopssuite-logs-*` is auto-provisioned by `kibana-init` container. |
+| Elasticsearch pipeline | Kibana index pattern `devopssuite-logs-*` is auto-provisioned by `kibana-init` container on startup. |
 | GitHub Actions | Use Java 21 + Maven in CI. Cache `.m2` directory for faster builds. |
-| Notification email | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` in `.env`. Use Mailtrap for dev. Email is opt-in per user (default off) — users must enable it in Profile → Notification Preferences. |
+| Notification email | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` in `.env`. Use Mailtrap for dev. Email is opt-in per user — enable in Profile → Notification Preferences. |
 | Notification preferences | `NotificationPreferenceService.getEffective()` returns an unsaved default entity — never call `.save()` on it directly. |
 | Admin observability access | Set `ADMIN_PASSWORD` in `.env` before `docker-compose up`. Grafana at http://localhost:8080, Kibana at http://localhost:8083. Both require nginx Basic Auth. |
-| Rate limiting | Limits configurable via `RATE_LIMIT_EXECUTION_MAX`, `RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_API_MAX` env vars. Defaults: 10/20/300 per 60 s window. |
-| Backend port | Host-mapped to 8082 (internal still 8081). Update frontend `.env` `VITE_API_URL` to `http://localhost:8082` when running with Docker Compose. |
+| Rate limiting | Defaults: 10/20/300 per 60s window for Execution/Auth/API. Configurable via env vars. |
+| Backend port | Internal port 8081, host-exposed at **8082** via docker-compose port mapping. Set `VITE_API_URL=http://localhost:8082` in frontend `.env` when running with Docker Compose. |
+| Frontend port | Docker nginx service runs at port **80**. Local dev server runs at **5173**. |
