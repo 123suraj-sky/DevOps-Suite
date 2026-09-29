@@ -1,10 +1,10 @@
-# Configuration Guide
+ï»¿# Configuration Guide
 
 > All configuration for DevOps Suite lives in two places:
-> - **`.env`** — secrets and environment-specific values (never commit this)
-> - **`backend/src/main/resources/application.yml`** — Spring Boot config (reads from `.env`)
+> - **.env** - secrets and environment-specific values (never commit this)
+> - **backend/src/main/resources/application.yml** - Spring Boot config (reads from .env)
 >
-> Use `.env.example` as the template. Copy it to `.env` and fill in your values.
+> Use .env.example as the template. Copy it to .env and fill in your values.
 
 ---
 
@@ -23,13 +23,9 @@ docker-compose up -d postgres redis backend
 
 ---
 
-## `.env` — All Variables
+## .env - All Variables
 
 ### Database (PostgreSQL)
-
-```env
-DB_PASSWORD=password
-```
 
 | Variable | Required | Description |
 |---|---|---|
@@ -41,57 +37,82 @@ DB_PASSWORD=password
 
 ### JWT Authentication
 
-```env
-JWT_SECRET=devops-suite-jwt-secret-key-minimum-256-bits-for-hs256-algorithm
-```
-
 | Variable | Required | Description |
 |---|---|---|
-| `JWT_SECRET` | Yes | HMAC-SHA256 signing key. Must be **at least 32 characters** (256 bits). |
+| `JWT_SECRET` | Yes | HMAC-SHA256 signing key. Must be at least 32 characters (256 bits). Generate with: `openssl rand -hex 32` |
 
-**Generate a strong secret:**
-```bash
-openssl rand -hex 32
-```
-
-> Access tokens expire in **24 hours**, refresh tokens in **7 days**. Configurable in `application.yml` via `jwt.expiration` / `jwt.refresh-expiration`.
+> Access tokens expire in **24 hours**, refresh tokens in **7 days**.
 
 ---
 
 ### Google OAuth2 (Optional)
-
-```env
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-```
 
 | Variable | Required | Description |
 |---|---|---|
 | `GOOGLE_CLIENT_ID` | No | OAuth2 client ID from Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | No | OAuth2 client secret |
 
-**Setup steps:**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials
-2. Create an **OAuth 2.0 Client ID** (Web application)
-3. Add authorized redirect URI: `http://localhost:8081/login/oauth2/code/google`
-4. Copy the Client ID and Secret into `.env`
-
-> Leave both blank to disable Google login entirely.
+Authorized redirect URI to register in Google Cloud Console:
+- Docker: `http://localhost:8082/login/oauth2/code/google`
+- Local dev: `http://localhost:8081/login/oauth2/code/google`
 
 ---
 
-### SMTP — Email (Optional)
+### GitHub OAuth2 (Optional)
+
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_CLIENT_ID` | No | Client ID from GitHub OAuth App |
+| `GITHUB_CLIENT_SECRET` | No | Client secret from GitHub OAuth App |
+
+Set **Authorization callback URL** in GitHub OAuth App to `http://localhost:8082` (Docker).
+
+---
+
+### Admin Proxy Authentication (nginx Basic Auth)
+
+| Variable | Required | Description |
+|---|---|---|
+| `ADMIN_USER` | Yes | HTTP Basic Auth username for the nginx admin proxy |
+| `ADMIN_PASSWORD` | Yes | HTTP Basic Auth password - protects **Grafana** at `:8080` and **Kibana** at `:8083` |
+
+> Grafana and Kibana are **not** directly exposed on ports 3000 / 5601. They are proxied through nginx at ports 8080 and 8083 with this HTTP Basic Auth. **Change before deploying.**
+
+---
+
+### Admin Seed User (DataSeeder)
+
+| Variable | Required | Description |
+|---|---|---|
+| `ADMIN_SEED_EMAIL` | No | Email for the default admin user seeded on first startup |
+| `ADMIN_SEED_PASSWORD` | No | Password for the seeded admin user |
+| `ADMIN_SEED_NAME` | No | Display name for the seeded admin user |
+
+> The `DataSeeder` creates this user with `ROLE_ADMIN` on first start if no admin exists. Used for initial login.
+
+---
+
+### Rate Limiting (Redis Sliding Window)
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `RATE_LIMIT_AUTH_MAX` | No | `20` | Max auth requests (login/register) per user per 60s |
+| `RATE_LIMIT_EXECUTION_MAX` | No | `30` | Max code executions per user per 60s |
+| `RATE_LIMIT_API_MAX` | No | `200` | Max general API requests per user per 60s |
+
+---
+
+### Frontend URL (Password Reset Emails)
+
+| Variable | Required | Description |
+|---|---|---|
+| `FRONTEND_URL` | No | Base URL injected into password reset email links. Use `http://localhost:80` for Docker nginx or `http://localhost:5173` for local dev. |
+
+---
+
+### SMTP - Email (Optional)
 
 > Required only for the **Forgot Password** flow. Leave `MAIL_HOST` blank to disable email.
-> All other features work without SMTP.
-
-```env
-MAIL_HOST=
-MAIL_PORT=587
-MAIL_USERNAME=
-MAIL_PASSWORD=
-MAIL_FROM=noreply@devopssuite.local
-```
 
 | Variable | Required | Description |
 |---|---|---|
@@ -101,60 +122,32 @@ MAIL_FROM=noreply@devopssuite.local
 | `MAIL_PASSWORD` | No | SMTP login password |
 | `MAIL_FROM` | No | The `From:` address shown in sent emails |
 
-#### Dev — Mailtrap (recommended for local testing)
-1. Sign up at [mailtrap.io](https://mailtrap.io) — free tier available
-2. Go to **Email Testing > Inboxes > SMTP Settings**
-3. Fill in `.env`:
-```env
-MAIL_HOST=smtp.mailtrap.io
-MAIL_PORT=2525
-MAIL_USERNAME=<your-mailtrap-username>
-MAIL_PASSWORD=<your-mailtrap-password>
-MAIL_FROM=noreply@devopssuite.local
-```
-
-#### Production — Gmail App Password
-1. Enable 2FA on your Google account
-2. Go to [Google App Passwords](https://myaccount.google.com/apppasswords) and generate one
-3. Fill in `.env`:
-```env
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=you@gmail.com
-MAIL_PASSWORD=<16-char-app-password>
-MAIL_FROM=you@gmail.com
-```
-
-#### Production — SendGrid
-```env
-MAIL_HOST=smtp.sendgrid.net
-MAIL_PORT=587
-MAIL_USERNAME=apikey
-MAIL_PASSWORD=<your-sendgrid-api-key>
-MAIL_FROM=noreply@yourdomain.com
-```
+For local testing use Mailtrap (free tier). For production use Gmail App Password or SendGrid.
 
 ---
 
 ### Grafana
 
-```env
-GRAFANA_PASSWORD=admin
-```
+| Variable | Required | Description |
+|---|---|---|
+| `GRAFANA_PASSWORD` | No | Internal Grafana admin password. Default: `admin`. |
+
+> Grafana is accessed via `http://localhost:8080` (nginx admin proxy with HTTP Basic Auth). It is **not** exposed directly on port 3000.
+
+---
+
+### Frontend Environment Variables (Vite / frontend/.env)
 
 | Variable | Required | Description |
 |---|---|---|
-| `GRAFANA_PASSWORD` | No | Admin password for Grafana at `http://localhost:3000`. Default: `admin`. |
-
-> Username is always `admin`.
+| `VITE_API_URL` | Yes | Backend base URL used by Axios. `http://localhost:8082` for Docker, `http://localhost:8081` for local native dev. |
+| `VITE_WS_URL` | Yes | WebSocket base URL. `ws://localhost:8082/ws` for Docker, `ws://localhost:8081/ws` for local. |
+| `VITE_GOOGLE_CLIENT_ID` | No | Google OAuth2 Client ID for the Google Sign-In button on the frontend |
+| `VITE_GITHUB_CLIENT_ID` | No | GitHub OAuth App Client ID for the GitHub login button on the frontend |
 
 ---
 
 ### Docker Sandbox
-
-```env
-DOCKER_HOST_TEMP_DIR=
-```
 
 | Variable | Required | Description |
 |---|---|---|
@@ -166,11 +159,6 @@ DOCKER_HOST_TEMP_DIR=
 
 ### Elasticsearch
 
-```env
-ELASTICSEARCH_HOST=elasticsearch
-ELASTICSEARCH_PORT=9200
-```
-
 | Variable | Required | Description |
 |---|---|---|
 | `ELASTICSEARCH_HOST` | No | Hostname of Elasticsearch. Default `elasticsearch` (Docker Compose service name). |
@@ -178,33 +166,31 @@ ELASTICSEARCH_PORT=9200
 
 ---
 
-## `application.yml` Reference
+## application.yml Reference
 
-[`backend/src/main/resources/application.yml`](../backend/src/main/resources/application.yml)
-
-All sensitive values use `${ENV_VAR:default}` syntax — edit `.env`, not this file directly.
+All sensitive values use `\` syntax. Edit `.env`, not this file directly.
 
 | Section | Key | Env Override | Default |
 |---|---|---|---|
 | Datasource password | `spring.datasource.password` | `DB_PASSWORD` | `password` |
-| JWT secret | `jwt.secret` | `JWT_SECRET` | *(weak placeholder)* |
-| JWT access expiry | `jwt.expiration` | — | `86400000` (24 h) |
-| JWT refresh expiry | `jwt.refresh-expiration` | — | `604800000` (7 d) |
-| Mail host | `spring.mail.host` | `MAIL_HOST` | *(blank — disabled)* |
+| JWT secret | `jwt.secret` | `JWT_SECRET` | (weak placeholder) |
+| JWT access expiry | `jwt.expiration` | - | `86400000` (24 h) |
+| JWT refresh expiry | `jwt.refresh-expiration` | - | `604800000` (7 d) |
+| Mail host | `spring.mail.host` | `MAIL_HOST` | (blank - disabled) |
 | Mail port | `spring.mail.port` | `MAIL_PORT` | `587` |
 | Google OAuth client ID | `spring.security.oauth2...client-id` | `GOOGLE_CLIENT_ID` | `dummy-id` |
 | Elasticsearch host | `elasticsearch.host` | `ELASTICSEARCH_HOST` | `localhost` |
-| Actuator endpoints | `management.endpoints.web.exposure.include` | — | `health,info,metrics,prometheus` |
+| Actuator endpoints | `management.endpoints.web.exposure.include` | - | `health,info,metrics,prometheus` |
 
 ---
 
-## After Changing `.env`
+## After Changing .env
 
 ```bash
-# .env change only — restart is enough (no rebuild)
+# .env change only - restart is enough (no rebuild)
 docker-compose restart backend
 
-# Java source or application.yml changed — full rebuild needed
+# Java source or application.yml changed - full rebuild needed
 docker-compose up -d --build backend
 ```
 
@@ -215,15 +201,30 @@ docker-compose up -d --build backend
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `DB_PASSWORD` | Yes | `password` | PostgreSQL password |
-| `JWT_SECRET` | Yes | *(weak placeholder)* | JWT signing key |
-| `GOOGLE_CLIENT_ID` | No | — | Google OAuth2 login |
-| `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth2 login |
-| `MAIL_HOST` | No | *(blank — disabled)* | SMTP server |
+| `JWT_SECRET` | Yes | (weak placeholder) | JWT signing key |
+| `GOOGLE_CLIENT_ID` | No | - | Google OAuth2 backend |
+| `GOOGLE_CLIENT_SECRET` | No | - | Google OAuth2 backend |
+| `GITHUB_CLIENT_ID` | No | - | GitHub OAuth2 backend |
+| `GITHUB_CLIENT_SECRET` | No | - | GitHub OAuth2 backend |
+| `ADMIN_USER` | Yes | `admin` | nginx Basic Auth username (Grafana/Kibana proxy) |
+| `ADMIN_PASSWORD` | Yes | `changeme` | nginx Basic Auth password (Grafana/Kibana proxy) |
+| `ADMIN_SEED_EMAIL` | No | `admin@devopssuite.local` | Seeded admin account email |
+| `ADMIN_SEED_PASSWORD` | No | `Admin1234!` | Seeded admin account password |
+| `ADMIN_SEED_NAME` | No | `Admin` | Seeded admin account display name |
+| `RATE_LIMIT_AUTH_MAX` | No | `20` | Auth rate limit (req/min) |
+| `RATE_LIMIT_EXECUTION_MAX` | No | `30` | Execution rate limit (req/min) |
+| `RATE_LIMIT_API_MAX` | No | `200` | General API rate limit (req/min) |
+| `FRONTEND_URL` | No | `http://localhost:5173` | Password reset link base URL |
+| `MAIL_HOST` | No | (blank) | SMTP server |
 | `MAIL_PORT` | No | `587` | SMTP port |
-| `MAIL_USERNAME` | No | — | SMTP username |
-| `MAIL_PASSWORD` | No | — | SMTP password |
+| `MAIL_USERNAME` | No | - | SMTP username |
+| `MAIL_PASSWORD` | No | - | SMTP password |
 | `MAIL_FROM` | No | `noreply@devopssuite.local` | Email sender address |
-| `GRAFANA_PASSWORD` | No | `admin` | Grafana admin password |
-| `DOCKER_HOST_TEMP_DIR` | No | *(blank)* | Docker sandbox temp dir |
+| `GRAFANA_PASSWORD` | No | `admin` | Grafana internal admin password |
+| `DOCKER_HOST_TEMP_DIR` | No | (blank) | Docker sandbox temp dir |
 | `ELASTICSEARCH_HOST` | No | `elasticsearch` | Elasticsearch hostname |
 | `ELASTICSEARCH_PORT` | No | `9200` | Elasticsearch port |
+| `VITE_API_URL` | Yes (frontend) | `http://localhost:8082` | Frontend -> backend API base URL |
+| `VITE_WS_URL` | Yes (frontend) | `ws://localhost:8082/ws` | Frontend -> backend WebSocket URL |
+| `VITE_GOOGLE_CLIENT_ID` | No | - | Google OAuth frontend client ID |
+| `VITE_GITHUB_CLIENT_ID` | No | - | GitHub OAuth frontend client ID |

@@ -1,4 +1,4 @@
-﻿# DevOps Suite — Project Overview
+# DevOps Suite — Project Overview
 
 > A single document that explains **what this project is**, **how everything connects**, **every API it exposes**, and **how to get started in Postman from zero**.
 
@@ -28,7 +28,7 @@ DevOps Suite is a **full-stack developer productivity platform** that combines f
 | 📈 **Metrics Dashboard** | JVM, memory, and request stats scraped by Prometheus and visualized in Grafana |
 
 **Stack at a glance:**
-- Backend: Spring Boot 3 monolith (Java 21), port `8081`
+- Backend: Spring Boot 3 monolith (Java 21), port `8082` (Docker host) / `8081` (internal)
 - Frontend: React 18 + Vite SPA, port `5173`
 - Auth: JWT (access 1h, refresh 7d) + Redis token blacklist
 - DB: PostgreSQL (single schema, Flyway migrations)
@@ -52,7 +52,7 @@ DevOps Suite is a **full-stack developer productivity platform** that combines f
                                 │ HTTP (REST) + WebSocket
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              Spring Boot Monolith (port 8081)                   │
+│              Spring Boot Monolith (internal: 8081, host: 8082)                 │
 │                                                                 │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │
 │  │   Auth   │  │ Project  │  │Execution │  │Notification  │   │
@@ -137,7 +137,7 @@ AuthService.logout()
 ### 3.4 Code Execution Flow
 
 ```
-POST /api/v1/execute  { language: "python", source_code: "..." }
+POST /api/code-execution/run  { language: "python", source_code: "..." }
       │
 ExecutionController → ExecutionService
   ├── Save ExecutionRequest to DB (status = QUEUED)
@@ -153,7 +153,7 @@ ExecutionController → ExecutionService
       │                      ├── Capture stdout + stderr
       │                      └── Save ExecutionResult to DB (status = COMPLETED/FAILED/TIMEOUT)
       │
-Client polls GET /api/v1/execute/{id} every 1-2 seconds
+Client polls GET /api/code-execution/{id} every 1-2 seconds
   └── Returns result once status is terminal
 ```
 
@@ -224,7 +224,7 @@ React Component calls projectApi.createProject(data)
 Axios request interceptor (client.js)
   └── Attaches "Authorization: Bearer <token>" from localStorage
       │
-POST http://localhost:8081/api/v1/projects
+POST http://localhost:8082/api/v1/projects
       │
 Backend processes, returns response
       │
@@ -252,7 +252,7 @@ User writes Python code in Monaco Editor
 User clicks "Run"
       │
 CodeEditorPage → codeExecutionApi.submitExecution(data)
-  └── POST /api/v1/execute → returns { execution_id, status: "QUEUED" }
+  └── POST /api/code-execution/run → returns { execution_id, status: "QUEUED" }
       │
 Frontend starts polling loop:
   setInterval(() => {
@@ -365,8 +365,8 @@ Auto-refresh every 30s (setInterval) to keep charts live
 ### Code Execution
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/execute` | 🔒 | Submit code (async) |
-| GET | `/api/v1/execute/{id}` | 🔒 | Poll for result |
+| POST | `/api/code-execution/run` | 🔒 | Submit code (async) |
+| GET | `/api/code-execution/{id}` | 🔒 | Poll for result |
 
 ### Notifications
 | Method | Endpoint | Auth | Description |
@@ -398,7 +398,7 @@ Auto-refresh every 30s (setInterval) to keep charts live
 ### Step 1 — Create a Collection
 1. Open Postman → **New Collection** → name it `DevOps Suite`
 2. Go to **Variables** tab, add:
-   - `base_url` → `http://localhost:8081`
+   - `base_url` → `http://localhost:8082`
    - `token` → *(leave empty)*
    - `refresh_token` → *(leave empty)*
    - `projectId` → *(leave empty)*
@@ -502,7 +502,7 @@ Body:
 
 ### Step 7 — Run Some Code
 
-**POST** `{{base_url}}/api/v1/execute`
+**POST** `{{base_url}}/api/code-execution/run`
 
 Body:
 ```json
@@ -516,7 +516,7 @@ Body:
 
 Copy the `execution_id` from the response, then:
 
-**GET** `{{base_url}}/api/v1/execute/{execution_id}`
+**GET** `{{base_url}}/api/code-execution/{execution_id}`
 
 Keep calling until `status` is `COMPLETED`. Check `stdout` for your output.
 
@@ -524,8 +524,8 @@ Keep calling until `status` is `COMPLETED`. Check `stdout` for your output.
 
 ### Step 8 — Check Health & Metrics (No Token Needed)
 
-**GET** `http://localhost:8081/actuator/health`  
-**GET** `http://localhost:8081/actuator/prometheus`
+**GET** `http://localhost:8082/actuator/health`  
+**GET** `http://localhost:8082/actuator/prometheus`
 
 ---
 
@@ -534,7 +534,7 @@ Keep calling until `status` is `COMPLETED`. Check `stdout` for your output.
 The backend pushes data to the browser over WebSocket — no polling needed for these features.
 
 ### Connection
-- URL: `ws://localhost:8081/ws` (SockJS-compatible)
+- URL: `ws://localhost:8082/ws` (SockJS-compatible)
 - Protocol: STOMP
 - Managed in frontend by `WebSocketContext.jsx` — connects automatically after login, disconnects on logout
 
@@ -556,19 +556,19 @@ All services run via `docker-compose up -d`.
 
 | UI | URL | What it shows |
 |---|---|---|
-| **Grafana** | `http://localhost:3000` | JVM heap, GC, HTTP request rates, error rates |
-| **Kibana** | `http://localhost:5601` | Full-text log explorer — every API request indexed |
+| **Grafana** | `http://localhost:8080` (nginx proxy) | JVM heap, GC, HTTP request rates, error rates |
+| **Kibana** | `http://localhost:8083` (nginx proxy) | Full-text log explorer — every API request indexed |
 | **Prometheus** | `http://localhost:9090` | Raw metrics, PromQL queries |
 
 ### Kibana Setup (first time)
-1. Open `http://localhost:5601`
+1. Open `http://localhost:8083` (requires ADMIN_USER/ADMIN_PASSWORD HTTP Basic Auth)
 2. Go to **Stack Management → Data Views → Create data view**
 3. Pattern: `devopssuite-logs-*`
 4. Timestamp field: `timestamp`
 5. Go to **Discover** — you will see real-time logs for every API call
 
 ### Grafana Setup (first time)
-1. Open `http://localhost:3000` (login: `admin` / `admin`)
+1. Open `http://localhost:8080` (nginx admin proxy) (login: `admin` / `admin`)
 2. Go to **Connections → Data Sources → Add Prometheus**
 3. URL: `http://prometheus:9090`
 4. Import a JVM dashboard (ID `4701` from Grafana.com) for instant visibility

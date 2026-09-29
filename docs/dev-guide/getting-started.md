@@ -1,4 +1,4 @@
-# Developer Guide — Running & Testing DevOps Suite
+﻿# Developer Guide â€” Running & Testing DevOps Suite
 
 > This guide covers how to start the entire stack, create your first user, and call every API via Postman.
 
@@ -9,12 +9,12 @@
 2. [Environment Setup](#2-environment-setup)
 3. [Starting the Stack](#3-starting-the-stack)
 4. [User Creation Guide](#4-user-creation-guide)
-5. [Postman — Auth APIs](#5-postman--auth-apis)
-6. [Postman — Project APIs](#6-postman--project-apis)
-7. [Postman — Task APIs](#7-postman--task-apis)
-8. [Postman — Code Execution API](#8-postman--code-execution-api)
-9. [Postman — Notification API](#9-postman--notification-api)
-10. [Postman — Actuator / Metrics APIs](#10-postman--actuator--metrics-apis)
+5. [Postman â€” Auth APIs](#5-postman--auth-apis)
+6. [Postman â€” Project APIs](#6-postman--project-apis)
+7. [Postman â€” Task APIs](#7-postman--task-apis)
+8. [Postman â€” Code Execution API](#8-postman--code-execution-api)
+9. [Postman â€” Notification API](#9-postman--notification-api)
+10. [Postman â€” Actuator / Metrics APIs](#10-postman--actuator--metrics-apis)
 11. [WebSocket Real-Time Topics](#11-websocket-real-time-topics)
 12. [Observability UIs](#12-observability-uis)
 13. [Postman Tips & Collection Setup](#13-postman-tips--collection-setup)
@@ -41,7 +41,7 @@
 ## 2. Environment Setup
 
 ### Backend
-The backend reads from `backend/src/main/resources/application.yml`. All settings have Docker-compatible defaults — no changes needed for local development.
+The backend reads from `backend/src/main/resources/application.yml`. All settings have Docker-compatible defaults â€” no changes needed for local development.
 
 Optional overrides (set before running):
 ```powershell
@@ -63,26 +63,26 @@ No changes needed for local development.
 
 ## 3. Starting the Stack
 
-### Step 1 — Start infrastructure (minimum)
+### Step 1 â€” Start infrastructure (minimum)
 ```powershell
 docker-compose up -d postgres redis
 ```
 
 Wait ~15 seconds for PostgreSQL to be ready.
 
-### Step 1 (optional) — Full observability stack
+### Step 1 (optional) â€” Full observability stack
 ```powershell
 docker-compose up -d
 ```
 This also starts Elasticsearch, Kibana, Prometheus, and Grafana.
 
-### Step 2 — Run the backend
+### Step 2 â€” Run the backend
 ```powershell
 mvn spring-boot:run
 ```
 Run from `d:\Projects\DevOps Suite\backend\`.
 
-The backend starts on **`http://localhost:8081`**.
+The backend starts on **`http://localhost:8081`** (native dev mode).
 
 Watch for:
 ```
@@ -91,7 +91,7 @@ Started DevOpsSuiteApplication in X.XXX seconds
 
 Flyway will automatically run `V1__initial_schema.sql` and create all tables on first boot.
 
-### Step 3 — Run the frontend
+### Step 3 â€” Run the frontend
 ```powershell
 npm install    # Only needed the first time
 npm run dev
@@ -104,15 +104,15 @@ The frontend starts on **`http://localhost:5173`**.
 
 ## 4. User Creation Guide
 
-### Option A — Via the Frontend (Recommended)
+### Option A â€” Via the Frontend (Recommended)
 1. Open `http://localhost:5173`
 2. Click **Register** on the login page
 3. Enter Email, Display Name, and Password
-4. Submit — you will be auto-logged in and redirected to the dashboard
+4. Submit â€” you will be auto-logged in and redirected to the dashboard
 
-### Option B — Via Postman (API)
+### Option B â€” Via Postman (API)
 
-**POST** `http://localhost:8081/auth/register`
+**POST** `http://localhost:8082/auth/register`
 
 **Body:**
 ```json
@@ -139,12 +139,12 @@ The frontend starts on **`http://localhost:5173`**.
 
 ---
 
-## 5. Postman — Auth APIs
+## 5. Postman â€” Auth APIs
 
 ### Collection Setup
-1. Open Postman → **New Collection** → Name it `DevOps Suite`
+1. Open Postman â†’ **New Collection** â†’ Name it `DevOps Suite`
 2. Go to **Variables** tab and add:
-   - `base_url` = `http://localhost:8081`
+   - `base_url` = `http://localhost:8082` (Docker) or `http://localhost:8081` (local dev)
    - `token` = *(leave empty)*
 
 ### 5.1 Register
@@ -265,7 +265,7 @@ Both tokens are blacklisted in Redis immediately.
 
 ---
 
-## 6. Postman — Project APIs
+## 6. Postman â€” Project APIs
 
 > All project requests require: **Authorization: Bearer {{token}}**
 
@@ -362,7 +362,7 @@ Valid roles: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
 
 ---
 
-## 7. Postman — Task APIs
+## 7. Postman â€” Task APIs
 
 > All task requests require: **Authorization: Bearer {{token}}**
 
@@ -433,14 +433,14 @@ Valid statuses: `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`
 
 ---
 
-## 8. Postman — Code Execution API
+## 8. Postman â€” Code Execution API
 
 > Requires: **Authorization: Bearer {{token}}** and Docker Desktop running.
 
 ### 8.1 Submit Code
 | Method | URL |
 |---|---|
-| `POST` | `{{base_url}}/api/v1/execute` |
+| `POST` | `{{base_url}}/api/code-execution/run` |
 
 **Body (Python):**
 ```json
@@ -496,7 +496,7 @@ Valid statuses: `BACKLOG`, `TODO`, `IN_PROGRESS`, `IN_REVIEW`, `DONE`
 ### 8.2 Poll for Result
 | Method | URL |
 |---|---|
-| `GET` | `{{base_url}}/api/v1/execute/{execution_id}` |
+| `GET` | `{{base_url}}/api/code-execution/{execution_id}` |
 
 Poll every 1-2 seconds until `status` is terminal.
 
@@ -529,7 +529,7 @@ Poll every 1-2 seconds until `status` is terminal.
 
 ---
 
-## 9. Postman — Notification API
+## 9. Postman â€” Notification API
 
 > Requires: **Authorization: Bearer {{token}}**
 
@@ -573,24 +573,24 @@ Poll every 1-2 seconds until `status` is terminal.
 
 ---
 
-## 10. Postman — Actuator / Metrics APIs
+## 10. Postman â€” Actuator / Metrics APIs
 
-These are **public** — no token required.
+These are **public** â€” no token required.
 
 | Name | Method | URL |
 |---|---|---|
-| Health check | `GET` | `http://localhost:8081/actuator/health` |
-| App info | `GET` | `http://localhost:8081/actuator/info` |
-| All metrics list | `GET` | `http://localhost:8081/actuator/metrics` |
-| Prometheus format | `GET` | `http://localhost:8081/actuator/prometheus` |
-| Specific metric | `GET` | `http://localhost:8081/actuator/metrics/jvm.memory.used` |
-| HTTP request stats | `GET` | `http://localhost:8081/actuator/metrics/http.server.requests` |
+| Health check | `GET` | `http://localhost:8082/actuator/health` |
+| App info | `GET` | `http://localhost:8082/actuator/info` |
+| All metrics list | `GET` | `http://localhost:8082/actuator/metrics` |
+| Prometheus format | `GET` | `http://localhost:8082/actuator/prometheus` |
+| Specific metric | `GET` | `http://localhost:8082/actuator/metrics/jvm.memory.used` |
+| HTTP request stats | `GET` | `http://localhost:8082/actuator/metrics/http.server.requests` |
 
 ---
 
 ## 11. WebSocket Real-Time Topics
 
-The backend exposes a STOMP WebSocket at `ws://localhost:8081/ws` (SockJS-compatible).
+The backend exposes a STOMP WebSocket at `ws://localhost:8082/ws` (Docker) or `ws://localhost:8081/ws` (local dev) (SockJS-compatible).
 
 ### Subscribable Topics
 
@@ -614,8 +614,8 @@ The backend exposes a STOMP WebSocket at `ws://localhost:8081/ws` (SockJS-compat
 
 ### Testing in Postman
 1. Create a new **WebSocket** request in Postman
-2. URL: `ws://localhost:8081/ws`
-3. Connect → send STOMP CONNECT frame → then SUBSCRIBE to a topic
+2. URL: `ws://localhost:8082/ws` (Docker) or `ws://localhost:8081/ws` (local dev)
+3. Connect â†’ send STOMP CONNECT frame â†’ then SUBSCRIBE to a topic
 
 ### How It's Wired in Frontend
 - `WebSocketContext.jsx` manages the STOMP connection lifecycle
@@ -628,28 +628,28 @@ The backend exposes a STOMP WebSocket at `ws://localhost:8081/ws` (SockJS-compat
 
 | UI | URL | Purpose |
 |---|---|---|
-| **Grafana** | `http://localhost:3000` | JVM + HTTP metrics dashboards (Prometheus data source) |
-| **Kibana** | `http://localhost:5601` | Log explorer — browse `devopssuite-logs-*` indices |
+| **Grafana** | `http://localhost:8080` (nginx proxy; requires HTTP Basic Auth) | JVM + HTTP metrics dashboards (Prometheus data source) |
+| **Kibana** | `http://localhost:8083` (nginx proxy; requires HTTP Basic Auth) | Log explorer â€” browse `devopssuite-logs-*` indices |
 | **Prometheus** | `http://localhost:9090` | Raw metrics, query with PromQL |
-| **Backend API** | `http://localhost:8081` | Spring Boot REST API |
+| **Backend API** | `http://localhost:8082` (Docker) / `http://localhost:8081` (local) | Spring Boot REST API |
 | **Frontend** | `http://localhost:5173` | React SPA |
 
-### Kibana — View Logs
-1. Open `http://localhost:5601`
-2. Go to **Discover** → Create a data view with pattern `devopssuite-logs-*`
+### Kibana â€” View Logs
+1. Open `http://localhost:8083` (HTTP Basic Auth required: ADMIN_USER/ADMIN_PASSWORD)
+2. Go to **Discover** â†’ Create a data view with pattern `devopssuite-logs-*`
 3. Set the time field to `timestamp`
 4. Browse real-time request logs
 
-### Grafana — View Metrics
-1. Open `http://localhost:3000` (default login: `admin` / `admin`)
-2. Go to **Dashboards** → Select pre-configured JVM or HTTP dashboard
+### Grafana â€” View Metrics
+1. Open `http://localhost:8080` (nginx proxy; HTTP Basic Auth required: ADMIN_USER/ADMIN_PASSWORD)
+2. Go to **Dashboards** â†’ Select pre-configured JVM or HTTP dashboard
 
 ---
 
 ## 13. Postman Tips & Collection Setup
 
 ### Auto-save Token After Login
-In your **Login request → Tests tab**:
+In your **Login request â†’ Tests tab**:
 ```javascript
 const json = pm.response.json();
 if (json.data && json.data.access_token) {
@@ -660,7 +660,7 @@ if (json.data && json.data.access_token) {
 ```
 
 ### Auto-save Project ID
-In your **Create Project request → Tests tab**:
+In your **Create Project request â†’ Tests tab**:
 ```javascript
 const json = pm.response.json();
 if (json.data && json.data.id) {
@@ -669,7 +669,7 @@ if (json.data && json.data.id) {
 ```
 
 ### Set Authorization on the Collection
-1. Go to **DevOps Suite** collection → **Authorization** tab
+1. Go to **DevOps Suite** collection â†’ **Authorization** tab
 2. Type: **Bearer Token**
 3. Token: `{{token}}`
 
@@ -709,25 +709,25 @@ docker-compose down -v
 ## 15. Troubleshooting
 
 ### Backend won't start
-- **"Connection refused" to PostgreSQL** — Run `docker-compose up -d postgres` first, wait 15 seconds.
-- **"Could not validate token"** — Check `JWT_SECRET` is set consistently.
-- **Port 8081 already in use** — Find and kill the process on that port.
-- **Flyway migration error** — Try `docker-compose down -v` then `docker-compose up -d postgres` to reset the DB volume.
+- **"Connection refused" to PostgreSQL** â€” Run `docker-compose up -d postgres` first, wait 15 seconds.
+- **"Could not validate token"** â€” Check `JWT_SECRET` is set consistently.
+- **Port 8081 or 8082 already in use** â€” Find and kill the process on that port.
+- **Flyway migration error** â€” Try `docker-compose down -v` then `docker-compose up -d postgres` to reset the DB volume.
 
 ### 401 Unauthorized in Postman
 - Token may have expired (1h TTL). Re-run the Login request to get a fresh token.
 - Ensure `Authorization` header is `Bearer {{token}}` and the collection variable is populated.
-- If you logged out, the token is blacklisted in Redis — log in again.
+- If you logged out, the token is blacklisted in Redis â€” log in again.
 
 ### Frontend shows blank / no data
-- Confirm backend is running on port `8081`.
-- Check browser DevTools → Network tab for failed API calls.
-- Confirm `frontend/.env` has `VITE_API_URL=http://localhost:8081/api`.
+- Confirm backend is running: on port `8081` for local dev, or port `8082` via Docker.
+- Check browser DevTools â†’ Network tab for failed API calls.
+- Confirm `frontend/.env` has `VITE_API_URL=http://localhost:8082` (Docker) or `http://localhost:8081` (local).
 
 ### Code execution times out or fails
 - Ensure Docker Desktop is running.
-- On first run, Docker pulls the language images — this can take 1-2 minutes.
-- Java and C++ take longer to compile — increase `max_time_ms` if needed.
+- On first run, Docker pulls the language images â€” this can take 1-2 minutes.
+- Java and C++ take longer to compile â€” increase `max_time_ms` if needed.
 
 ### Logs not appearing in Kibana
 - Elasticsearch needs ~30 seconds after startup before indices are queryable.
@@ -736,10 +736,10 @@ docker-compose down -v
 
 ### Grafana shows no data
 - Confirm Prometheus is running: `http://localhost:9090` should be accessible.
-- Confirm the backend is exposing metrics: `GET http://localhost:8081/actuator/prometheus`.
+- Confirm the backend is exposing metrics: `GET http://localhost:8082/actuator/prometheus`.
 - In Grafana, verify the Prometheus data source URL is `http://prometheus:9090`.
 
 ### WebSocket not connecting
-- Ensure the backend is running and the WebSocket endpoint is at `ws://localhost:8081/ws`.
+- Ensure the backend is running and the WebSocket endpoint is at `ws://localhost:8082/ws` (Docker) or `ws://localhost:8081/ws` (local dev).
 - The connection is established automatically after login via `WebSocketContext.jsx`.
-- Check browser DevTools → Network tab → WS for the SockJS handshake.
+- Check browser DevTools â†’ Network tab â†’ WS for the SockJS handshake.
