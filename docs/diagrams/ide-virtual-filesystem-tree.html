@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDE Virtual Filesystem Tree</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Tree Hierarchy · Diagram Design</p>
+    <h1>Project-Scoped Virtual File Hierarchy Persisted in PostgreSQL</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ide-virtual-filesystem-tree-title ide-virtual-filesystem-tree-desc">
+      <title id="ide-virtual-filesystem-tree-title">Project-Scoped Virtual File Hierarchy Persisted in PostgreSQL</title>
+      <desc id="ide-virtual-filesystem-tree-desc">Tree diagram of the virtual file hierarchy for a project stored in the ide_files database table.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Root Node -->
+      <rect x="60" y="210" width="160" height="60" rx="6" fill="#242b37" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="75" y="235" fill="#f08a59" font-size="11" font-weight="600">project-root /</text>
+      <text x="75" y="252" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Project ID Scoped</text>
+
+      <!-- Level 1 Connectors -->
+      <path d="M 220,240 H 280 Q 290,240 290,170 V 100 Q 290,90 300,90 H 340" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 220,240 H 340" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 220,240 H 280 Q 290,240 290,320 V 390 Q 290,400 300,400 H 340" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Level 1 Nodes -->
+      <!-- src/ -->
+      <rect x="340" y="65" width="160" height="50" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="355" y="90" fill="#f8fafc" font-size="11" font-weight="600">&#128193; src/</text>
+      <text x="355" y="105" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Directory Node</text>
+
+      <!-- config/ -->
+      <rect x="340" y="215" width="160" height="50" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="355" y="240" fill="#f8fafc" font-size="11" font-weight="600">&#128193; config/</text>
+      <text x="355" y="255" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Directory Node</text>
+
+      <!-- README.md -->
+      <rect x="340" y="375" width="160" height="50" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="355" y="400" fill="#60a5fa" font-size="11" font-weight="500">&#128196; README.md</text>
+      <text x="355" y="415" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">File &bull; 1.2 KB</text>
+
+      <!-- Level 2 Connectors & Files -->
+      <!-- src -> main.py -->
+      <line x1="500" y1="90" x2="620" y2="70" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="620" y="45" width="180" height="45" rx="4" fill="#242b37" stroke="rgba(240,138,89,0.3)" stroke-width="1"/>
+      <text x="635" y="68" fill="#f08a59" font-size="10.5" font-weight="600">&#128196; main.py (Entrypoint)</text>
+      <text x="635" y="82" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Python 3.11 Runtime</text>
+
+      <!-- src -> utils.py -->
+      <line x1="500" y1="90" x2="620" y2="120" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="620" y="100" width="180" height="45" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="635" y="122" fill="#f8fafc" font-size="10.5">&#128196; utils.py</text>
+      <text x="635" y="136" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Helper functions</text>
+
+      <!-- config -> app.json -->
+      <line x1="500" y1="240" x2="620" y2="240" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <rect x="620" y="215" width="180" height="45" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="635" y="238" fill="#f8fafc" font-size="10.5">&#128196; settings.json</text>
+      <text x="635" y="252" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Environment configuration</text>
+
+      <!-- DB mapping note -->
+      <rect x="850" y="140" width="210" height="180" rx="6" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="870" y="170" fill="#f8fafc" font-size="11" font-weight="600">Database Storage</text>
+      <text x="870" y="195" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">&bull; Stored in ide_files table</text>
+      <text x="870" y="215" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">&bull; Scoped by project_id</text>
+      <text x="870" y="235" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">&bull; Unique constraint:</text>
+      <text x="878" y="250" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">(project_id, file_path)</text>
+      <text x="870" y="275" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">&bull; Synced with Monaco Editor</text>
+
+      <!-- Legend -->
+      <line x1="60" y1="465" x2="1040" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="130" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="152" y="485" fill="#94a3b8" font-size="8.5">Executable Entrypoint File</text>
+    </svg>
+  </div>
+</body>
+</html>

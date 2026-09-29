@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domain Entity-Relationship Diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Entity Relationship · Diagram Design</p>
+    <h1>Conceptual Entity Relationships, Multiplicities, and Foreign Keys</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="entity-relationships-title entity-relationships-desc">
+      <title id="entity-relationships-title">Conceptual Entity Relationships, Multiplicities, and Foreign Keys</title>
+      <desc id="entity-relationships-desc">Entity relationship diagram showing cardinalities between User, Project, KanbanBoard, Column, Task, and IdeFile entities.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Relationships -->
+      <!-- User (1) -> Project (N) -->
+      <line x1="200" y1="130" x2="350" y2="130" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="275" y="120" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1 : N (owns)</text>
+
+      <!-- Project (1) -> Board (1) -->
+      <line x1="490" y1="130" x2="620" y2="130" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="555" y="120" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1 : 1 (has)</text>
+
+      <!-- Board (1) -> Column (N) -->
+      <line x1="760" y1="130" x2="880" y2="130" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="820" y="120" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1 : N</text>
+
+      <!-- Column (1) -> Task (N) -->
+      <path d="M 950,180 V 270 Q 950,285 935,285 H 760" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="870" y="275" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">1 : N (contains)</text>
+
+      <!-- Project (1) -> IdeFile (N) -->
+      <path d="M 420,180 V 270 Q 420,285 435,285 H 620" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="510" y="275" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">1 : N (persists)</text>
+
+      <!-- Entities -->
+      <!-- Entity: User -->
+      <rect x="60" y="90" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="60" y="90" width="140" height="24" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="130" y="106" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">User</text>
+      <text x="75" y="128" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="75" y="146" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">email</text>
+      <text x="75" y="164" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">role</text>
+
+      <!-- Entity: Project -->
+      <rect x="350" y="90" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="350" y="90" width="140" height="24" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="420" y="106" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Project</text>
+      <text x="365" y="128" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="365" y="146" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">FK owner_id</text>
+      <text x="365" y="164" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">name</text>
+
+      <!-- Entity: KanbanBoard -->
+      <rect x="620" y="90" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(240,138,89,0.3)" stroke-width="1"/>
+      <rect x="620" y="90" width="140" height="24" rx="4" fill="rgba(240,138,89,0.15)"/>
+      <text x="690" y="106" fill="#f08a59" font-size="11" font-weight="600" text-anchor="middle">KanbanBoard</text>
+      <text x="635" y="128" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="635" y="146" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">FK project_id</text>
+      <text x="635" y="164" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">title</text>
+
+      <!-- Entity: Column -->
+      <rect x="880" y="90" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="880" y="90" width="140" height="24" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="950" y="106" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Column</text>
+      <text x="895" y="128" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="895" y="146" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">FK board_id</text>
+      <text x="895" y="164" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">position</text>
+
+      <!-- Entity: Task -->
+      <rect x="620" y="240" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="620" y="240" width="140" height="24" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="690" y="256" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Task</text>
+      <text x="635" y="278" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="635" y="296" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">FK column_id</text>
+      <text x="635" y="314" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">priority</text>
+
+      <!-- Entity: IdeFile -->
+      <rect x="350" y="240" width="140" height="90" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="350" y="240" width="140" height="24" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="420" y="256" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">IdeFile</text>
+      <text x="365" y="278" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">PK id</text>
+      <text x="365" y="296" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">FK project_id</text>
+      <text x="365" y="314" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">path / content</text>
+
+      <!-- Legend -->
+      <line x1="60" y1="465" x2="1040" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="130" y1="483" x2="160" y2="483" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="168" y="485" fill="#94a3b8" font-size="8.5">Entity Cardinality Link</text>
+    </svg>
+  </div>
+</body>
+</html>

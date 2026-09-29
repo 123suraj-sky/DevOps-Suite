@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Execution Sandbox Failure Root Cause Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Root Cause Analysis · Diagram Design</p>
+    <h1>Fishbone / Ishikawa Cause Analysis for Sandbox Job Terminations</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="sandbox-failure-cause-analysis-title sandbox-failure-cause-analysis-desc">
+      <title id="sandbox-failure-cause-analysis-title">Fishbone / Ishikawa Cause Analysis for Sandbox Job Terminations</title>
+      <desc id="sandbox-failure-cause-analysis-desc">Ishikawa fishbone diagram categorizing root causes for Docker code sandbox failures across Memory, Network, Timeouts, and Host constraints.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Central Spine -->
+      <line x1="80" y1="240" x2="880" y2="240" stroke="#f08a59" stroke-width="2"/>
+      
+      <!-- Fish Head (Problem Statement - Focal) -->
+      <polygon points="880,180 1020,240 880,300" fill="rgba(240,138,89,0.15)" stroke="#f08a59" stroke-width="1.5"/>
+      <text x="930" y="235" fill="#f08a59" font-size="11.5" font-weight="600" text-anchor="middle">EXECUTION</text>
+      <text x="930" y="255" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">TERMINATION</text>
+
+      <!-- Rib 1 (Top Left: Memory Limits) -->
+      <line x1="280" y1="240" x2="200" y2="120" stroke="rgba(248,250,252,0.3)" stroke-width="1.2"/>
+      <text x="190" y="110" fill="#60a5fa" font-size="10.5" font-weight="600">Memory Ceiling</text>
+      <line x1="230" y1="165" x2="310" y2="165" stroke="rgba(248,250,252,0.15)"/>
+      <text x="315" y="168" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">cgroup OOM Kill (256MB)</text>
+
+      <!-- Rib 2 (Top Right: Timeouts) -->
+      <line x1="650" y1="240" x2="570" y2="120" stroke="rgba(248,250,252,0.3)" stroke-width="1.2"/>
+      <text x="560" y="110" fill="#60a5fa" font-size="10.5" font-weight="600">Timeout Limits</text>
+      <line x1="600" y1="165" x2="680" y2="165" stroke="rgba(248,250,252,0.15)"/>
+      <text x="685" y="168" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">30s Wall-clock Exceeded</text>
+
+      <!-- Rib 3 (Bottom Left: Network Violations) -->
+      <line x1="280" y1="240" x2="200" y2="360" stroke="rgba(248,250,252,0.3)" stroke-width="1.2"/>
+      <text x="190" y="380" fill="#60a5fa" font-size="10.5" font-weight="600">Network Security</text>
+      <line x1="230" y1="315" x2="310" y2="315" stroke="rgba(248,250,252,0.15)"/>
+      <text x="315" y="318" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">--no-network Socket Drop</text>
+
+      <!-- Rib 4 (Bottom Right: Filesystem Write) -->
+      <line x1="650" y1="240" x2="570" y2="360" stroke="rgba(248,250,252,0.3)" stroke-width="1.2"/>
+      <text x="560" y="380" fill="#60a5fa" font-size="10.5" font-weight="600">Filesystem Policy</text>
+      <line x1="600" y1="315" x2="680" y2="315" stroke="rgba(248,250,252,0.15)"/>
+      <text x="685" y="318" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Read-only Mount Reject</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="140" y1="482" x2="170" y2="482" stroke="#f08a59" stroke-width="2"/>
+      <text x="178" y="485" fill="#94a3b8" font-size="8.5">Controlled Sandbox Safety Boundary Termination</text>
+    </svg>
+  </div>
+</body>
+</html>

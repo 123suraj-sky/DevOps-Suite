@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Language Execution Performance Bar Chart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Bar Chart · Diagram Design</p>
+    <h1>Average Container Cold-Start & Execution Time by Language Runtime</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="code-execution-language-stats-title code-execution-language-stats-desc">
+      <title id="code-execution-language-stats-title">Average Container Cold-Start & Execution Time by Language Runtime</title>
+      <desc id="code-execution-language-stats-desc">Bar chart comparing execution latency across Python, JavaScript, Java, Go, and C++ runtimes in the Docker sandbox.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Chart Axes -->
+      <line x1="160" y1="80" x2="160" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+      <line x1="160" y1="420" x2="1020" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+
+      <!-- X Axis Ticks & Grid -->
+      <line x1="360" y1="80" x2="360" y2="420" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="360" y="438" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">500ms</text>
+
+      <line x1="560" y1="80" x2="560" y2="420" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="560" y="438" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1000ms</text>
+
+      <line x1="760" y1="80" x2="760" y2="420" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="760" y="438" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1500ms</text>
+
+      <line x1="960" y1="80" x2="960" y2="420" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="960" y="438" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2000ms</text>
+
+      <!-- Bar 1: Python -->
+      <text x="140" y="130" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="end">Python 3.11</text>
+      <rect x="160" y="110" width="310" height="34" rx="3" fill="#60a5fa"/>
+      <text x="480" y="132" fill="#f8fafc" font-size="9" font-family="'Geist Mono', monospace">780ms</text>
+
+      <!-- Bar 2: Node.js / JS -->
+      <text x="140" y="190" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="end">Node.js 20</text>
+      <rect x="160" y="170" width="240" height="34" rx="3" fill="#60a5fa"/>
+      <text x="410" y="192" fill="#f8fafc" font-size="9" font-family="'Geist Mono', monospace">610ms</text>
+
+      <!-- Bar 3: Java 21 (Focal - Heavy JVM Startup) -->
+      <text x="140" y="250" fill="#f08a59" font-size="11" font-weight="600" text-anchor="end">Java 21 JRE</text>
+      <rect x="160" y="230" width="680" height="34" rx="3" fill="rgba(240,138,89,0.3)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="850" y="252" fill="#f08a59" font-size="9" font-weight="600" font-family="'Geist Mono', monospace">1720ms (JVM Boot)</text>
+
+      <!-- Bar 4: Go -->
+      <text x="140" y="310" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="end">Go 1.22</text>
+      <rect x="160" y="290" width="180" height="34" rx="3" fill="#34d399"/>
+      <text x="350" y="312" fill="#34d399" font-size="9" font-family="'Geist Mono', monospace">450ms</text>
+
+      <!-- Bar 5: C++ -->
+      <text x="140" y="370" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="end">C++ (GCC)</text>
+      <rect x="160" y="350" width="210" height="34" rx="3" fill="#34d399"/>
+      <text x="380" y="372" fill="#34d399" font-size="9" font-family="'Geist Mono', monospace">520ms</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="150" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.3)" stroke="#f08a59" stroke-width="1"/>
+      <text x="172" y="485" fill="#94a3b8" font-size="8.5">Compilation &amp; VM Warm-up Phase</text>
+    </svg>
+  </div>
+</body>
+</html>

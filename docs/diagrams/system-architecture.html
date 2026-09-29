@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOps Suite · System Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .frame { max-width: 1240px; width: 100%; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Architecture Topology · Diagram Design</p>
+    <h1>DevOps Suite — Production System Architecture</h1>
+
+    <svg viewBox="0 0 1200 680" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="devops-suite-arch-title devops-suite-arch-desc">
+      <title id="devops-suite-arch-title">DevOps Suite Production Architecture</title>
+      <desc id="devops-suite-arch-desc">Detailed architecture topology of DevOps Suite showing React SPA frontend, Spring Boot monolith backend, Docker isolated sandbox runner, and backing infrastructure stores.</desc>
+      
+      <defs>
+        <pattern id="grid-dots" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1" fill="rgba(248,250,252,0.07)"/>
+        </pattern>
+
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/>
+        </marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f08a59"/>
+        </marker>
+        <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/>
+        </marker>
+        <marker id="arrow-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+        </marker>
+      </defs>
+
+      <!-- Background Canvas -->
+      <rect width="100%" height="100%" fill="#1e232d"/>
+      <rect width="100%" height="100%" fill="url(#grid-dots)"/>
+
+      <!-- ================= ZONES (TRUST BOUNDARIES) ================= -->
+      
+      <!-- Zone 1: Client & Ingress Tier -->
+      <rect x="30" y="70" width="220" height="530" rx="8"
+            fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <rect x="75" y="74" width="130" height="13" rx="2" fill="#1e232d"/>
+      <text x="140" y="84" fill="rgba(248,250,252,0.4)" font-size="7.5" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">CLIENT / INGRESS TIER</text>
+
+      <!-- Zone 2: Application Core Monolith -->
+      <rect x="290" y="70" width="370" height="530" rx="8"
+            fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <rect x="390" y="74" width="170" height="13" rx="2" fill="#1e232d"/>
+      <text x="475" y="84" fill="rgba(248,250,252,0.4)" font-size="7.5" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">SPRING BOOT MONOLITH</text>
+
+      <!-- Zone 3: Sandboxed Execution & Infra Stores -->
+      <rect x="700" y="70" width="470" height="530" rx="8"
+            fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <rect x="835" y="74" width="200" height="13" rx="2" fill="#1e232d"/>
+      <text x="935" y="84" fill="rgba(248,250,252,0.4)" font-size="7.5" font-family="'Geist Mono', monospace"
+            text-anchor="middle" letter-spacing="0.14em">ISOLATION &amp; STORAGE SERVICES</text>
+
+      <!-- ================= CONNECTORS / ARROWS (DRAWN FIRST) ================= -->
+
+      <!-- Client Browser -> React SPA (Port 80/5173) -->
+      <line x1="140" y1="172" x2="140" y2="218" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <rect x="110" y="186" width="60" height="12" rx="2" fill="#1e232d"/>
+      <text x="140" y="195" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">HTTP GET</text>
+
+      <!-- React SPA -> Spring Boot (REST /api) -->
+      <path d="M 216,252 H 312" fill="none" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="232" y="242" width="64" height="12" rx="2" fill="#1e232d"/>
+      <text x="264" y="251" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">REST / JWT</text>
+
+      <!-- React SPA <-> Spring Boot WebSocket (Bi-directional STOMP/SockJS) -->
+      <path d="M 216,276 H 312" fill="none" stroke="#34d399" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-emerald)"/>
+      <rect x="232" y="280" width="64" height="12" rx="2" fill="#1e232d"/>
+      <text x="264" y="289" fill="#34d399" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">WS / STOMP</text>
+
+      <!-- Nginx Admin Proxy -> Grafana & Kibana -->
+      <path d="M 216,490 H 260 Q 268,490 268,470 V 438 Q 268,418 280,418 H 930 Q 938,418 938,426 V 438" 
+            fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3"/>
+      <!-- Nginx Admin Proxy to Kibana (Port 8083) -->
+      <path d="M 140,522 V 552 Q 140,560 148,560 H 930 Q 938,560 938,548 V 534"
+            fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+      <rect x="180" y="554" width="76" height="12" rx="2" fill="#1e232d"/>
+      <text x="218" y="563" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">BASIC AUTH</text>
+
+      <!-- Spring Boot -> PostgreSQL (Data JPA / Flyway) -->
+      <path d="M 640,240 H 720" fill="none" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <rect x="652" y="230" width="56" height="12" rx="2" fill="#1e232d"/>
+      <text x="680" y="239" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">JPA / SQL</text>
+
+      <!-- Spring Boot -> Redis (Cache + Rate Limiting + Token Blacklist) -->
+      <path d="M 640,280 H 704 Q 712,280 712,295 V 325 Q 712,335 720,335 H 724" 
+            fill="none" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <rect x="656" y="295" width="50" height="12" rx="2" fill="#1e232d"/>
+      <text x="681" y="304" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">LETTUCE</text>
+
+      <!-- Spring Boot -> Docker Java Client / Sandbox Runner -->
+      <path d="M 640,165 H 724" fill="none" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="652" y="155" width="56" height="12" rx="2" fill="#1e232d"/>
+      <text x="680" y="164" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">SANDBOX</text>
+
+      <!-- Spring Boot -> Elasticsearch (Request Logs) -->
+      <path d="M 640,445 H 724" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="656" y="435" width="50" height="12" rx="2" fill="#1e232d"/>
+      <text x="681" y="444" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">REST LOGS</text>
+
+      <!-- Elasticsearch -> Kibana -->
+      <line x1="880" y1="450" x2="940" y2="480" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+
+      <!-- Prometheus -> Spring Boot Actuator (/actuator/prometheus) -->
+      <path d="M 724,535 H 650 Q 640,535 640,520 V 500" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <rect x="652" y="525" width="58" height="12" rx="2" fill="#1e232d"/>
+      <text x="681" y="534" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">PULL SCRAPE</text>
+
+      <!-- Prometheus -> Grafana -->
+      <line x1="880" y1="525" x2="940" y2="475" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+
+      <!-- ================= NODES ================= -->
+
+      <!-- --- CLIENT TIER --- -->
+
+      <!-- Node: Developer Browser -->
+      <rect x="60" y="110" width="160" height="62" rx="6" fill="#1e232d"/>
+      <rect x="60" y="110" width="160" height="62" rx="6" fill="rgba(148,163,184,0.06)" stroke="#64748b" stroke-width="1"/>
+      <rect x="68" y="118" width="30" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="83" y="127" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">USER</text>
+      <text x="140" y="143" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Developer Client</text>
+      <text x="140" y="159" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Web Browser (SPA / WS)</text>
+
+      <!-- Node: React 18 Frontend SPA -->
+      <rect x="60" y="220" width="160" height="74" rx="6" fill="#1e232d"/>
+      <rect x="60" y="220" width="160" height="74" rx="6" fill="rgba(96,165,250,0.06)" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="68" y="228" width="36" height="12" rx="2" fill="transparent" stroke="rgba(96,165,250,0.5)" stroke-width="0.8"/>
+      <text x="86" y="237" fill="#60a5fa" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">UI APP</text>
+      <text x="140" y="254" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">React 18 Frontend</text>
+      <text x="140" y="270" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Vite · Monaco · Tailwind</text>
+      <text x="140" y="284" fill="rgba(148,163,184,0.7)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Nginx :80 / Local :5173</text>
+
+      <!-- Node: Nginx Admin Reverse Proxy -->
+      <rect x="60" y="460" width="160" height="62" rx="6" fill="#1e232d"/>
+      <rect x="60" y="460" width="160" height="62" rx="6" fill="rgba(148,163,184,0.04)" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
+      <rect x="68" y="468" width="34" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="85" y="477" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">PROXY</text>
+      <text x="140" y="493" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Nginx Admin Proxy</text>
+      <text x="140" y="509" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Basic Auth (:8080, :8083)</text>
+
+      <!-- --- APPLICATION CORE MONOLITH --- -->
+
+      <!-- Node: Spring Boot Monolith Core (FOCAL NODE) -->
+      <rect x="314" y="110" width="326" height="460" rx="8" fill="#1e232d"/>
+      <rect x="314" y="110" width="326" height="460" rx="8" fill="rgba(240,138,89,0.05)" stroke="#f08a59" stroke-width="1.5"/>
+      <rect x="324" y="118" width="46" height="13" rx="2" fill="transparent" stroke="rgba(240,138,89,0.5)" stroke-width="0.8"/>
+      <text x="347" y="128" fill="#f08a59" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">BACKEND</text>
+      <text x="626" y="146" fill="rgba(240,138,89,0.12)" font-size="36" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">01</text>
+      <text x="477" y="142" fill="#f8fafc" font-size="14" font-weight="600" text-anchor="middle">Spring Boot Monolith</text>
+      <text x="477" y="158" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Java 21 · Host: 8082 (Int: 8081)</text>
+
+      <!-- Monolith Internal Modules Sub-boxes -->
+      <!-- Module 1: Auth & Security -->
+      <rect x="330" y="176" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="340" y="194" fill="#f8fafc" font-size="10.5" font-weight="600">Auth &amp; Security</text>
+      <text x="340" y="210" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• JWT Access &amp; Refresh</text>
+      <text x="340" y="224" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Google &amp; GitHub OAuth2</text>
+
+      <!-- Module 2: Kanban & Projects -->
+      <rect x="484" y="176" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="494" y="194" fill="#f8fafc" font-size="10.5" font-weight="600">Project &amp; Kanban</text>
+      <text x="494" y="210" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Boards, Columns, Tasks</text>
+      <text x="494" y="224" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• RBAC (Owner/Admin/Mbr)</text>
+
+      <!-- Module 3: Execution Engine -->
+      <rect x="330" y="254" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(240,138,89,0.3)" stroke-width="0.8"/>
+      <text x="340" y="272" fill="#f08a59" font-size="10.5" font-weight="600">Execution Engine</text>
+      <text x="340" y="288" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Async Task Queue</text>
+      <text x="340" y="302" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Docker Java Client</text>
+
+      <!-- Module 4: Web IDE Engine -->
+      <rect x="484" y="254" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="494" y="272" fill="#f8fafc" font-size="10.5" font-weight="600">Web IDE Service</text>
+      <text x="494" y="288" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• DB File Persistence</text>
+      <text x="494" y="302" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Project Scoped Tree</text>
+
+      <!-- Module 5: WebSocket & Notifications -->
+      <rect x="330" y="332" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(52,211,153,0.3)" stroke-width="0.8"/>
+      <text x="340" y="350" fill="#34d399" font-size="10.5" font-weight="600">WS &amp; Notifications</text>
+      <text x="340" y="366" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• STOMP / SockJS</text>
+      <text x="340" y="380" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Spring Event Publisher</text>
+
+      <!-- Module 6: Observability / Logback -->
+      <rect x="484" y="332" width="140" height="66" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="494" y="350" fill="#f8fafc" font-size="10.5" font-weight="600">Telemetry &amp; Logging</text>
+      <text x="494" y="366" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Actuator / Micrometer</text>
+      <text x="494" y="380" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">• Request Filter + ELK</text>
+
+      <!-- Spring Boot Footer Indicator -->
+      <line x1="330" y1="418" x2="624" y2="418" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="477" y="440" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">Redis Sliding-Window Rate Limiting</text>
+      <text x="477" y="456" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Execution Max · Auth Max · Global API Max</text>
+
+      <!-- --- ISOLATION & STORAGE SERVICES --- -->
+
+      <!-- Node: Docker Sandbox Runner -->
+      <rect x="726" y="110" width="156" height="86" rx="6" fill="#1e232d"/>
+      <rect x="726" y="110" width="156" height="86" rx="6" fill="rgba(240,138,89,0.06)" stroke="#f08a59" stroke-width="1.2"/>
+      <rect x="734" y="118" width="46" height="12" rx="2" fill="transparent" stroke="rgba(240,138,89,0.5)" stroke-width="0.8"/>
+      <text x="757" y="127" fill="#f08a59" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">SANDBOX</text>
+      <text x="804" y="144" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Docker Sandbox</text>
+      <text x="804" y="160" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">--no-network · ReadOnly FS</text>
+      <text x="804" y="174" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">256MB RAM · 1 CPU · 30s Cap</text>
+
+      <!-- Node: PostgreSQL Database -->
+      <rect x="726" y="210" width="156" height="74" rx="6" fill="#1e232d"/>
+      <rect x="726" y="210" width="156" height="74" rx="6" fill="rgba(96,165,250,0.05)" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="734" y="218" width="42" height="12" rx="2" fill="transparent" stroke="rgba(96,165,250,0.4)" stroke-width="0.8"/>
+      <text x="755" y="227" fill="#60a5fa" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">STORAGE</text>
+      <text x="804" y="244" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">PostgreSQL 16</text>
+      <text x="804" y="260" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">DB: devopssuite</text>
+      <text x="804" y="274" fill="rgba(148,163,184,0.7)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Flyway Migrations (V1-V16)</text>
+
+      <!-- Node: Redis Cache & Counters -->
+      <rect x="726" y="300" width="156" height="74" rx="6" fill="#1e232d"/>
+      <rect x="726" y="300" width="156" height="74" rx="6" fill="rgba(240,138,89,0.05)" stroke="rgba(240,138,89,0.6)" stroke-width="1"/>
+      <rect x="734" y="308" width="34" height="12" rx="2" fill="transparent" stroke="rgba(240,138,89,0.4)" stroke-width="0.8"/>
+      <text x="751" y="317" fill="#f08a59" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">CACHE</text>
+      <text x="804" y="334" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Redis 7 In-Memory</text>
+      <text x="804" y="350" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Port 6379</text>
+      <text x="804" y="364" fill="rgba(148,163,184,0.7)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Tokens · Cache · Rate-Limits</text>
+
+      <!-- Node: Elasticsearch -->
+      <rect x="726" y="394" width="156" height="70" rx="6" fill="#1e232d"/>
+      <rect x="726" y="394" width="156" height="70" rx="6" fill="rgba(148,163,184,0.04)" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
+      <rect x="734" y="402" width="28" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="748" y="411" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">ELK</text>
+      <text x="804" y="428" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Elasticsearch</text>
+      <text x="804" y="444" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Port 9200</text>
+      <text x="804" y="458" fill="rgba(148,163,184,0.7)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Structured App Logs</text>
+
+      <!-- Node: Prometheus -->
+      <rect x="726" y="484" width="156" height="70" rx="6" fill="#1e232d"/>
+      <rect x="726" y="484" width="156" height="70" rx="6" fill="rgba(148,163,184,0.04)" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
+      <rect x="734" y="492" width="46" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="757" y="501" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">METRICS</text>
+      <text x="804" y="518" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Prometheus</text>
+      <text x="804" y="534" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Port 9090</text>
+      <text x="804" y="548" fill="rgba(148,163,184,0.7)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Time-Series Scraping</text>
+
+      <!-- Dashboards Stack: Kibana & Grafana -->
+      <!-- Kibana -->
+      <rect x="940" y="410" width="200" height="66" rx="6" fill="#1e232d"/>
+      <rect x="940" y="410" width="200" height="66" rx="6" fill="rgba(148,163,184,0.04)" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
+      <rect x="948" y="418" width="38" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="967" y="427" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">VIEWER</text>
+      <text x="1040" y="444" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Kibana Dashboard</text>
+      <text x="1040" y="460" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Proxied at :8083 (Auth)</text>
+
+      <!-- Grafana -->
+      <rect x="940" y="490" width="200" height="66" rx="6" fill="#1e232d"/>
+      <rect x="940" y="490" width="200" height="66" rx="6" fill="rgba(148,163,184,0.04)" stroke="rgba(148,163,184,0.3)" stroke-width="1"/>
+      <rect x="948" y="498" width="38" height="12" rx="2" fill="transparent" stroke="rgba(148,163,184,0.4)" stroke-width="0.8"/>
+      <text x="967" y="507" fill="#94a3b8" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">CHARTS</text>
+      <text x="1040" y="524" fill="#f8fafc" font-size="12" font-weight="600" text-anchor="middle">Grafana Dashboard</text>
+      <text x="1040" y="540" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Proxied at :8080 (Auth)</text>
+
+      <!-- ================= LEGEND STRIP ================= -->
+      <line x1="30" y1="625" x2="1170" y2="625" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="30" y="646" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+
+      <rect x="110" y="638" width="14" height="10" rx="2" fill="rgba(240,138,89,0.1)" stroke="#f08a59" stroke-width="1"/>
+      <text x="132" y="646" fill="#94a3b8" font-size="8.5" font-family="'Geist', sans-serif">Spring Boot Monolith / Runner (Core)</text>
+
+      <rect x="375" y="638" width="14" height="10" rx="2" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1"/>
+      <text x="397" y="646" fill="#94a3b8" font-size="8.5" font-family="'Geist', sans-serif">SPA &amp; Relational Storage</text>
+
+      <line x1="565" y1="643" x2="595" y2="643" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="603" y="646" fill="#94a3b8" font-size="8.5" font-family="'Geist', sans-serif">Synchronous REST / Command</text>
+
+      <line x1="795" y1="643" x2="825" y2="643" stroke="#34d399" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrow-emerald)"/>
+      <text x="833" y="646" fill="#94a3b8" font-size="8.5" font-family="'Geist', sans-serif">WebSocket / STOMP Realtime</text>
+
+      <line x1="1020" y1="643" x2="1050" y2="643" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+      <text x="1058" y="646" fill="#94a3b8" font-size="8.5" font-family="'Geist', sans-serif">Admin Proxy / Internal Scrape</text>
+    </svg>
+  </div>
+</body>
+</html>

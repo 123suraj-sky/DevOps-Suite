@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redis Sliding-Window Rate Limiter Flowchart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Decision Flowchart · Diagram Design</p>
+    <h1>Rate Limiter Decision Flow: Window Verification & Counter Enforcement</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rate-limiting-decision-tree-title rate-limiting-decision-tree-desc">
+      <title id="rate-limiting-decision-tree-title">Rate Limiter Decision Flow: Window Verification & Counter Enforcement</title>
+      <desc id="rate-limiting-decision-tree-desc">Flowchart detailing inbound HTTP request evaluation against sliding-window counters in Redis, branching to allow or 429 Too Many Requests.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+        <marker id="arrow-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#34d399"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Arrows before nodes -->
+      <line x1="160" y1="180" x2="220" y2="180" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="370" y1="180" x2="430" y2="180" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <!-- Decision: Yes -> Allow -->
+      <line x1="580" y1="180" x2="680" y2="180" stroke="#34d399" stroke-width="1.4" marker-end="url(#arrow-emerald)"/>
+      <text x="630" y="172" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">YES (Under)</text>
+      <!-- Decision: No -> Reject 429 -->
+      <path d="M 505,225 V 320 Q 505,330 515,330 H 680" fill="none" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="540" y="322" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">NO (Exceeded)</text>
+
+      <!-- Start Node -->
+      <rect x="40" y="150" width="120" height="60" rx="30" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="100" y="178" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Inbound Request</text>
+      <text x="100" y="195" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">IP / User Key</text>
+
+      <!-- Step 1: Redis Key Lookup -->
+      <rect x="220" y="145" width="150" height="70" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="295" y="172" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Sliding Window</text>
+      <text x="295" y="188" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ZREMRANGEBYSCORE</text>
+      <text x="295" y="202" fill="rgba(148,163,184,0.7)" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Remove expired stamps</text>
+
+      <!-- Decision Diamond (Focal) -->
+      <polygon points="505,135 580,180 505,225 430,180" fill="rgba(240,138,89,0.1)" stroke="#f08a59" stroke-width="1.5"/>
+      <text x="505" y="176" fill="#f8fafc" font-size="10.5" font-weight="600" text-anchor="middle">Count &lt;</text>
+      <text x="505" y="192" fill="#f08a59" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Limit Max?</text>
+
+      <!-- Target 1: 200 Allow -->
+      <rect x="680" y="145" width="180" height="70" rx="6" fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="1.2"/>
+      <text x="770" y="172" fill="#34d399" font-size="11.5" font-weight="600" text-anchor="middle">&#10003; Allow &amp; Pass Through</text>
+      <text x="770" y="188" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ZADD current_timestamp</text>
+      <text x="770" y="202" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Proceed to Controller</text>
+
+      <!-- Target 2: 429 Reject -->
+      <rect x="680" y="295" width="180" height="70" rx="6" fill="rgba(240,138,89,0.06)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="770" y="322" fill="#f08a59" font-size="11.5" font-weight="600" text-anchor="middle">&times; 429 Too Many Requests</text>
+      <text x="770" y="338" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Retry-After Header</text>
+      <text x="770" y="352" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Halt Filter Chain</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="465" x2="1060" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="110" y1="483" x2="140" y2="483" stroke="#34d399" stroke-width="1.4" marker-end="url(#arrow-emerald)"/>
+      <text x="148" y="485" fill="#94a3b8" font-size="8.5">Allowed Request Branch</text>
+      <line x1="330" y1="483" x2="360" y2="483" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="368" y="485" fill="#94a3b8" font-size="8.5">Rate Limit Breached (429)</text>
+    </svg>
+  </div>
+</body>
+</html>

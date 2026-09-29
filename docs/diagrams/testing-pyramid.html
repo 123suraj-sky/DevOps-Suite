@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing Strategy Pyramid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Testing Pyramid · Diagram Design</p>
+    <h1>DevOps Suite Automated Quality & Verification Strategy</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="testing-pyramid-title testing-pyramid-desc">
+      <title id="testing-pyramid-title">DevOps Suite Automated Quality & Verification Strategy</title>
+      <desc id="testing-pyramid-desc">Testing pyramid showing test distribution across Unit tests, Integration tests, and End-to-End browser tests.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Top Tier: E2E Tests (10%) -->
+      <polygon points="550,80 630,170 470,170" fill="rgba(240,138,89,0.15)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="550" y="140" fill="#f08a59" font-size="10.5" font-weight="600" text-anchor="middle">E2E Tests (10%)</text>
+      <text x="550" y="155" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Browser &bull; API Workflows</text>
+
+      <!-- Middle Tier: Integration Tests (30% - Focal) -->
+      <polygon points="470,175 630,175 730,285 370,285" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" stroke-width="1.2"/>
+      <text x="550" y="225" fill="#60a5fa" font-size="11.5" font-weight="600" text-anchor="middle">Integration Tests (30%)</text>
+      <text x="550" y="245" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">@SpringBootTest &bull; Testcontainers Postgres &bull; Redis</text>
+
+      <!-- Bottom Tier: Unit Tests (60%) -->
+      <polygon points="370,290 730,290 850,420 250,420" fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="1.2"/>
+      <text x="550" y="350" fill="#34d399" font-size="12" font-weight="600" text-anchor="middle">Unit Tests (60%)</text>
+      <text x="550" y="370" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">JUnit 5 &bull; Mockito &bull; React Testing Library</text>
+      <text x="550" y="388" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Instant Feedback Cycle</text>
+
+      <!-- Speed & Cost indicators on right -->
+      <line x1="880" y1="100" x2="880" y2="400" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+      <text x="900" y="110" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace">&uarr; Higher Cost &amp; Execution Time</text>
+      <text x="900" y="390" fill="#34d399" font-size="8.5" font-family="'Geist Mono', monospace">&darr; Maximum Speed &amp; Isolation</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <polygon points="140,480 148,490 132,490" fill="#34d399"/>
+      <text x="155" y="485" fill="#94a3b8" font-size="8.5">Foundation: Fast Mocked Unit Suites</text>
+    </svg>
+  </div>
+</body>
+</html>

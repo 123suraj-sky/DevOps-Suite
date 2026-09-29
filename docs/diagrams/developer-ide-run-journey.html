@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Experience & IDE Run Journey</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">User Journey · Diagram Design</p>
+    <h1>End-to-End Developer Journey: From Project Creation to Live Sandboxed Run</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="developer-ide-run-journey-title developer-ide-run-journey-desc">
+      <title id="developer-ide-run-journey-title">End-to-End Developer Journey: From Project Creation to Live Sandboxed Run</title>
+      <desc id="developer-ide-run-journey-desc">User journey map showing developer experience stages: Onboarding, Project Setup, Coding in IDE, Sandboxed Execution, and Result Inspection.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Stages (Columns) -->
+      <!-- Stage 1 -->
+      <rect x="40" y="60" width="190" height="380" rx="6" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="55" y="90" fill="#60a5fa" font-size="10" font-weight="600" font-family="'Geist Mono', monospace">01 / AUTH</text>
+      <text x="55" y="112" fill="#f8fafc" font-size="12" font-weight="600">OAuth Login</text>
+      <rect x="55" y="130" width="160" height="80" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="68" y="152" fill="#f8fafc" font-size="9.5">Action: 1-Click Login</text>
+      <text x="68" y="170" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">GitHub or Google</text>
+      <text x="68" y="190" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Feeling: Seamless &#128522;</text>
+
+      <!-- Stage 2 -->
+      <rect x="250" y="60" width="190" height="380" rx="6" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="265" y="90" fill="#60a5fa" font-size="10" font-weight="600" font-family="'Geist Mono', monospace">02 / SETUP</text>
+      <text x="265" y="112" fill="#f8fafc" font-size="12" font-weight="600">Select Project</text>
+      <rect x="265" y="130" width="160" height="80" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="278" y="152" fill="#f8fafc" font-size="9.5">Action: Open Kanban</text>
+      <text x="278" y="170" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Pick Active Task</text>
+      <text x="278" y="190" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Feeling: Focused</text>
+
+      <!-- Stage 3 -->
+      <rect x="460" y="60" width="190" height="380" rx="6" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="475" y="90" fill="#60a5fa" font-size="10" font-weight="600" font-family="'Geist Mono', monospace">03 / CODING</text>
+      <text x="475" y="112" fill="#f8fafc" font-size="12" font-weight="600">Monaco IDE</text>
+      <rect x="475" y="130" width="160" height="80" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="488" y="152" fill="#f8fafc" font-size="9.5">Action: Write Python</text>
+      <text x="488" y="170" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Auto-saved to DB</text>
+      <text x="488" y="190" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Feeling: Productive</text>
+
+      <!-- Stage 4 (Focal) -->
+      <rect x="670" y="60" width="190" height="380" rx="6" fill="rgba(240,138,89,0.04)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="685" y="90" fill="#f08a59" font-size="10" font-weight="600" font-family="'Geist Mono', monospace">04 / RUN (FOCAL)</text>
+      <text x="685" y="112" fill="#f8fafc" font-size="12" font-weight="600">Docker Sandbox</text>
+      <rect x="685" y="130" width="160" height="80" rx="4" fill="#242b37" stroke="#f08a59" stroke-width="1"/>
+      <text x="698" y="152" fill="#f08a59" font-size="9.5" font-weight="600">Action: Click "Run"</text>
+      <text x="698" y="170" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Isolated container</text>
+      <text x="698" y="190" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace">Zero host exposure</text>
+
+      <!-- Stage 5 -->
+      <rect x="880" y="60" width="180" height="380" rx="6" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="895" y="90" fill="#60a5fa" font-size="10" font-weight="600" font-family="'Geist Mono', monospace">05 / FEEDBACK</text>
+      <text x="895" y="112" fill="#f8fafc" font-size="12" font-weight="600">Live Streaming</text>
+      <rect x="895" y="130" width="150" height="80" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="908" y="152" fill="#f8fafc" font-size="9.5">Action: Read Logs</text>
+      <text x="908" y="170" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">STOMP Real-time</text>
+      <text x="908" y="190" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Feeling: Delighted</text>
+
+      <!-- Emotion Curve -->
+      <path d="M 135,320 Q 345,300 555,270 T 765,240 T 970,220" fill="none" stroke="#f08a59" stroke-width="2"/>
+      <circle cx="135" cy="320" r="5" fill="#f08a59"/>
+      <circle cx="345" cy="290" r="5" fill="#f08a59"/>
+      <circle cx="555" cy="270" r="5" fill="#f08a59"/>
+      <circle cx="765" cy="240" r="6" fill="#f08a59"/>
+      <circle cx="970" cy="220" r="5" fill="#34d399"/>
+      <text x="50" y="380" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Confidence &amp; Productivity Curve &uarr;</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="465" x2="1060" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="110" y1="483" x2="140" y2="483" stroke="#f08a59" stroke-width="2"/>
+      <text x="148" y="485" fill="#94a3b8" font-size="8.5">Satisfaction &amp; Velocity Curve</text>
+    </svg>
+  </div>
+</body>
+</html>

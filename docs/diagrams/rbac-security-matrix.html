@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Role-Based Access Control (RBAC) Security Matrix</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Security Matrix · Diagram Design</p>
+    <h1>Fine-Grained Permissions Matrix by Platform Role</h1>
+    <svg viewBox="0 0 1100 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rbac-security-matrix-title rbac-security-matrix-desc">
+      <title id="rbac-security-matrix-title">Fine-Grained Permissions Matrix by Platform Role</title>
+      <desc id="rbac-security-matrix-desc">Security matrix mapping platform roles (OWNER, ADMIN, MEMBER, VIEWER) against granular project operations and administrative capabilities.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Matrix Header -->
+      <rect x="40" y="40" width="340" height="40" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="60" y="65" fill="#f8fafc" font-size="11" font-weight="600">Resource / Permission Area</text>
+
+      <rect x="400" y="40" width="140" height="40" rx="4" fill="rgba(240,138,89,0.15)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="470" y="65" fill="#f08a59" font-size="11" font-weight="600" text-anchor="middle">OWNER</text>
+
+      <rect x="560" y="40" width="140" height="40" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="630" y="65" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">ADMIN</text>
+
+      <rect x="720" y="40" width="140" height="40" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="790" y="65" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">MEMBER</text>
+
+      <rect x="880" y="40" width="140" height="40" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="950" y="65" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">VIEWER</text>
+
+      <!-- Matrix Rows -->
+      <!-- Row 1: Project Admin -->
+      <rect x="40" y="95" width="1020" height="65" rx="4" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="125" fill="#f8fafc" font-size="10.5" font-weight="600">Project Administration</text>
+      <text x="60" y="145" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Delete, Transfer, Rename, Archive</text>
+      <!-- Owner: Full --> <text x="470" y="132" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <!-- Admin: Partial --> <text x="630" y="132" fill="#60a5fa" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Config only</text>
+      <!-- Member: None --> <text x="790" y="132" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+      <!-- Viewer: None --> <text x="950" y="132" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+
+      <!-- Row 2: Member Management -->
+      <rect x="40" y="170" width="1020" height="65" rx="4" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="200" fill="#f8fafc" font-size="10.5" font-weight="600">Team &amp; Membership</text>
+      <text x="60" y="220" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Invite users, Change roles, Revoke</text>
+      <text x="470" y="207" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="630" y="207" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Invite/Edit</text>
+      <text x="790" y="207" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+      <text x="950" y="207" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+
+      <!-- Row 3: Kanban Operations -->
+      <rect x="40" y="245" width="1020" height="65" rx="4" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="275" fill="#f8fafc" font-size="10.5" font-weight="600">Kanban Board &amp; Tasks</text>
+      <text x="60" y="295" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Columns, WIP limits, Tasks, Drag/Drop</text>
+      <text x="470" y="282" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="630" y="282" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="790" y="282" fill="#34d399" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Tasks only</text>
+      <text x="950" y="282" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Read only</text>
+
+      <!-- Row 4: IDE & Code Execution -->
+      <rect x="40" y="320" width="1020" height="65" rx="4" fill="rgba(240,138,89,0.04)" stroke="rgba(240,138,89,0.2)" stroke-width="0.8"/>
+      <text x="60" y="350" fill="#f08a59" font-size="10.5" font-weight="600">Web IDE &amp; Sandbox Runner</text>
+      <text x="60" y="370" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Trigger execution, Edit files, View logs</text>
+      <text x="470" y="357" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="630" y="357" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="790" y="357" fill="#34d399" font-size="11" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Run/Edit</text>
+      <text x="950" y="357" fill="#94a3b8" font-size="9" font-family="'Geist Mono', monospace" text-anchor="middle">Read only</text>
+
+      <!-- Row 5: Telemetry & Observability -->
+      <rect x="40" y="395" width="1020" height="65" rx="4" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="60" y="425" fill="#f8fafc" font-size="10.5" font-weight="600">Observability &amp; Audit Logs</text>
+      <text x="60" y="445" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Elasticsearch logs, Grafana, Metrics</text>
+      <text x="470" y="432" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="630" y="432" fill="#34d399" font-size="13" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Full</text>
+      <text x="790" y="432" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+      <text x="950" y="432" fill="rgba(148,163,184,0.3)" font-size="12" font-family="'Geist Mono', monospace" text-anchor="middle">&mdash;</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="495" x2="1060" y2="495" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="515" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <text x="110" y="515" fill="#34d399" font-size="9" font-family="'Geist Mono', monospace">&#10003; Authorized</text>
+      <text x="240" y="515" fill="#60a5fa" font-size="9" font-family="'Geist Mono', monospace">Limited Scope</text>
+      <text x="360" y="515" fill="rgba(148,163,184,0.4)" font-size="9" font-family="'Geist Mono', monospace">&mdash; Denied (403 Forbidden)</text>
+      <rect x="580" y="507" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)"/>
+      <text x="602" y="515" fill="#f08a59" font-size="8.5">Security Focal Role (OWNER)</text>
+    </svg>
+  </div>
+</body>
+</html>

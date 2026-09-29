@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cross-Cutting Security Concerns Venn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Security Venn · Diagram Design</p>
+    <h1>Convergence of JWT Stateless Tokens, Redis Blacklisting, and Docker Sandboxing</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="security-cross-cutting-concerns-title security-cross-cutting-concerns-desc">
+      <title id="security-cross-cutting-concerns-title">Convergence of JWT Stateless Tokens, Redis Blacklisting, and Docker Sandboxing</title>
+      <desc id="security-cross-cutting-concerns-desc">Venn diagram illustrating overlapping domains between Stateless JWT Auth, Stateful Redis Blacklisting, and Docker Kernel Sandboxing.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Circle 1: Stateless JWT Auth (Left) -->
+      <circle cx="430" cy="220" r="140" fill="rgba(96,165,250,0.1)" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="360" y="160" fill="#60a5fa" font-size="12" font-weight="600">Stateless JWT</text>
+      <text x="360" y="180" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">1h Expiry &bull; Claims</text>
+
+      <!-- Circle 2: Stateful Redis Blacklist (Right) -->
+      <circle cx="670" cy="220" r="140" fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="740" y="160" fill="#34d399" font-size="12" font-weight="600">Stateful Redis</text>
+      <text x="740" y="180" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Instant Revocation &bull; TTL</text>
+
+      <!-- Circle 3: Docker Sandbox Execution (Bottom - Focal) -->
+      <circle cx="550" cy="300" r="140" fill="rgba(240,138,89,0.12)" stroke="#f08a59" stroke-width="1.5"/>
+      <text x="550" y="410" fill="#f08a59" font-size="12" font-weight="600" text-anchor="middle">Docker Kernel Sandbox</text>
+      <text x="550" y="426" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">No-network &bull; 256MB cap</text>
+
+      <!-- Center Intersection (Tri-party Protection) -->
+      <circle cx="550" cy="240" r="12" fill="#f08a59"/>
+      <text x="550" y="244" fill="#1e232d" font-size="7" font-weight="700" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003;</text>
+      <rect x="490" y="200" width="120" height="20" rx="3" fill="#1e232d" stroke="rgba(248,250,252,0.2)" stroke-width="0.8"/>
+      <text x="550" y="214" fill="#f8fafc" font-size="8" font-weight="600" text-anchor="middle">Hardened Core</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <circle cx="140" cy="482" r="5" fill="#f08a59"/>
+      <text x="155" y="485" fill="#94a3b8" font-size="8.5">Triple-Barrier Security Perimeter</text>
+    </svg>
+  </div>
+</body>
+</html>

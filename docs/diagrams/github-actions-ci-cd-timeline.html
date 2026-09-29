@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Actions CI/CD Pipeline Timeline</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Timeline Pipeline · Diagram Design</p>
+    <h1>Automated Build, Test, Containerization, and Deployment Sequence</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="github-actions-ci-cd-timeline-title github-actions-ci-cd-timeline-desc">
+      <title id="github-actions-ci-cd-timeline-title">Automated Build, Test, Containerization, and Deployment Sequence</title>
+      <desc id="github-actions-ci-cd-timeline-desc">Pipeline timeline displaying continuous integration stages: Checkout, Maven build, Docker multi-stage images, and production deployment.</desc>
+      <defs>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Main Horizontal Timeline Spine -->
+      <line x1="60" y1="220" x2="1040" y2="220" stroke="rgba(248,250,252,0.18)" stroke-width="2"/>
+
+      <!-- Milestones -->
+      <!-- Milestone 1: Checkout -->
+      <circle cx="120" cy="220" r="10" fill="#242b37" stroke="#60a5fa" stroke-width="2"/>
+      <line x1="120" y1="220" x2="120" y2="120" stroke="#60a5fa" stroke-width="1.2"/>
+      <rect x="50" y="70" width="140" height="50" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="65" y="92" fill="#60a5fa" font-size="10.5" font-weight="600">01. Checkout</text>
+      <text x="65" y="108" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">git pull &bull; 5s</text>
+
+      <!-- Milestone 2: Maven Backend Build -->
+      <circle cx="340" cy="220" r="10" fill="#242b37" stroke="#60a5fa" stroke-width="2"/>
+      <line x1="340" y1="220" x2="340" y2="290" stroke="#60a5fa" stroke-width="1.2"/>
+      <rect x="270" y="290" width="140" height="60" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="285" y="312" fill="#f8fafc" font-size="10.5" font-weight="600">02. Maven Build</text>
+      <text x="285" y="328" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Java 21 Unit Tests</text>
+      <text x="285" y="342" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Flyway migration dry-run</text>
+
+      <!-- Milestone 3: Frontend Vite Build -->
+      <circle cx="560" cy="220" r="10" fill="#242b37" stroke="#60a5fa" stroke-width="2"/>
+      <line x1="560" y1="220" x2="560" y2="120" stroke="#60a5fa" stroke-width="1.2"/>
+      <rect x="490" y="70" width="140" height="50" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="0.8"/>
+      <text x="505" y="92" fill="#f8fafc" font-size="10.5" font-weight="600">03. Frontend Vite</text>
+      <text x="505" y="108" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">npm run build &bull; 15s</text>
+
+      <!-- Milestone 4: Docker Multi-Stage (Focal) -->
+      <circle cx="780" cy="220" r="12" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="2.5"/>
+      <line x1="780" y1="220" x2="780" y2="290" stroke="#f08a59" stroke-width="1.5"/>
+      <rect x="695" y="290" width="170" height="65" rx="4" fill="rgba(240,138,89,0.08)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="710" y="314" fill="#f08a59" font-size="11" font-weight="600">04. Multi-Stage Docker</text>
+      <text x="710" y="332" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">Minimal JRE Alpine Image</text>
+      <text x="710" y="346" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Cached layers</text>
+
+      <!-- Milestone 5: Deploy & Healthcheck -->
+      <circle cx="980" cy="220" r="10" fill="#242b37" stroke="#34d399" stroke-width="2"/>
+      <line x1="980" y1="220" x2="980" y2="120" stroke="#34d399" stroke-width="1.2"/>
+      <rect x="910" y="70" width="140" height="50" rx="4" fill="#242b37" stroke="rgba(52,211,153,0.3)" stroke-width="0.8"/>
+      <text x="925" y="92" fill="#34d399" font-size="10.5" font-weight="600">05. Live Restart</text>
+      <text x="925" y="108" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Healthcheck :8082 &bull; 200</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="465" x2="1060" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <circle cx="120" cy="482" r="5" fill="#f08a59"/>
+      <text x="135" y="485" fill="#94a3b8" font-size="8.5">Core Docker Image Packaging Phase</text>
+      <circle cx="360" cy="482" r="5" fill="#34d399"/>
+      <text x="375" y="485" fill="#94a3b8" font-size="8.5">Verified Production Deployment</text>
+    </svg>
+  </div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architectural Trade-Offs Radar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Radar Chart · Diagram Design</p>
+    <h1>Architectural Trade-Offs: Modular Monolith vs. Microservice Fleet</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="architectural-tradeoffs-radar-title architectural-tradeoffs-radar-desc">
+      <title id="architectural-tradeoffs-radar-title">Architectural Trade-Offs: Modular Monolith vs. Microservice Fleet</title>
+      <desc id="architectural-tradeoffs-radar-desc">Radar chart assessing DevOps Suite's monolith architecture on Deployability, Performance, Simplicity, Isolation, and Observability.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Radar Web Polygons (5 Axes) -->
+      <polygon points="550,100 700,200 640,360 460,360 400,200" fill="none" stroke="rgba(248,250,252,0.06)" stroke-width="1"/>
+      <polygon points="550,140 660,220 610,330 490,330 440,220" fill="none" stroke="rgba(248,250,252,0.06)" stroke-width="1"/>
+      <polygon points="550,180 620,240 580,300 520,300 480,240" fill="none" stroke="rgba(248,250,252,0.06)" stroke-width="1"/>
+
+      <!-- Axis Spokes -->
+      <line x1="550" y1="240" x2="550" y2="80" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="550" y="70" fill="#f8fafc" font-size="10" font-weight="600" text-anchor="middle">Operational Simplicity</text>
+
+      <line x1="550" y1="240" x2="740" y2="190" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="750" y="195" fill="#f8fafc" font-size="10" font-weight="600">Local Dev Velocity</text>
+
+      <line x1="550" y1="240" x2="660" y2="390" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="670" y="405" fill="#f8fafc" font-size="10" font-weight="600">ACID Transaction Safety</text>
+
+      <line x1="550" y1="240" x2="440" y2="390" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="430" y="405" fill="#f8fafc" font-size="10" font-weight="600" text-anchor="end">Security Sandbox Isolation</text>
+
+      <line x1="550" y1="240" x2="360" y2="190" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="350" y="195" fill="#f8fafc" font-size="10" font-weight="600" text-anchor="end">Observability Density</text>
+
+      <!-- Shape 1: DevOps Suite Monolith (Focal Coral) -->
+      <polygon points="550,95 720,195 650,380 470,360 380,195" fill="rgba(240,138,89,0.15)" stroke="#f08a59" stroke-width="2"/>
+      <circle cx="550" cy="95" r="4" fill="#f08a59"/>
+      <circle cx="720" cy="195" r="4" fill="#f08a59"/>
+      <circle cx="650" cy="380" r="4" fill="#f08a59"/>
+      <circle cx="470" cy="360" r="4" fill="#f08a59"/>
+      <circle cx="380" cy="195" r="4" fill="#f08a59"/>
+
+      <!-- Shape 2: Typical Microservices Comparison (Blue dashed) -->
+      <polygon points="550,200 620,240 560,290 440,370 410,210" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="140" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="162" y="485" fill="#94a3b8" font-size="8.5">DevOps Suite Monolith Strategy</text>
+      <line x1="400" y1="483" x2="430" y2="483" stroke="#60a5fa" stroke-dasharray="3,3" stroke-width="1.5"/>
+      <text x="438" y="485" fill="#94a3b8" font-size="8.5">Distributed Microservices Fleet</text>
+    </svg>
+  </div>
+</body>
+</html>

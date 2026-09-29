@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Execution Memory vs. Duration Scatter Plot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Scatter Plot · Diagram Design</p>
+    <h1>Sandbox Job Duration vs. Peak Memory Consumption (with 256MB Hard Cap)</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="execution-memory-vs-duration-title execution-memory-vs-duration-desc">
+      <title id="execution-memory-vs-duration-title">Sandbox Job Duration vs. Peak Memory Consumption (with 256MB Hard Cap)</title>
+      <desc id="execution-memory-vs-duration-desc">Scatter plot mapping sandbox job duration in seconds against peak resident set size in megabytes.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Axes -->
+      <line x1="100" y1="80" x2="100" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+      <line x1="100" y1="420" x2="1020" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+
+      <!-- 256MB Limit Ceiling Line (Focal) -->
+      <line x1="100" y1="120" x2="1020" y2="120" stroke="#f08a59" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <rect x="850" y="105" width="160" height="20" rx="3" fill="#1e232d" stroke="#f08a59" stroke-width="0.8"/>
+      <text x="930" y="118" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">256MB Hard Ceiling (OOM)</text>
+
+      <!-- 30s Timeout Line -->
+      <line x1="920" y1="80" x2="920" y2="420" stroke="#f08a59" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <text x="910" y="95" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">30s Timeout</text>
+
+      <!-- Data Points (Clusters) -->
+      <!-- Normal cluster: Python & Node (50-120MB, 0.5-3s) -->
+      <circle cx="180" cy="360" r="5" fill="#60a5fa" opacity="0.8"/>
+      <circle cx="210" cy="340" r="5" fill="#60a5fa" opacity="0.8"/>
+      <circle cx="240" cy="320" r="5" fill="#60a5fa" opacity="0.8"/>
+      <circle cx="270" cy="350" r="5" fill="#60a5fa" opacity="0.8"/>
+      <circle cx="310" cy="310" r="5" fill="#60a5fa" opacity="0.8"/>
+      <text x="210" y="380" fill="#60a5fa" font-size="8" font-family="'Geist Mono', monospace">Python/JS Cluster</text>
+
+      <!-- Normal cluster: Java (140-190MB, 1.5-4s) -->
+      <circle cx="280" cy="220" r="5" fill="#34d399" opacity="0.8"/>
+      <circle cx="320" cy="200" r="5" fill="#34d399" opacity="0.8"/>
+      <circle cx="350" cy="210" r="5" fill="#34d399" opacity="0.8"/>
+      <text x="320" y="240" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Java JRE Baseline</text>
+
+      <!-- Heavy cluster / Near breach -->
+      <circle cx="580" cy="140" r="6" fill="#f08a59"/>
+      <circle cx="620" cy="130" r="6" fill="#f08a59"/>
+      <circle cx="890" cy="135" r="7" fill="#f08a59"/>
+      <text x="880" y="160" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">Near-Ceiling Runs</text>
+
+      <!-- Axis Labels -->
+      <text x="560" y="445" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Execution Duration (Seconds) &rarr;</text>
+      <text x="50" y="250" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" transform="rotate(-90 50 250)" text-anchor="middle">Memory (MB) &rarr;</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="475" x2="1020" y2="475" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="495" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="140" y1="492" x2="170" y2="492" stroke="#f08a59" stroke-dasharray="3,3" stroke-width="1.5"/>
+      <text x="178" y="495" fill="#94a3b8" font-size="8.5">Kernel Cgroup Safety Limit</text>
+    </svg>
+  </div>
+</body>
+</html>

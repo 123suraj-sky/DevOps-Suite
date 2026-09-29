@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physical Database Schema · Flyway Migrations</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Database Schema · Diagram Design</p>
+    <h1>DevOps Suite Database Schema (V1–V16) with Column Constraints & Cascades</h1>
+    <svg viewBox="0 0 1120 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="db-schema-flyway-title db-schema-flyway-desc">
+      <title id="db-schema-flyway-title">DevOps Suite Database Schema (V1–V16) with Column Constraints & Cascades</title>
+      <desc id="db-schema-flyway-desc">Physical schema diagram showing core tables across users, projects, kanban boards, tasks, and task history with foreign key cascade relationships.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Group: KANBAN DOMAIN -->
+      <rect x="360" y="30" width="730" height="520" rx="8" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="0.8" stroke-dasharray="4,4"/>
+      <text x="375" y="48" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.14em">KANBAN &amp; PROJECT DOMAIN</text>
+
+      <!-- Connectors (drawn before tables) -->
+      <!-- projects.owner_id -> users.id -->
+      <path d="M 380,120 H 330 Q 320,120 320,135 V 150 Q 320,165 310,165 H 260" fill="none" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <!-- boards.project_id -> projects.id (CASCADE) -->
+      <path d="M 720,135 H 660 Q 650,135 650,125 V 120 H 620" fill="none" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <!-- columns.board_id -> boards.id (CASCADE) -->
+      <path d="M 720,320 H 680 Q 670,320 670,290 V 210 Q 670,180 680,180 H 720" fill="none" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <!-- tasks.column_id -> columns.id (CASCADE) -->
+      <path d="M 380,360 H 350 Q 340,360 340,380 V 380 Q 340,400 350,400 H 720" fill="none" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+
+      <!-- Labels on connectors -->
+      <rect x="290" y="105" width="85" height="12" rx="2" fill="#1e232d"/>
+      <text x="332" y="114" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">RESTRICT</text>
+
+      <rect x="635" y="115" width="80" height="12" rx="2" fill="#1e232d"/>
+      <text x="675" y="124" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">CASCADE</text>
+
+      <rect x="640" y="240" width="80" height="12" rx="2" fill="#1e232d"/>
+      <text x="680" y="249" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">CASCADE</text>
+
+      <!-- Table 1: users -->
+      <rect x="30" y="80" width="230" height="190" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="30" y="80" width="230" height="28" rx="6" fill="rgba(248,250,252,0.04)"/>
+      <line x1="30" y1="108" x2="260" y2="108" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="42" y="98" fill="#f8fafc" font-size="11.5" font-weight="600">public.users</text>
+      <rect x="210" y="88" width="40" height="12" rx="2" fill="none" stroke="rgba(248,250,252,0.3)" stroke-width="0.8"/>
+      <text x="230" y="97" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">TABLE</text>
+      <!-- Rows -->
+      <text x="42" y="124" fill="#f8fafc" font-size="11">id</text> <text x="140" y="124" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">PK</text> <text x="250" y="124" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="42" y="148" fill="#f8fafc" font-size="11">email</text> <text x="140" y="148" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">UQ NN</text> <text x="250" y="148" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(255)</text>
+      <text x="42" y="172" fill="#f8fafc" font-size="11">password_hash</text> <text x="250" y="172" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(255)</text>
+      <text x="42" y="196" fill="#f8fafc" font-size="11">role</text> <text x="140" y="196" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">NN</text> <text x="250" y="196" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(32)</text>
+      <text x="42" y="220" fill="#f8fafc" font-size="11">provider</text> <text x="250" y="220" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(32)</text>
+      <line x1="30" y1="234" x2="260" y2="234" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="42" y="250" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">idx_users_email</text>
+
+      <!-- Table 2: projects -->
+      <rect x="380" y="80" width="240" height="190" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="380" y="80" width="240" height="28" rx="6" fill="rgba(248,250,252,0.04)"/>
+      <line x1="380" y1="108" x2="620" y2="108" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="392" y="98" fill="#f8fafc" font-size="11.5" font-weight="600">public.projects</text>
+      <rect x="570" y="88" width="40" height="12" rx="2" fill="none" stroke="rgba(248,250,252,0.3)" stroke-width="0.8"/>
+      <text x="590" y="97" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">TABLE</text>
+      <text x="392" y="124" fill="#f8fafc" font-size="11">id</text> <text x="490" y="124" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">PK</text> <text x="610" y="124" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="392" y="148" fill="#f8fafc" font-size="11">name</text> <text x="490" y="148" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">NN</text> <text x="610" y="148" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(120)</text>
+      <text x="392" y="172" fill="#f8fafc" font-size="11">owner_id</text> <text x="490" y="172" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">FK</text> <text x="610" y="172" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="392" y="196" fill="#f8fafc" font-size="11">created_at</text> <text x="610" y="196" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">timestamp</text>
+      <line x1="380" y1="210" x2="620" y2="210" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="392" y="226" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">idx_projects_owner_id</text>
+
+      <!-- Table 3: boards -->
+      <rect x="720" y="80" width="240" height="150" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="720" y="80" width="240" height="28" rx="6" fill="rgba(240,138,89,0.15)"/>
+      <line x1="720" y1="108" x2="960" y2="108" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="732" y="98" fill="#f8fafc" font-size="11.5" font-weight="600">public.kanban_boards</text>
+      <text x="732" y="124" fill="#f8fafc" font-size="11">id</text> <text x="830" y="124" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">PK</text> <text x="950" y="124" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="732" y="148" fill="#f8fafc" font-size="11">project_id</text> <text x="830" y="148" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">FK</text> <text x="950" y="148" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="732" y="172" fill="#f8fafc" font-size="11">title</text> <text x="950" y="172" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(100)</text>
+
+      <!-- Table 4: columns -->
+      <rect x="720" y="270" width="240" height="170" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="720" y="270" width="240" height="28" rx="6" fill="rgba(240,138,89,0.15)"/>
+      <line x1="720" y1="298" x2="960" y2="298" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="732" y="288" fill="#f8fafc" font-size="11.5" font-weight="600">public.kanban_columns</text>
+      <text x="732" y="316" fill="#f8fafc" font-size="11">id</text> <text x="830" y="316" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">PK</text> <text x="950" y="316" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="732" y="340" fill="#f8fafc" font-size="11">board_id</text> <text x="830" y="340" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">FK</text> <text x="950" y="340" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="732" y="364" fill="#f8fafc" font-size="11">name</text> <text x="950" y="364" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(60)</text>
+      <text x="732" y="388" fill="#f8fafc" font-size="11">position</text> <text x="950" y="388" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">integer</text>
+
+      <!-- Table 5: tasks -->
+      <rect x="380" y="310" width="240" height="210" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="380" y="310" width="240" height="28" rx="6" fill="rgba(240,138,89,0.15)"/>
+      <line x1="380" y1="338" x2="620" y2="338" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="392" y="328" fill="#f8fafc" font-size="11.5" font-weight="600">public.kanban_tasks</text>
+      <text x="392" y="356" fill="#f8fafc" font-size="11">id</text> <text x="490" y="356" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">PK</text> <text x="610" y="356" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="392" y="380" fill="#f8fafc" font-size="11">column_id</text> <text x="490" y="380" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">FK</text> <text x="610" y="380" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <text x="392" y="404" fill="#f8fafc" font-size="11">title</text> <text x="610" y="404" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(160)</text>
+      <text x="392" y="428" fill="#f8fafc" font-size="11">priority</text> <text x="610" y="428" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">varchar(20)</text>
+      <text x="392" y="452" fill="#f8fafc" font-size="11">assignee_id</text> <text x="490" y="452" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">FK</text> <text x="610" y="452" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="end">bigint</text>
+      <line x1="380" y1="468" x2="620" y2="468" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="392" y="484" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">idx_tasks_column_id</text>
+
+      <!-- Legend -->
+      <line x1="50" y1="580" x2="1050" y2="580" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="50" y="598" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="120" y1="595" x2="150" y2="595" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="158" y="598" fill="#94a3b8" font-size="8.5">ON DELETE CASCADE (Focal)</text>
+      <line x1="360" y1="595" x2="390" y2="595" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <text x="398" y="598" fill="#94a3b8" font-size="8.5">ON DELETE RESTRICT</text>
+      <rect x="580" y="590" width="16" height="10" rx="2" fill="rgba(240,138,89,0.2)"/>
+      <text x="602" y="598" fill="#94a3b8" font-size="8.5">Cascade Target Table</text>
+    </svg>
+  </div>
+</body>
+</html>

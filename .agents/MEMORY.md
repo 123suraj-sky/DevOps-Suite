@@ -47,6 +47,7 @@
 - **Notification system** â€” fully implemented end-to-end (see details below)
 - **Infrastructure integration** â€” Elasticsearch log indexing, Grafana/Kibana auto-provisioning, Redis caching + rate limiting all implemented (see below)
 - **Admin User Activity & Log Explorer** â€” Added `/api/admin/users`, `/tasks`, and `/logs` endpoints alongside the frontend `AdminUsersPage` to inspect all users, real-time activity status, all tasks created/assigned across projects, and user-filtered Elasticsearch logs.
+- **Diagram Design Suite (41 diagrams generated & verified)** — Installed diagram-design skill and produced all 41 production-ready self-contained HTML/SVG diagrams + master gallery in docs/diagrams/index.html. All verified with self_check.py.
 
 ---
 

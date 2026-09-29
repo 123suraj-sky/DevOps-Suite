@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual OAuth2 & JWT Security Flow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sequence Flow · Diagram Design</p>
+    <h1>OAuth2 Code Exchange & JWT Issuance with Redis Token Blacklisting</h1>
+    <svg viewBox="0 0 1100 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="auth-oauth2-jwt-sequence-title auth-oauth2-jwt-sequence-desc">
+      <title id="auth-oauth2-jwt-sequence-title">OAuth2 Code Exchange & JWT Issuance with Redis Token Blacklisting</title>
+      <desc id="auth-oauth2-jwt-sequence-desc">Sequence diagram tracing client authentication through Google and GitHub OAuth2, JWT issuance, protected endpoint requests via JwtRequestFilter, and Redis logout blacklisting.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+        <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#60a5fa"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Actors Header -->
+      <!-- Actor 1: Browser -->
+      <rect x="50" y="30" width="130" height="44" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="115" y="56" fill="#f8fafc" font-size="11.5" font-weight="600" text-anchor="middle">Browser / React SPA</text>
+      <!-- Actor 2: OAuth Provider -->
+      <rect x="260" y="30" width="140" height="44" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="330" y="56" fill="#f8fafc" font-size="11.5" font-weight="600" text-anchor="middle">Google / GitHub IDP</text>
+      <!-- Actor 3: Spring Security Monolith (Focal) -->
+      <rect x="470" y="30" width="160" height="44" rx="6" fill="rgba(240,138,89,0.1)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="550" y="56" fill="#f08a59" font-size="11.5" font-weight="600" text-anchor="middle">Spring Security Monolith</text>
+      <!-- Actor 4: Redis Cache -->
+      <rect x="710" y="30" width="130" height="44" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="775" y="56" fill="#f8fafc" font-size="11.5" font-weight="600" text-anchor="middle">Redis Token Store</text>
+      <!-- Actor 5: PostgreSQL -->
+      <rect x="910" y="30" width="130" height="44" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="975" y="56" fill="#f8fafc" font-size="11.5" font-weight="600" text-anchor="middle">PostgreSQL Users</text>
+
+      <!-- Lifelines -->
+      <line x1="115" y1="74" x2="115" y2="520" stroke="rgba(248,250,252,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="330" y1="74" x2="330" y2="520" stroke="rgba(248,250,252,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="550" y1="74" x2="550" y2="520" stroke="rgba(248,250,252,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="775" y1="74" x2="775" y2="520" stroke="rgba(248,250,252,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="975" y1="74" x2="975" y2="520" stroke="rgba(248,250,252,0.15)" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- Activation Bars -->
+      <rect x="111" y="90" width="8" height="380" fill="rgba(248,250,252,0.06)" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="326" y="110" width="8" height="60" fill="rgba(248,250,252,0.06)" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="546" y="140" width="8" height="340" fill="rgba(240,138,89,0.15)" stroke="#f08a59" stroke-width="1"/>
+      <rect x="771" y="240" width="8" height="40" fill="rgba(248,250,252,0.06)" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="771" y="440" width="8" height="40" fill="rgba(248,250,252,0.06)" stroke="#94a3b8" stroke-width="0.8"/>
+      <rect x="971" y="180" width="8" height="50" fill="rgba(248,250,252,0.06)" stroke="#94a3b8" stroke-width="0.8"/>
+
+      <!-- Messages -->
+      <!-- 1. Browser -> IDP -->
+      <line x1="119" y1="115" x2="326" y2="115" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="220" y="108" fill="#60a5fa" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1. OAuth Redirect &amp; Consent</text>
+
+      <!-- 2. IDP -> Browser Code -->
+      <line x1="326" y1="145" x2="119" y2="145" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="220" y="138" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2. Callback with auth code</text>
+
+      <!-- 3. Browser -> Spring Boot Token Exchange -->
+      <line x1="119" y1="175" x2="546" y2="175" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="330" y="168" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">3. POST /api/auth/oauth2/callback (code)</text>
+
+      <!-- 4. Spring Boot -> DB Upsert User -->
+      <line x1="554" y1="195" x2="971" y2="195" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="760" y="188" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">4. Load / Register User (RBAC Role)</text>
+      <line x1="971" y1="215" x2="554" y2="215" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="760" y="210" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">User entity returned</text>
+
+      <!-- 5. Headline Success: Token Pair to Browser -->
+      <line x1="546" y1="245" x2="119" y2="245" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <rect x="230" y="235" width="200" height="15" rx="2" fill="#1e232d"/>
+      <text x="330" y="246" fill="#f08a59" font-size="8" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">5. 200 OK: JWT (1h) + Refresh (7d)</text>
+
+      <!-- Combined Fragment: ALT [Authorized API Request vs Logged out / Blacklisted] -->
+      <rect x="80" y="280" width="760" height="135" rx="4" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="80" y="280" width="40" height="16" rx="2" fill="#1e232d" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="100" y="292" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ALT</text>
+      <text x="135" y="292" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">[Token Active &amp; Valid]</text>
+
+      <!-- Flow in ALT: Token check in Redis -->
+      <line x1="119" y1="315" x2="546" y2="315" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="330" y="308" fill="#60a5fa" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">GET /api/projects (Bearer JWT)</text>
+      <line x1="554" y1="325" x2="771" y2="325" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+      <text x="660" y="320" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Check isBlacklisted(jti)</text>
+      <line x1="771" y1="340" x2="554" y2="340" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="660" y="335" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">false (cache miss)</text>
+      <line x1="546" y1="355" x2="119" y2="355" stroke="#60a5fa" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-blue)"/>
+      <text x="330" y="350" fill="#60a5fa" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">200 OK + Resource Data</text>
+
+      <!-- Alt Divider -->
+      <line x1="85" y1="370" x2="835" y2="370" stroke="rgba(248,250,252,0.18)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="135" y="384" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">[On User Logout]</text>
+
+      <!-- Logout message -->
+      <line x1="119" y1="400" x2="546" y2="400" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="330" y="394" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">POST /api/auth/logout</text>
+      <line x1="554" y1="410" x2="771" y2="410" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+      <text x="660" y="404" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">SET blacklist:&#123;jti&#125; TTL=exp</text>
+
+      <!-- Final logout response -->
+      <line x1="546" y1="455" x2="119" y2="455" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="330" y="448" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">200 OK: Logged out successfully</text>
+
+      <!-- Legend -->
+      <line x1="50" y1="535" x2="1050" y2="535" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="50" y="552" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="120" y1="550" x2="150" y2="550" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="158" y="552" fill="#94a3b8" font-size="8.5">Auth / Token Issuance Flow</text>
+      <line x1="370" y1="550" x2="400" y2="550" stroke="#60a5fa" stroke-width="1.2" marker-end="url(#arrow-blue)"/>
+      <text x="408" y="552" fill="#94a3b8" font-size="8.5">Authenticated REST Call</text>
+      <line x1="600" y1="550" x2="630" y2="550" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text x="638" y="552" fill="#94a3b8" font-size="8.5">Async / Cache Verification</text>
+    </svg>
+  </div>
+</body>
+</html>

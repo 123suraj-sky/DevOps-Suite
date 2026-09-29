@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Traffic & Latency Heatmap</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Traffic Heatmap · Diagram Design</p>
+    <h1>24-Hour Request Traffic Volume and Response Latency by Endpoint Group</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="api-latency-traffic-heatmap-title api-latency-traffic-heatmap-desc">
+      <title id="api-latency-traffic-heatmap-title">24-Hour Request Traffic Volume and Response Latency by Endpoint Group</title>
+      <desc id="api-latency-traffic-heatmap-desc">Heatmap displaying endpoint latency and request densities across 6-hour windows.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Grid Column Labels (Time Blocks) -->
+      <text x="310" y="80" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">00:00 - 06:00</text>
+      <text x="510" y="80" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">06:00 - 12:00</text>
+      <text x="710" y="80" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">12:00 - 18:00 (Peak)</text>
+      <text x="910" y="80" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">18:00 - 24:00</text>
+
+      <!-- Row 1: /api/auth/* -->
+      <text x="50" y="130" fill="#f8fafc" font-size="11" font-weight="600">/api/auth/*</text>
+      <rect x="220" y="100" width="180" height="50" rx="4" fill="rgba(96,165,250,0.1)"/>
+      <text x="310" y="130" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">15ms &bull; 1.2k req</text>
+
+      <rect x="420" y="100" width="180" height="50" rx="4" fill="rgba(96,165,250,0.2)"/>
+      <text x="510" y="130" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">22ms &bull; 8.4k req</text>
+
+      <rect x="620" y="100" width="180" height="50" rx="4" fill="rgba(96,165,250,0.3)"/>
+      <text x="710" y="130" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">28ms &bull; 14.1k req</text>
+
+      <rect x="820" y="100" width="180" height="50" rx="4" fill="rgba(96,165,250,0.15)"/>
+      <text x="910" y="130" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">18ms &bull; 4.6k req</text>
+
+      <!-- Row 2: /api/projects/* (Kanban) -->
+      <text x="50" y="200" fill="#f8fafc" font-size="11" font-weight="600">/api/projects/*</text>
+      <rect x="220" y="170" width="180" height="50" rx="4" fill="rgba(96,165,250,0.1)"/>
+      <text x="310" y="200" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">12ms &bull; 2.1k req</text>
+
+      <rect x="420" y="170" width="180" height="50" rx="4" fill="rgba(96,165,250,0.25)"/>
+      <text x="510" y="200" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">16ms &bull; 18.2k req</text>
+
+      <rect x="620" y="170" width="180" height="50" rx="4" fill="rgba(96,165,250,0.35)"/>
+      <text x="710" y="200" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">20ms &bull; 26.5k req</text>
+
+      <rect x="820" y="170" width="180" height="50" rx="4" fill="rgba(96,165,250,0.15)"/>
+      <text x="910" y="200" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">14ms &bull; 7.8k req</text>
+
+      <!-- Row 3: /api/execution/* (Focal) -->
+      <text x="50" y="270" fill="#f08a59" font-size="11" font-weight="600">/api/execution/*</text>
+      <rect x="220" y="240" width="180" height="50" rx="4" fill="rgba(240,138,89,0.15)"/>
+      <text x="310" y="270" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">420ms &bull; 210 req</text>
+
+      <rect x="420" y="240" width="180" height="50" rx="4" fill="rgba(240,138,89,0.25)"/>
+      <text x="510" y="270" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">680ms &bull; 1.4k req</text>
+
+      <rect x="620" y="240" width="180" height="50" rx="4" fill="rgba(240,138,89,0.4)" stroke="#f08a59" stroke-width="1.2"/>
+      <text x="710" y="270" fill="#f8fafc" font-size="8.5" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="middle">1.2s &bull; 3.2k runs (Peak)</text>
+
+      <rect x="820" y="240" width="180" height="50" rx="4" fill="rgba(240,138,89,0.2)"/>
+      <text x="910" y="270" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">510ms &bull; 890 req</text>
+
+      <!-- Row 4: /actuator/prometheus -->
+      <text x="50" y="340" fill="#94a3b8" font-size="11" font-weight="600">/actuator/*</text>
+      <rect x="220" y="310" width="180" height="50" rx="4" fill="rgba(248,250,252,0.05)"/>
+      <text x="310" y="340" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">8ms &bull; 360 req</text>
+
+      <rect x="420" y="310" width="180" height="50" rx="4" fill="rgba(248,250,252,0.05)"/>
+      <text x="510" y="340" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">9ms &bull; 360 req</text>
+
+      <rect x="620" y="310" width="180" height="50" rx="4" fill="rgba(248,250,252,0.05)"/>
+      <text x="710" y="340" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">11ms &bull; 360 req</text>
+
+      <rect x="820" y="310" width="180" height="50" rx="4" fill="rgba(248,250,252,0.05)"/>
+      <text x="910" y="340" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">8ms &bull; 360 req</text>
+
+      <!-- Legend -->
+      <line x1="50" y1="465" x2="1050" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="50" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="120" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.3)" stroke="#f08a59" stroke-width="1"/>
+      <text x="142" y="485" fill="#94a3b8" font-size="8.5">Docker Sandboxed Compute Overhead</text>
+    </svg>
+  </div>
+</body>
+</html>

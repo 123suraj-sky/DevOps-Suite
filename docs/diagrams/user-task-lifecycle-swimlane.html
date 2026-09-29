@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Actor Task Lifecycle Swimlane</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Swimlane Map · Diagram Design</p>
+    <h1>Task & Code Lifecycle Across Developer, Project Lead, and Admin</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="user-task-lifecycle-swimlane-title user-task-lifecycle-swimlane-desc">
+      <title id="user-task-lifecycle-swimlane-title">Task & Code Lifecycle Across Developer, Project Lead, and Admin</title>
+      <desc id="user-task-lifecycle-swimlane-desc">Swimlane diagram dividing lifecycle activities across Developer, Project Lead, and Admin roles.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Lane Dividers -->
+      <line x1="40" y1="60" x2="1060" y2="60" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <line x1="40" y1="180" x2="1060" y2="180" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <line x1="40" y1="310" x2="1060" y2="310" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <line x1="40" y1="440" x2="1060" y2="440" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+
+      <!-- Lane Headers -->
+      <text x="50" y="125" fill="#f8fafc" font-size="11" font-weight="600">PROJECT LEAD</text>
+      <text x="50" y="250" fill="#f08a59" font-size="11" font-weight="600">DEVELOPER (Focal)</text>
+      <text x="50" y="380" fill="#94a3b8" font-size="11" font-weight="600">ADMIN</text>
+
+      <!-- Connectors -->
+      <path d="M 320,120 H 350 Q 360,120 360,140 V 230 Q 360,245 370,245 H 390" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <path d="M 540,245 H 580" fill="none" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <path d="M 730,245 H 760 Q 770,245 770,225 V 135 Q 770,120 780,120 H 800" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Lane 1: Lead Boxes -->
+      <rect x="180" y="90" width="140" height="60" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="195" y="115" fill="#f8fafc" font-size="10.5" font-weight="500">Create Task</text>
+      <text x="195" y="132" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Set column &amp; priority</text>
+
+      <rect x="800" y="90" width="140" height="60" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="815" y="115" fill="#f8fafc" font-size="10.5" font-weight="500">Review &amp; Close</text>
+      <text x="815" y="132" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Move to Done</text>
+
+      <!-- Lane 2: Developer Boxes -->
+      <rect x="390" y="215" width="150" height="60" rx="4" fill="#242b37" stroke="rgba(240,138,89,0.3)" stroke-width="1"/>
+      <text x="405" y="240" fill="#f8fafc" font-size="10.5" font-weight="500">Pick Task</text>
+      <text x="405" y="257" fill="#f08a59" font-size="7.5" font-family="'Geist Mono', monospace">Move to In Progress</text>
+
+      <rect x="580" y="205" width="150" height="80" rx="4" fill="rgba(240,138,89,0.1)" stroke="#f08a59" stroke-width="1.4"/>
+      <text x="595" y="230" fill="#f08a59" font-size="11" font-weight="600">Code &amp; Execute</text>
+      <text x="595" y="248" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">Monaco IDE Sandbox</text>
+      <text x="595" y="266" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Stream WS Output</text>
+
+      <!-- Lane 3: Admin Boxes -->
+      <rect x="580" y="350" width="150" height="60" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="595" y="375" fill="#f8fafc" font-size="10.5" font-weight="500">Audit &amp; Resource Cap</text>
+      <text x="595" y="392" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Monitor execution rate</text>
+      <line x1="655" y1="285" x2="655" y2="350" stroke="#94a3b8" stroke-dasharray="3,3" stroke-width="1"/>
+
+      <!-- Legend -->
+      <line x1="40" y1="465" x2="1060" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="110" y1="483" x2="140" y2="483" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+      <text x="148" y="485" fill="#94a3b8" font-size="8.5">Core Developer Execution Flow</text>
+      <line x1="360" y1="483" x2="390" y2="483" stroke="#94a3b8" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="398" y="485" fill="#94a3b8" font-size="8.5">Telemetry &amp; Audit Link</text>
+    </svg>
+  </div>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logging Pipeline Medallion Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Medallion Pipeline · Diagram Design</p>
+    <h1>Raw Request Logs to Searchable Elasticsearch Gold Aggregations</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logging-pipeline-medallion-title logging-pipeline-medallion-desc">
+      <title id="logging-pipeline-medallion-title">Raw Request Logs to Searchable Elasticsearch Gold Aggregations</title>
+      <desc id="logging-pipeline-medallion-desc">Medallion architecture diagram showing Bronze raw request capture, Silver structured sanitization, and Gold analytical visualization.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Arrows -->
+      <line x1="330" y1="240" x2="410" y2="240" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="690" y1="240" x2="770" y2="240" stroke="#f08a59" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+
+      <!-- Bronze Tier -->
+      <rect x="50" y="120" width="280" height="240" rx="8" fill="#242b37" stroke="rgba(184,115,51,0.4)" stroke-width="1.2"/>
+      <rect x="50" y="120" width="280" height="30" rx="8" fill="rgba(184,115,51,0.15)"/>
+      <text x="70" y="140" fill="#b87333" font-size="11" font-weight="600" font-family="'Geist Mono', monospace">BRONZE / RAW INGESTION</text>
+      <text x="70" y="180" fill="#f8fafc" font-size="11" font-weight="600">Raw Request Interceptor</text>
+      <text x="70" y="202" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; HTTP Method, URI, Query</text>
+      <text x="70" y="222" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; IP address &amp; User-Agent</text>
+      <text x="70" y="242" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Inbound Payload Buffer</text>
+      <text x="70" y="262" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Unparsed raw text</text>
+
+      <!-- Silver Tier -->
+      <rect x="410" y="120" width="280" height="240" rx="8" fill="#242b37" stroke="rgba(192,192,192,0.4)" stroke-width="1.2"/>
+      <rect x="410" y="120" width="280" height="30" rx="8" fill="rgba(192,192,192,0.15)"/>
+      <text x="430" y="140" fill="#c0c0c0" font-size="11" font-weight="600" font-family="'Geist Mono', monospace">SILVER / FILTERED &amp; SCOPED</text>
+      <text x="430" y="180" fill="#f8fafc" font-size="11" font-weight="600">Sanitized JSON Documents</text>
+      <text x="430" y="202" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Password redaction</text>
+      <text x="430" y="222" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; X-Project-Id correlation</text>
+      <text x="430" y="242" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Trace ID &amp; User ID tag</text>
+      <text x="430" y="262" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; ISO-8601 Timestamps</text>
+
+      <!-- Gold Tier (Focal) -->
+      <rect x="770" y="120" width="280" height="240" rx="8" fill="rgba(240,138,89,0.06)" stroke="#f08a59" stroke-width="1.5"/>
+      <rect x="770" y="120" width="280" height="30" rx="8" fill="rgba(240,138,89,0.2)"/>
+      <text x="790" y="140" fill="#f08a59" font-size="11" font-weight="600" font-family="'Geist Mono', monospace">GOLD / AGGREGATED METRICS</text>
+      <text x="790" y="180" fill="#f8fafc" font-size="11" font-weight="600">Searchable Analytics Indices</text>
+      <text x="790" y="202" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Error spike alert rules</text>
+      <text x="790" y="222" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Rate limit violation audit</text>
+      <text x="790" y="242" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Kibana Discover saved views</text>
+      <text x="790" y="262" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">&bull; Docker sandbox error logs</text>
+
+      <!-- Legend -->
+      <line x1="50" y1="465" x2="1050" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="50" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="120" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="142" y="485" fill="#94a3b8" font-size="8.5">High-Value Elasticsearch Gold Layer</text>
+    </svg>
+  </div>
+</body>
+</html>

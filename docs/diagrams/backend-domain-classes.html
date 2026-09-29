@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Backend Domain UML Class Diagram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">UML Class · Diagram Design</p>
+    <h1>Core Service, Repository, and Entity UML Class Hierarchy</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="backend-domain-classes-title backend-domain-classes-desc">
+      <title id="backend-domain-classes-title">Core Service, Repository, and Entity UML Class Hierarchy</title>
+      <desc id="backend-domain-classes-desc">UML class diagram illustrating relationships between TaskController, TaskService, TaskRepository, and Task entity.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-white" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f8fafc"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Connectors -->
+      <line x1="240" y1="180" x2="330" y2="180" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="570" y1="180" x2="660" y2="180" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+      <line x1="770" y1="260" x2="770" y2="330" stroke="#f08a59" stroke-width="1.2" marker-end="url(#arrow)"/>
+
+      <!-- Class 1: TaskController -->
+      <rect x="40" y="110" width="200" height="150" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="40" y="110" width="200" height="26" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="140" y="128" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">&laquo;RestController&raquo; TaskController</text>
+      <line x1="40" y1="136" x2="240" y2="136" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="50" y="155" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- taskService: TaskService</text>
+      <line x1="40" y1="168" x2="240" y2="168" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="50" y="188" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ createTask(req): TaskDTO</text>
+      <text x="50" y="206" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ moveTask(id, colId): void</text>
+      <text x="50" y="224" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ updateTask(id, req): TaskDTO</text>
+
+      <!-- Class 2: TaskService (Focal) -->
+      <rect x="330" y="95" width="240" height="180" rx="4" fill="#242b37" stroke="#f08a59" stroke-width="1.5"/>
+      <rect x="330" y="95" width="240" height="26" rx="4" fill="rgba(240,138,89,0.15)"/>
+      <text x="450" y="113" fill="#f08a59" font-size="11" font-weight="600" text-anchor="middle">&laquo;Service&raquo; TaskServiceImpl</text>
+      <line x1="330" y1="121" x2="570" y2="121" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="340" y="138" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- taskRepo: TaskRepository</text>
+      <text x="340" y="154" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- eventPublisher: EventPublisher</text>
+      <line x1="330" y1="164" x2="570" y2="164" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="340" y="184" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ createTask(TaskDTO): Task</text>
+      <text x="340" y="202" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ moveTask(Long, Long): void</text>
+      <text x="340" y="220" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ validateWipLimit(Long): bool</text>
+      <text x="340" y="238" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ logAuditHistory(Task): void</text>
+
+      <!-- Class 3: TaskRepository -->
+      <rect x="660" y="110" width="220" height="150" rx="4" fill="#242b37" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <rect x="660" y="110" width="220" height="26" rx="4" fill="rgba(248,250,252,0.06)"/>
+      <text x="770" y="128" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">&laquo;JpaRepository&raquo; TaskRepository</text>
+      <line x1="660" y1="136" x2="880" y2="136" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="670" y="155" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Spring Data JPA Interface</text>
+      <line x1="660" y1="168" x2="880" y2="168" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="670" y="188" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ findByColumnId(id): List&lt;Task&gt;</text>
+      <text x="670" y="206" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">+ countByColumnId(id): long</text>
+
+      <!-- Class 4: Task Entity -->
+      <rect x="660" y="330" width="220" height="120" rx="4" fill="#242b37" stroke="rgba(240,138,89,0.4)" stroke-width="1"/>
+      <rect x="660" y="330" width="220" height="26" rx="4" fill="rgba(240,138,89,0.1)"/>
+      <text x="770" y="348" fill="#f08a59" font-size="11" font-weight="600" text-anchor="middle">&laquo;Entity&raquo; Task</text>
+      <line x1="660" y1="356" x2="880" y2="356" stroke="rgba(248,250,252,0.1)" stroke-width="0.8"/>
+      <text x="670" y="375" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">- id: Long</text>
+      <text x="670" y="392" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">- title: String</text>
+      <text x="670" y="410" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace">- column: Column</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="465" x2="1060" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="110" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="132" y="485" fill="#94a3b8" font-size="8.5">Core Business Logic Service Component</text>
+    </svg>
+  </div>
+</body>
+</html>

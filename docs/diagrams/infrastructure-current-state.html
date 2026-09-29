@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infrastructure Current State Topology</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">IT Current State · Diagram Design</p>
+    <h1>Production IT Current State: Containers, Volumes, and Exposed Ports</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="infrastructure-current-state-title infrastructure-current-state-desc">
+      <title id="infrastructure-current-state-title">Production IT Current State: Containers, Volumes, and Exposed Ports</title>
+      <desc id="infrastructure-current-state-desc">IT current-state topology illustrating local Docker Compose health, active ports, and mounted volumes.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Host Server Box -->
+      <rect x="50" y="60" width="1000" height="380" rx="8" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.18)" stroke-width="1"/>
+      <text x="75" y="90" fill="#f8fafc" font-size="12" font-weight="600">DOCKER HOST INFRASTRUCTURE (WINDOWS / LINUX KERNEL)</text>
+      <text x="75" y="108" fill="#34d399" font-size="8.5" font-family="'Geist Mono', monospace">&#9679; ALL CONTAINERS HEALTHY (UP)</text>
+
+      <!-- Container Cards Grid -->
+      <!-- C1: Backend Spring Boot (Focal) -->
+      <rect x="75" y="130" width="280" height="130" rx="6" fill="rgba(240,138,89,0.08)" stroke="#f08a59" stroke-width="1.5"/>
+      <text x="95" y="158" fill="#f08a59" font-size="12" font-weight="600">backend (Monolith)</text>
+      <text x="95" y="178" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace">Status: Up 24h &bull; Port: 8082:8081</text>
+      <text x="95" y="196" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Memory: 512MB limit &bull; Java 21</text>
+      <text x="95" y="214" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Image: devopssuite-backend:latest</text>
+      <text x="95" y="232" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">&#10003; Actuator Health: UP</text>
+
+      <!-- C2: Frontend Nginx -->
+      <rect x="385" y="130" width="280" height="130" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="405" y="158" fill="#60a5fa" font-size="12" font-weight="600">frontend (React 18 SPA)</text>
+      <text x="405" y="178" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace">Status: Up &bull; Port: 80:80</text>
+      <text x="405" y="196" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Nginx alpine static bundle</text>
+      <text x="405" y="214" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Vite build &bull; Tailwind CSS</text>
+
+      <!-- C3: PostgreSQL -->
+      <rect x="695" y="130" width="330" height="130" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="715" y="158" fill="#60a5fa" font-size="12" font-weight="600">postgres (Primary DB)</text>
+      <text x="715" y="178" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace">Status: Up &bull; Port: 5432</text>
+      <text x="715" y="196" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">DB: devopssuite (Flyway V1-V16)</text>
+      <text x="715" y="214" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Volume: ./postgres_data mounted</text>
+
+      <!-- Row 2 -->
+      <!-- C4: Redis -->
+      <rect x="75" y="280" width="280" height="130" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="95" y="308" fill="#f8fafc" font-size="12" font-weight="600">redis (In-Memory Cache)</text>
+      <text x="95" y="328" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace">Status: Up &bull; Port: 6379</text>
+      <text x="95" y="346" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Rate limiting + Blacklist</text>
+      <text x="95" y="364" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Volume: ./redis_data</text>
+
+      <!-- C5: Observability Proxies -->
+      <rect x="385" y="280" width="640" height="130" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="405" y="308" fill="#f8fafc" font-size="12" font-weight="600">Observability Stack (Elasticsearch, Kibana, Prometheus, Grafana)</text>
+      <text x="405" y="328" fill="#f8fafc" font-size="8.5" font-family="'Geist Mono', monospace">Nginx Admin Proxy: Basic Auth Enabled &bull; Ports: 8080 (Grafana), 8083 (Kibana)</text>
+      <text x="405" y="346" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Prometheus scraping Actuator at 15s intervals</text>
+      <text x="405" y="364" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Elasticsearch JSON logging index operational</text>
+
+      <!-- Legend -->
+      <line x1="50" y1="465" x2="1050" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="50" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="120" y="478" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="142" y="485" fill="#94a3b8" font-size="8.5">Core Application Container</text>
+    </svg>
+  </div>
+</body>
+</html>

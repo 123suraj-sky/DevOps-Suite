@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Host Resource Utilization Trends</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Line Chart · Diagram Design</p>
+    <h1>CPU & Memory Utilization During Concurrent Docker Execution Surges</h1>
+    <svg viewBox="0 0 1100 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="resource-utilization-trends-title resource-utilization-trends-desc">
+      <title id="resource-utilization-trends-title">CPU & Memory Utilization During Concurrent Docker Execution Surges</title>
+      <desc id="resource-utilization-trends-desc">Line chart tracking host CPU % and RAM usage over a 60-minute window during burst code execution tests.</desc>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Axes -->
+      <line x1="80" y1="80" x2="80" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+      <line x1="80" y1="420" x2="1020" y2="420" stroke="rgba(248,250,252,0.18)" stroke-width="1.2"/>
+
+      <!-- Y Grid Lines -->
+      <line x1="80" y1="335" x2="1020" y2="335" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="70" y="340" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">25%</text>
+
+      <line x1="80" y1="250" x2="1020" y2="250" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="70" y="255" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">50%</text>
+
+      <line x1="80" y1="165" x2="1020" y2="165" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="70" y="170" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">75%</text>
+
+      <line x1="80" y1="80" x2="1020" y2="80" stroke="rgba(248,250,252,0.05)" stroke-dasharray="3,3"/>
+      <text x="70" y="85" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="end">100%</text>
+
+      <!-- Curve 1: RAM Usage (Steady Blue) -->
+      <path d="M 80,300 C 250,290 400,280 550,260 S 800,240 1020,230" fill="none" stroke="#60a5fa" stroke-width="2"/>
+      <text x="960" y="215" fill="#60a5fa" font-size="9" font-family="'Geist Mono', monospace">RAM (Flat ~58%)</text>
+
+      <!-- Curve 2: CPU % (Burst Focal Coral) -->
+      <path d="M 80,380 Q 200,370 300,360 T 450,340 T 550,130 T 650,150 T 750,350 T 1020,370" fill="none" stroke="#f08a59" stroke-width="2.5"/>
+      <circle cx="550" cy="130" r="6" fill="#f08a59"/>
+      <rect x="560" y="110" width="140" height="20" rx="3" fill="#1e232d" stroke="#f08a59" stroke-width="0.8"/>
+      <text x="630" y="124" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Burst Peak: 85% CPU</text>
+
+      <!-- Legend -->
+      <line x1="80" y1="465" x2="1020" y2="465" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="80" y="485" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <line x1="140" y1="482" x2="170" y2="482" stroke="#f08a59" stroke-width="2.5"/>
+      <text x="178" y="485" fill="#94a3b8" font-size="8.5">Host CPU Spike (Concurrent Sandboxes)</text>
+      <line x1="430" y1="482" x2="460" y2="482" stroke="#60a5fa" stroke-width="2"/>
+      <text x="468" y="485" fill="#94a3b8" font-size="8.5">Resident Memory Consumption</text>
+    </svg>
+  </div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Compose Infrastructure & Network Deployment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #1e232d;
+      --color-ink:     #f8fafc;
+      --color-muted:   #94a3b8;
+      --color-accent:  #f08a59;
+      --font-sans:     'Geist', system-ui, -apple-system, sans-serif;
+      --font-serif:    'Instrument Serif', Georgia, serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+    }
+    .frame { max-width: 1240px; width: 100%; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.4rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 2.5vw + 0.8rem, 2.2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.25rem;
+    }
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border: 1px solid rgba(248, 250, 252, 0.08);
+      border-radius: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Deployment Topology · Diagram Design</p>
+    <h1>Container Networking, Host Port Bindings, and Volume Persistence</h1>
+    <svg viewBox="0 0 1100 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="docker-compose-deployment-title docker-compose-deployment-desc">
+      <title id="docker-compose-deployment-title">Container Networking, Host Port Bindings, and Volume Persistence</title>
+      <desc id="docker-compose-deployment-desc">Deployment diagram illustrating the Docker bridge network, container services, persistent volume mappings, and exposed host ports.</desc>
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+        <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#f08a59"/></marker>
+      </defs>
+      <rect width="100%" height="100%" fill="#1e232d"/>
+
+      <!-- Host Machine Frame -->
+      <rect x="40" y="30" width="1020" height="470" rx="8" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+      <text x="60" y="55" fill="#f8fafc" font-size="11" font-weight="600">HOST OPERATING SYSTEM (Docker Host)</text>
+
+      <!-- Docker Bridge Network Box -->
+      <rect x="60" y="75" width="980" height="335" rx="6" fill="rgba(248,250,252,0.02)" stroke="rgba(240,138,89,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+      <text x="80" y="96" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace" letter-spacing="0.1em">DOCKER BRIDGE NETWORK: devops-suite-net</text>
+
+      <!-- Containers -->
+      <!-- C1: Frontend Nginx -->
+      <rect x="80" y="120" width="170" height="100" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="95" y="145" fill="#f8fafc" font-size="11" font-weight="600">frontend</text>
+      <text x="95" y="162" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">React SPA (Nginx)</text>
+      <rect x="95" y="175" width="140" height="18" rx="2" fill="rgba(96,165,250,0.15)"/>
+      <text x="165" y="188" fill="#60a5fa" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Host: 80 &rarr; Cont: 80</text>
+
+      <!-- C2: Spring Boot Backend (Focal) -->
+      <rect x="290" y="120" width="220" height="140" rx="6" fill="rgba(240,138,89,0.08)" stroke="#f08a59" stroke-width="1.5"/>
+      <text x="310" y="145" fill="#f8fafc" font-size="12" font-weight="600">backend</text>
+      <text x="310" y="162" fill="#f08a59" font-size="8.5" font-family="'Geist Mono', monospace">Spring Boot Monolith</text>
+      <rect x="310" y="175" width="180" height="18" rx="2" fill="rgba(240,138,89,0.2)"/>
+      <text x="400" y="188" fill="#f08a59" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Host: 8082 &rarr; Cont: 8081</text>
+      <text x="310" y="215" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">JVM 21 Alpine · JRE Mode</text>
+      <text x="310" y="232" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace">Internal DNS: http://backend:8081</text>
+
+      <!-- C3: Postgres -->
+      <rect x="550" y="120" width="160" height="100" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="565" y="145" fill="#f8fafc" font-size="11" font-weight="600">postgres</text>
+      <text x="565" y="162" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">PostgreSQL 16</text>
+      <text x="565" y="182" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Cont Port: 5432</text>
+      <text x="565" y="202" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">Vol: pg_data</text>
+
+      <!-- C4: Redis -->
+      <rect x="750" y="120" width="150" height="100" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="765" y="145" fill="#f8fafc" font-size="11" font-weight="600">redis</text>
+      <text x="765" y="162" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Redis 7 Alpine</text>
+      <text x="765" y="182" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Cont Port: 6379</text>
+      <text x="765" y="202" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">Vol: redis_data</text>
+
+      <!-- C5: Elasticsearch -->
+      <rect x="80" y="260" width="170" height="110" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="95" y="285" fill="#f8fafc" font-size="11" font-weight="600">elasticsearch</text>
+      <text x="95" y="302" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Log Aggregator :9200</text>
+      <text x="95" y="322" fill="#60a5fa" font-size="7.5" font-family="'Geist Mono', monospace">Vol: es_data</text>
+
+      <!-- C6: Admin Proxy & Dashboards -->
+      <rect x="550" y="260" width="350" height="110" rx="6" fill="#242b37" stroke="rgba(248,250,252,0.2)" stroke-width="1"/>
+      <text x="565" y="285" fill="#f8fafc" font-size="11" font-weight="600">nginx-admin-proxy</text>
+      <text x="565" y="302" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Basic Auth Barrier for Observability</text>
+      <rect x="565" y="318" width="150" height="18" rx="2" fill="rgba(148,163,184,0.15)"/>
+      <text x="640" y="331" fill="#f8fafc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Grafana :8080 &rarr; 3000</text>
+      <rect x="730" y="318" width="150" height="18" rx="2" fill="rgba(148,163,184,0.15)"/>
+      <text x="805" y="331" fill="#f8fafc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Kibana :8083 &rarr; 5601</text>
+
+      <!-- Host Volume persistence bar -->
+      <rect x="60" y="425" width="980" height="50" rx="6" fill="rgba(96,165,250,0.06)" stroke="rgba(96,165,250,0.25)" stroke-width="1"/>
+      <text x="80" y="455" fill="#60a5fa" font-size="9" font-weight="600" font-family="'Geist Mono', monospace">PERSISTENT HOST VOLUMES:</text>
+      <text x="270" y="455" fill="#94a3b8" font-size="8.5" font-family="'Geist Mono', monospace">./postgres_data &bull; ./redis_data &bull; ./es_data &bull; ./prometheus_data &bull; ./grafana_data</text>
+
+      <!-- Legend -->
+      <line x1="40" y1="515" x2="1060" y2="515" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+      <text x="40" y="535" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+      <rect x="110" y="528" width="14" height="10" rx="2" fill="rgba(240,138,89,0.2)" stroke="#f08a59" stroke-width="1"/>
+      <text x="132" y="536" fill="#94a3b8" font-size="8.5">Core Application Container</text>
+      <rect x="330" y="528" width="14" height="10" rx="2" fill="rgba(96,165,250,0.15)"/>
+      <text x="352" y="536" fill="#94a3b8" font-size="8.5">Host-Bound Exposed Port</text>
+      <line x1="540" y1="533" x2="570" y2="533" stroke="rgba(240,138,89,0.5)" stroke-dasharray="4,4"/>
+      <text x="578" y="536" fill="#94a3b8" font-size="8.5">Internal Docker Bridge Network</text>
+    </svg>
+  </div>
+</body>
+</html>
