@@ -1,56 +1,62 @@
-# Azure Deployment Guide — DevOps Suite
+# Azure Deployment — DevOps Suite
 
-This guide provides detailed, step-by-step instructions for deploying the **DevOps Suite** platform to Microsoft Azure.
+DevOps Suite was deployed live to Microsoft Azure using **Azure for Students free subscription credits**. The full multi-container stack was hosted on a single **Azure Virtual Machine** (`Standard_B2ms`, Ubuntu 22.04 LTS) using Docker Compose, which preserved the Docker socket sandbox required for code execution out-of-the-box.
 
----
-
-## 📌 Architecture Options on Azure
-
-DevOps Suite consists of a React frontend, a Spring Boot monolith backend, PostgreSQL, Redis, Elasticsearch/Logstash/Kibana, and Prometheus/Grafana. Crucially, the backend requires a **Docker Daemon connection** (via `/var/run/docker.sock`) to spawn ephemeral sandbox containers for code execution.
-
-We support two main deployment options on Azure:
-
-| Deployment Option | Effort | Code Sandbox Compatibility | Best For |
-| :--- | :--- | :--- | :--- |
-| **Option A: Azure VM (Docker Compose)** | ⭐ Easiest | 🟢 Out-of-the-box (uses host Docker daemon) | Small-to-medium teams, portfolios, rapid deployments. |
-| **Option B: Azure Kubernetes Service (AKS)** | 🛡️ Complex | 🟡 Requires Docker-in-Docker (DinD) configuration | Highly scalable, high availability, enterprise use. |
+This document describes exactly what was done.
 
 ---
 
-## 🚀 Option A: Azure VM Deployment (Recommended)
+## Deployment Overview
 
-This strategy deploys the entire stack onto a single Azure Virtual Machine using Docker Compose, preserving the Docker socket sandbox out-of-the-box.
+| Property | Value |
+| :--- | :--- |
+| Cloud Provider | Microsoft Azure (Azure for Students) |
+| VM SKU | `Standard_B2ms` — 2 vCPUs, 8 GB RAM |
+| OS Image | Ubuntu Server 22.04 LTS — x64 Gen2 |
+| Orchestration | Docker Compose (single-VM, all services) |
+| CI/CD | GitHub Actions (`deploy.yml`) — build, test, push, deploy on merge to `main` |
+| Monitoring | Azure Monitor — metric alerts, action groups (email + SMS) |
 
-### Step 1: Create an Azure Virtual Machine
-1. Log in to the [Azure Portal](https://portal.azure.com/).
-2. Search for **Virtual Machines** and click **Create -> Azure Virtual Machine**.
-3. Configure the VM:
-   - **Resource Group:** Create new (e.g., `rg-devopssuite`).
-   - **VM Name:** `vm-devopssuite`.
-   - **Region:** Choose your preferred region.
-   - **Image:** `Ubuntu Server 22.04 LTS - x64 Gen2` (or latest Ubuntu).
-   - **Size:** `Standard_B2ms` (2 vCPUs, 8 GB RAM) is recommended to support ELK and Prometheus/Grafana.
-   - **Authentication:** SSH public key.
-4. Under **Inbound Port Rules**, select **Allow selected ports** and choose:
-   - `SSH (22)`
-   - `HTTP (80)`
-   - `HTTPS (443)`
-5. Click **Review + Create**, then **Create**. Download the private key `.pem` file.
+---
 
-### Step 2: Install Docker and Docker Compose on the VM
-SSH into your VM:
+## Step 1: Create the Azure Virtual Machine
+
+The VM was created via the Azure Portal:
+
+1. Navigated to **Virtual Machines** → **Create → Azure Virtual Machine**.
+2. Configuration used:
+   - **Resource Group:** `rg-devopssuite` (created new)
+   - **VM Name:** `vm-devopssuite`
+   - **Region:** East US
+   - **Image:** Ubuntu Server 22.04 LTS — x64 Gen2
+   - **Size:** `Standard_B2ms` (2 vCPUs, 8 GB RAM) — chosen to comfortably run the ELK stack alongside Prometheus + Grafana
+   - **Authentication:** SSH public key
+3. **Inbound Port Rules** set to allow:
+   - `SSH (22)` — for remote access
+   - `HTTP (80)` — frontend nginx
+   - `HTTPS (443)` — SSL termination
+   - Additional ports opened in the Network Security Group for internal proxies
+
+---
+
+## Step 2: Install Docker and Docker Compose on the VM
+
+After SSH-ing into the VM:
+
 ```bash
 ssh -i /path/to/key.pem azureuser@<VM_PUBLIC_IP>
 ```
-Run the following script to install Docker and Docker Compose:
+
+Docker CE and Docker Compose were installed:
+
 ```bash
-# Update package database
+# Update package index
 sudo apt-get update -y
 
-# Install Docker dependencies
+# Install prerequisites
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 
-# Add Docker’s official GPG key
+# Add Docker's official GPG key
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 # Add Docker repository
@@ -64,108 +70,130 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Add azureuser to docker group so sudo isn't needed for docker commands
+# Allow running Docker without sudo
 sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### Step 3: Clone the Repository and Prepare Files
-On the VM, clone your repository and navigate to the project directory:
+---
+
+## Step 3: Clone the Repository and Configure Environment
+
+The repository was cloned onto the VM:
+
 ```bash
-git clone <YOUR_GIT_REPO_URL> devops-suite
-cd devops-suite
+git clone <REPO_URL> devops-suite
 ```
 
-### Step 4: Configure Production Environment Variables
-Create the production `.env` file from the example:
-```bash
-cp .env.example .env
-nano .env
-```
-Update the variables for production:
-- Set `DB_PASSWORD` to a strong random string.
-- Generate a strong `JWT_SECRET` using `openssl rand -hex 32` and set it.
-- Fill in optional third-party integrations (Google Client ID/Secret for OAuth2, SMTP settings, etc.).
-
-### Step 5: Start the Application Stack
-Build the production containers and start them in background mode:
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
-> Note: If `docker-compose.prod.yml` isn't created yet, you can spin up the core services (`postgres`, `redis`, `backend`, `frontend`) using standard docker-compose commands.
+The `.env` file was created from `.env.example` and populated with production values:
+- A strong random `DB_PASSWORD`
+- A 32-byte `JWT_SECRET` generated via `openssl rand -hex 32`
+- Google and GitHub OAuth2 credentials
+- SMTP settings for email notifications
+- `ADMIN_PASSWORD` for the nginx Basic Auth proxy (Grafana + Kibana)
 
 ---
 
-## ☸️ Option B: Azure Kubernetes Service (AKS) Deployment
+## Step 4: Start the Full Application Stack
 
-If you prefer deploying via AKS, follow these instructions.
+The complete multi-container stack was brought up in detached mode:
 
-### Step 1: Create the AKS Cluster and Azure Container Registry (ACR)
-Use Azure CLI to spin up AKS and ACR, linking them together:
 ```bash
-# Create Resource Group
-az group create --name rg-devopssuite --location eastus
-
-# Create Azure Container Registry
-az acr create --resource-group rg-devopssuite --name acrdevopssuite --sku Basic
-
-# Create AKS Cluster and attach it to ACR
-az aks create \
-    --resource-group rg-devopssuite \
-    --name aks-devopssuite \
-    --node-count 2 \
-    --generate-ssh-keys \
-    --attach-acr acrdevopssuite
-
-# Get credentials to run kubectl commands locally
-az aks get-credentials --resource-group rg-devopssuite --name aks-devopssuite
+docker-compose up -d --build
 ```
 
-### Step 2: Build & Push Docker Images to ACR
-Build and tag backend and frontend images:
-```bash
-# Login to ACR
-az acr login --name acrdevopssuite
+This started all services defined in `docker-compose.yml`:
 
-# Build and Push Backend Monolith
-docker build -t acrdevopssuite.azurecr.io/devopssuite-backend:latest ./backend
-docker push acrdevopssuite.azurecr.io/devopssuite-backend:latest
+| Container | Role |
+| :--- | :--- |
+| `frontend` | React SPA built by Vite, served by nginx on port 80 |
+| `backend` | Spring Boot monolith on internal port 8081 (host-mapped 8082) |
+| `postgres` | PostgreSQL database with Flyway-managed schema |
+| `redis` | Session/token blacklist and rate-limiting cache |
+| `elasticsearch` | Log storage and full-text search |
+| `kibana` | Log explorer (proxied via nginx on port 8083) |
+| `prometheus` | Metrics scraping from Spring Actuator |
+| `grafana` | Metrics dashboards (proxied via nginx on port 8080) |
+| `nginx` | Admin proxy for Grafana + Kibana with HTTP Basic Auth |
 
-# Build and Push Frontend SPA
-docker build -t acrdevopssuite.azurecr.io/devopssuite-frontend:latest ./frontend
-docker push acrdevopssuite.azurecr.io/devopssuite-frontend:latest
+---
+
+## Step 5: CI/CD via GitHub Actions
+
+The `.github/workflows/deploy.yml` pipeline was configured to run on every push to `main`:
+
+1. **Build** — compiles the Spring Boot backend with Maven
+2. **Test** — runs unit tests
+3. **Docker Build + Push** — builds and pushes updated images
+4. **Deploy** — SSH-es into the Azure VM and runs `docker-compose up -d --build` to roll out the new version
+
+This gave fully automated deployments without manual SSH intervention for every change.
+
+---
+
+## Step 6: Azure Monitor — Alerting and Telemetry
+
+Azure Monitor was configured to track VM health and dispatch automated incident alerts:
+
 ```
-
-### Step 3: Configure K8s Pods to Support Code Execution Sandbox
-Since AKS uses `containerd` and doesn't run Docker on the host nodes, you must deploy a Docker-in-Docker (DinD) sidecar or DaemonSet to allow the backend pod to access a Docker daemon.
-- Modify `k8s/backend.yaml` to include a `dind` sidecar container.
-- Configure the backend container's `DOCKER_HOST` environment variable to connect to the DinD sidecar at `tcp://localhost:2375`.
-
-### Step 4: Apply Manifests
-Deploy the applications to the cluster:
-```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap-secrets.yaml
-kubectl apply -f k8s/postgres.yaml
-kubectl apply -f k8s/redis.yaml
-kubectl apply -f k8s/backend.yaml
-kubectl apply -f k8s/frontend.yaml
+Azure VM (Host)
+   │
+   ▼
+Azure Monitor
+   ├── Metrics Telemetry ──────────► CPU & Memory utilization tracking
+   ├── VM Health Monitoring ──────► Availability & heartbeat checks
+   ├── Metric Alert Rules ─────────► Thresholds (CPU > 80%, VM Unavailable)
+   └── Action Groups ──────────────► Email & SMS incident dispatcher
 ```
 
 ---
 
-## 🛠️ Required Codebase Changes Before Deploying
+## Azure Deployment in Action
 
-To ensure the production build behaves correctly on Azure, the following changes are required in this codebase:
+> **Student Azure Deployment:**  
+> The DevOps Suite platform was deployed live to Microsoft Azure using **Azure for Students free subscription credits**, verifying real-world cloud deployment, CI/CD pipeline automation, and production monitoring.
 
-1. **Frontend Production Dockerfile (`frontend/Dockerfile`):**
-   A production-ready Dockerfile that compiles the React SPA via Node.js and serves the static files using Nginx.
-   
-2. **Frontend Nginx Proxy Configuration (`frontend/nginx.conf`):**
-   Configure Nginx to act as the web server for the frontend, while proxying request paths starting with `/api/` and `/ws/` to the backend monolith service.
+### 1. Azure Virtual Machine & Network Topology
 
-3. **Relative Frontend Environment API URLs:**
-   Change the environment configuration in the React frontend so it uses relative paths (e.g., `/api` and `/ws`) instead of hardcoded `localhost:8081` URLs. This prevents browser CORS and mixed-content issues when fronted by Nginx.
+The production multi-container Docker Compose stack was hosted on an Ubuntu Linux Virtual Machine in Azure with custom Virtual Network security rules.
 
-4. **Production Docker Compose Override File (`docker-compose.prod.yml`):**
-   Add a production override file to spin up Nginx, frontend, backend, PostgreSQL, and Redis together, with secure, production-ready environment configurations.
+| Azure VM Overview | Network Security Group & Port Rules |
+|:---:|:---:|
+| ![Azure VM Overview](../screenshots/00/02-Azure-VM-Overview.png) | ![Network Security Rules](../screenshots/00/04-Network-Settings-Azure.png) |
+| *Azure Portal showing active VM instance details, public IP, and resource sizing.* | *Inbound security rules configuring HTTP (80), HTTPS (443), SSH (22), and proxy ports.* |
+
+---
+
+### 2. Live Docker Containers on Azure CLI
+
+Verification of the live multi-container stack running on the Azure VM via SSH terminal:
+
+![Docker Containers on Azure VM](../screenshots/docker_ps_command_on_azure_cli.png)
+*`docker ps` output on the Azure VM verifying active containers: frontend nginx, Spring Boot backend monolith, PostgreSQL, Redis, Elasticsearch, Kibana, Prometheus, and Grafana.*
+
+---
+
+### 3. Automated GitHub Actions CI/CD Pipeline
+
+The GitHub Actions workflow (`.github/workflows/deploy.yml`) automates building the monolithic backend, running unit tests, building Docker images, and deploying to the Azure VM upon every push to `main`.
+
+| GitHub Actions CI/CD Run | Application Deployment (Live Login) |
+|:---:|:---:|
+| ![GitHub Actions CI/CD Success](../screenshots/00/03-GitHub-Actions-CI-CD-Success.png) | ![Application Login](../screenshots/00/01-Application-Login.png) |
+| *Green build & automated deployment pipeline via GitHub Actions.* | *DevOps Suite authenticated login interface served from the Azure VM.* |
+
+---
+
+### 4. Azure Monitor, Telemetry & Incident Alert Rules
+
+Production telemetry was configured via **Azure Monitor** to track infrastructure performance and dispatch automated alerts:
+
+| Azure Monitor Overview | CPU & Memory Performance Metrics |
+|:---:|:---:|
+| ![Azure Monitor Overview](../screenshots/stage1/04_monitor.png) | ![Azure Monitor Metrics](../screenshots/stage1/03_metrics.png) |
+| *Azure Monitor centralized dashboard reporting healthy VM status.* | *Live CPU percentage and memory metrics scraped over time.* |
+
+| Metric Alert Rules Configuration | Action Groups Notification Dispatcher |
+|:---:|:---:|
+| ![Azure Alert Rules](../screenshots/stage1/01_alert_rules.png) | ![Azure Action Groups](../screenshots/stage1/02_action_groups.png) |
+| *Configured alert conditions for high CPU usage and VM downtime.* | *Action Group targets routing automated alert emails and SMS.* |
