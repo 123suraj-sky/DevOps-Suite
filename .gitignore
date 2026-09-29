@@ -40,4 +40,5 @@ Thumbs.db
 docker-compose.override.yml
 
 # Sandbox temp directories (ephemeral source files written by the execution sandbox)
-sandbox-temp/
+sandbox-temp/*
+!sandbox-temp/.gitkeep
