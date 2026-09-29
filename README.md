@@ -104,6 +104,8 @@ flowchart TB
     Kibana --> ES
 ```
 
+For a full set of 42 interactive architectural and design diagrams covering auth flows, database schema, deployment topology, Kanban state machines, observability layers, and more — see **[docs/diagrams/index.html](docs/diagrams/index.html)**.
+
 ---
 
 ## Core Capabilities
