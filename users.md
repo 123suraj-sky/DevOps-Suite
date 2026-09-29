@@ -15,6 +15,8 @@
   }
 </style>
 
+These users were created locally for development purpose.
+
 ## Users
 |S.No.|Email|Password|
 |---|---|---|
