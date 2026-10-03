@@ -154,7 +154,7 @@ stateDiagram-v2
 | `loginWithGithub` | `async (code)` | Sends OAuth authorization code to `/api/v1/auth/github`. | Updates tokens and context user state. |
 | `logout` | `async ()` | Posts refresh token to `/api/v1/auth/logout` (Redis blacklisting). | Clears `localStorage`, resets state, disconnects STOMP sockets. |
 | `updateUser` | `(updatedUserData) => void` | Updates in-memory profile metadata without network re-authentication. | Synchronizes components like user avatar and status displays. |
-| `isAdmin` | *Derived Boolean* | Evaluates `user?.roles` for `ROLE_ADMIN` or `ROLE_OWNER`. | Unlocks Admin navigation, Grafana, Kibana, and Admin routes. |
+| `isAdmin` | *Derived Boolean* | Evaluates `user?.roles` for `ROLE_ADMIN`. | Unlocks Admin navigation, Grafana, Kibana, and Admin routes. |
 
 #### The `user.userId` vs `user.user_id` Bug Fix (`normalizeUser`)
 

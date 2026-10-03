@@ -173,7 +173,7 @@ sequenceDiagram
    - Injects a `UsernamePasswordAuthenticationToken` into the thread-local `SecurityContextHolder`.
 4. **`SecurityFilterChain` Evaluation**:
    - Disables CSRF (stateless API model using bearer tokens).
-   - Enforces endpoint permissions (e.g., `/actuator/prometheus` is permitAll; `/actuator/**` requires `ROLE_ADMIN` or `ROLE_OWNER`).
+   - Enforces endpoint permissions (e.g., `/actuator/prometheus` is permitAll; `/actuator/**` requires `ROLE_ADMIN`).
 5. **Controller & Service Layer**:
    - Spring MVC maps the payload via Jackson `ObjectMapper`.
    - Business service executes validation and transactional persistence (`@Transactional`).
@@ -396,7 +396,7 @@ flowchart LR
    - Queries Redis: `hasKey("blacklist:" + token)`. If blacklisted (e.g., user clicked logout), authentication is rejected.
    - If valid, unpacks JWT claims (user ID subject, comma-separated roles) and sets a `UsernamePasswordAuthenticationToken` in Spring's thread-local `SecurityContextHolder`.
 3. **`SecurityFilterChain` (Authorization & RBAC)**:
-   - Matches URL patterns against assigned roles: `/actuator/prometheus` and `/auth/**` are `permitAll()`; `/actuator/**` and `/api/metrics/dashboard` require `ROLE_ADMIN` or `ROLE_OWNER`.
+   - Matches URL patterns against assigned roles: `/actuator/prometheus` and `/auth/**` are `permitAll()`; `/actuator/**` and `/api/metrics/dashboard` require `ROLE_ADMIN`.
    - If authorization passes, the request reaches the target `@RestController`.
 
 ---

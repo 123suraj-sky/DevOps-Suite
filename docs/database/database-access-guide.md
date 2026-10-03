@@ -89,7 +89,7 @@ These are the 14 tables created by Flyway migrations:
 | Table | Purpose |
 |---|---|
 | `users` | Registered user accounts |
-| `roles` | Role definitions (`ROLE_MEMBER`, `ROLE_ADMIN`, `ROLE_OWNER`, etc.) |
+| `roles` | Global role definitions (`ROLE_MEMBER`, `ROLE_ADMIN`) |
 | `user_roles` | Many-to-many join: which roles a user has |
 | `projects` | Projects created by users |
 | `project_members` | Members of each project and their role |

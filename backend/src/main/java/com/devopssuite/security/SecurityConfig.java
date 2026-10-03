@@ -61,7 +61,7 @@ public class SecurityConfig {
                 ).permitAll()
                 // Liveness probe and Prometheus scraper endpoint must be accessible
                 .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
-                .requestMatchers("/actuator/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
+                .requestMatchers("/actuator/**").hasAuthority("ROLE_ADMIN")
                 // SockJS HTTP handshake requests (/ws/info, /ws/<transport>) must be
                 // permitted here — the JWT is sent as a STOMP connect header after the
                 // WebSocket upgrade, not as an HTTP Authorization header, so the HTTP
@@ -69,8 +69,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 // Avatar images are public static files (URLs are not guessable — UUID names)
                 .requestMatchers("/uploads/avatars/**").permitAll()
-                // System-wide metrics dashboard and requests are admin/owner only; user-summary is any authenticated user
-                .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard", "/metrics/requests", "/api/metrics/requests").hasAnyAuthority("ROLE_ADMIN", "ROLE_OWNER")
+                // System-wide metrics dashboard and requests are admin-only; user-summary is any authenticated user
+                .requestMatchers("/metrics/dashboard", "/api/metrics/dashboard", "/metrics/requests", "/api/metrics/requests").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/metrics/user-summary", "/api/metrics/user-summary").authenticated()
                 // IDE file CRUD — any authenticated project member
                 .requestMatchers("/api/ide/**").authenticated()

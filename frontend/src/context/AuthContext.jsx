@@ -94,9 +94,9 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  // Derive isAdmin from the user's roles list — true for ROLE_ADMIN and ROLE_OWNER
+  // Derive isAdmin from the user's global role.
   const isAdmin = Array.isArray(state.user?.roles) &&
-    state.user.roles.some(r => r === 'ROLE_ADMIN' || r === 'ROLE_OWNER');
+    state.user.roles.some(r => r === 'ROLE_ADMIN');
 
   return (
     <AuthContext.Provider value={{ ...state, isAdmin, login, loginWithGoogle, loginWithGithub, register, logout, updateUser, dispatch }}>

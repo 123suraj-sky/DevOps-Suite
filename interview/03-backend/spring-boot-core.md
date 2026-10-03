@@ -592,7 +592,7 @@ public class ProjectController {
 | `hasRole("ADMIN")` | `ROLE_ADMIN` (auto-prefixes `ROLE_`) |
 | `hasAuthority("ROLE_ADMIN")` | Exact string match |
 
-In DevOps Suite, the RBAC system stores roles as `ROLE_OWNER`, `ROLE_ADMIN`, `ROLE_MEMBER`, `ROLE_VIEWER` in the JWT claims, and `hasRole("ADMIN")` matches `ROLE_ADMIN`.
+In DevOps Suite, the global RBAC system stores `ROLE_ADMIN` and `ROLE_MEMBER` in the JWT claims. Project membership uses separate `OWNER`, `ADMIN`, and `MEMBER` roles.
 
 ---
 

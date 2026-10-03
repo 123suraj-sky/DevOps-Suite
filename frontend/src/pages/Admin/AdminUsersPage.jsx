@@ -298,7 +298,7 @@ export const AdminUsersPage = () => {
                               <span
                                 key={role}
                                 className={`text-2xs px-1.5 py-0.5 rounded font-medium ${
-                                  role === 'ROLE_ADMIN' || role === 'ROLE_OWNER'
+                                  role === 'ROLE_ADMIN'
                                     ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
                                     : 'bg-[var(--surface-sunken)] text-[var(--text-muted)]'
                                 }`}

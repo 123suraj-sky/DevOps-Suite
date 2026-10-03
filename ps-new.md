@@ -91,7 +91,7 @@ The original blueprint called for microservices (Auth Service, API Gateway, Code
 ### Monolith modules (packages under `com.devopssuite`)
 
 1. **auth** — Registration, login, JWT, refresh tokens, Google OAuth2, GitHub OAuth2, password reset via email, Redis token blacklist on logout, public user profiles & social follow system
-2. **admin** — Admin user management, user activity explorer, cross-project user tasks and logs inspection (`ROLE_ADMIN` / `ROLE_OWNER`)
+2. **admin** — Admin user management, user activity explorer, cross-project user tasks and logs inspection (`ROLE_ADMIN`)
 3. **project** — Projects, boards, columns, tasks (Kanban), task audit history (`task_audit_history`), RBAC (`OWNER > ADMIN > MEMBER > VIEWER`)
 4. **execution** — Sandboxed code runner via Docker Java client (Python 3.12, Node 24, Java 21, C++ g++ 15), execution history & activity heatmap API
 5. **ide** — Browser IDE file tree persistence in PostgreSQL (`ide_files`) scoped per project

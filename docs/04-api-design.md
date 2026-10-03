@@ -831,7 +831,7 @@ Returns distinct service names / URIs seen in the project's logs (for filter dro
 ## 9. Admin Users API
 
 Base path: `/api/admin/users`  
-All endpoints require 🔒 `ROLE_ADMIN` or `ROLE_OWNER`.
+All endpoints require 🔒 `ROLE_ADMIN`.
 
 ---
 
@@ -901,7 +901,7 @@ Get request and audit logs for a specific user from Elasticsearch.
 ### 10.1 Spring Actuator Endpoints
 
 > `/actuator/health` and `/actuator/prometheus` are **public** (no auth required) — Prometheus scrapes them directly.  
-> All other actuator endpoints require `ROLE_ADMIN` or `ROLE_OWNER`.
+> All other actuator endpoints require `ROLE_ADMIN`.
 
 | Method | URL | Auth | Description |
 |---|---|---|---|
@@ -915,7 +915,7 @@ Get request and audit logs for a specific user from Elasticsearch.
 
 ### 10.2 Admin Dashboard & Metrics API
 
-> 🔒 **Requires `ROLE_ADMIN` or `ROLE_OWNER`.** Returns `403 Forbidden` for other roles.
+> 🔒 **Requires `ROLE_ADMIN`.** Returns `403 Forbidden` for other roles.
 
 ---
 

@@ -872,7 +872,7 @@ The **none algorithm attack** exploits JWT libraries that accept tokens with `"a
 **Example attack token:**
 ```
 Header: {"alg": "none", "typ": "JWT"}
-Payload: {"sub": "admin-uuid", "roles": ["ROLE_OWNER"]}
+Payload: {"sub": "admin-uuid", "roles": ["ROLE_ADMIN"]}
 Signature: (empty)
 ```
 

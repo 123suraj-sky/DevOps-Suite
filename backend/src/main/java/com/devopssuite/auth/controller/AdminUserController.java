@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 @Slf4j
-@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_OWNER')")
+@PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminUserController {
 
     private final UserRepository userRepository;
