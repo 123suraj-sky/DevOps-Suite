@@ -461,6 +461,22 @@ Key Files:       JwtRequestFilter · RateLimitFilter · DockerSandbox · Executi
                  AuthContext · WebSocketContext · NotificationContext · EditorContext
 ```
 
+|Project|         DevOps Suite — full-stack developer productivity platform|
+|-------|-------------------------------------------------------------|
+|Backend|         Spring Boot 3.x · Java 21 · Maven · com.devopssuite|
+|Frontend|        React 18 · Vite · JavaScript/JSX · Tailwind CSS|
+|Database|        PostgreSQL (devopssuite) · 16 Flyway migrations|
+|Cache|           Redis 7 — cache-aside · JWT blacklist · sliding-window rate limit|
+|Real-Time|       STOMP over SockJS · 3 topics · In-memory broker|
+|Code Exec|       Docker sandbox · Python/JS/Java/C++ · 30s timeout · 256MB/1CPU|
+|Auth|            JWT (1h/7d) · Google OAuth2 · GitHub OAuth2 · BCrypt · RBAC 4 roles|
+|Observability|   Prometheus + Grafana (2 dashboards) · Elasticsearch (180d ILM) · Kibana|
+|Custom Metrics|  6 Micrometer metrics in AppMetrics.java|
+|Networks|        2 bridge networks — app + observability|
+|Ports|           Backend 8081→8082 · Frontend 5173/80 · Grafana 8080 · Kibana 8083|
+|CI/CD|           GitHub Actions · .github/workflows/deploy.yml|
+|Key Files|       JwtRequestFilter · RateLimitFilter · DockerSandbox · ExecutionQueueWorker StompAuthChannelInterceptor · NotificationEventListener · AppMetrics AuthContext · WebSocketContext · NotificationContext · EditorContext|
+
 ---
 
 *Last updated: 2026-09-29 | Knowledge base covers 46 files across 12 categories*
